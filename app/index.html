@@ -4,7 +4,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Cinzel:wght@700&display=swap">
 <style>
   /* Layout: controlli a sinistra separati da filetti, palco fisso a destra con la carta e le miniature alla dimensione reale. */
   :root {
@@ -22,6 +22,7 @@
     --logo-glow: none;
     --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+    --font-title: 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -196,6 +197,27 @@
   .flag:hover { opacity: 1; }
   .flag[aria-pressed="true"] { border-color: var(--accent); opacity: 1; }
   .btn.armed { border-color: var(--warn); color: var(--warn); }
+  .drawer { border-top: 1px solid var(--line); }
+  .drawer:first-child { border-top: 0; }
+  .drawer > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 14px; user-select: none; }
+  .drawer > summary::-webkit-details-marker { display: none; }
+  .drawer > summary::after { content: ""; flex: none; width: 10px; height: 10px; margin-right: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.15s; }
+  .drawer[open] > summary::after { transform: rotate(-135deg); }
+  .drawer > summary:hover h2 { color: var(--accent); }
+  .drawer h2 { font: 700 28px/1.15 var(--font-title); letter-spacing: 0.02em; text-transform: none; color: var(--fg); text-wrap: balance; }
+  .drawer.sub2 h2 { font-size: 14px; }
+  .drawer.sub2 > summary::after { width: 8px; height: 8px; }
+  .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
+  .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
+  .dmain { min-width: 0; }
+  .dside { position: sticky; top: 156px; display: grid; gap: 12px; justify-items: center; }
+  .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
+  @media (max-width: 899px) {
+    .dview { grid-template-columns: minmax(0, 1fr); }
+    .dside { position: static; order: -1; }
+    .dside canvas { height: 170px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .drawer > summary::after { transition: none; } }
   .themes { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
   .themes button { border: 0; border-left: 1px solid var(--line); background: none; color: var(--muted); width: 38px; height: 30px; display: grid; place-items: center; cursor: pointer; padding: 0; }
   .themes button:first-child { border-left: 0; }
@@ -237,8 +259,7 @@
   <div class="layout">
     <div class="controls">
 
-      <section class="block" aria-labelledby="h-img">
-        <h2 id="h-img">Immagine</h2>
+      <details class="drawer" data-group="cover" open><summary><h2 id="h-img">Immagine</h2></summary><div class="dbody">
         <div class="filerow">
           <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
           <button type="button" class="btn" id="pick">Carica PNG</button>
@@ -247,10 +268,9 @@
         <label class="rng"><span>Zoom</span><output data-out="zoom" data-suf="%"></output><input type="range" data-k="zoom" min="100" max="300" step="1"></label>
         <label class="rng"><span>Sposta in orizzontale</span><output data-out="ox"></output><input type="range" data-k="ox" min="-100" max="100" step="1"></label>
         <label class="rng"><span>Sposta in verticale</span><output data-out="oy"></output><input type="range" data-k="oy" min="-100" max="100" step="1"></label>
-      </section>
+      </div></details>
 
-      <section class="block" aria-labelledby="h-txt">
-        <h2 id="h-txt">Testo</h2>
+      <details class="drawer" data-group="cover"><summary><h2 id="h-txt">Testo</h2></summary><div class="dbody">
         <label class="chk"><input type="checkbox" data-k="nameLink"> Usa il nome della carta (vista Dati)</label>
         <label class="fld"><span>Nome sulla copertina</span><input type="text" data-k="name" maxlength="80" autocomplete="off" spellcheck="false"></label>
         <label class="fld"><span>Descrizione breve</span><textarea data-k="desc" rows="3" maxlength="220"></textarea></label>
@@ -265,10 +285,9 @@
             <button type="button" data-v="center" aria-pressed="false">Centro</button>
           </div>
         </div>
-      </section>
+      </div></details>
 
-      <section class="block" aria-labelledby="h-font">
-        <h2 id="h-font">Font</h2>
+      <details class="drawer" data-group="cover"><summary><h2 id="h-font">Font</h2></summary><div class="dbody">
         <div class="tabs">
           <button type="button" id="tabName" aria-pressed="true"><small>Nome</small><span id="tabNameF"></span></button>
           <button type="button" id="tabDesc" aria-pressed="false"><small>Descrizione</small><span id="tabDescF"></span></button>
@@ -283,10 +302,9 @@
           <button type="submit" class="btn" style="flex:none">Aggiungi</button>
         </form>
         <p id="cmsg" class="hint" aria-live="polite">Qualsiasi famiglia di fonts.google.com, scritta col nome esatto.</p>
-      </section>
+      </div></details>
 
-      <section class="block" aria-labelledby="h-style">
-        <h2 id="h-style">Stile del testo</h2>
+      <details class="drawer" data-group="cover"><summary><h2 id="h-style">Stile del testo</h2></summary><div class="dbody">
         <div class="chips" data-seg="template">
           <button type="button" data-v="velo" aria-pressed="false">Velo</button>
           <button type="button" data-v="pannello" aria-pressed="false">Pannello</button>
@@ -305,10 +323,9 @@
           <label class="color"><input type="color" data-k="panelColor"> Sfondo del testo</label>
         </div>
         <div><button type="button" class="btn quiet" id="reset">Ripristina lo stile</button></div>
-      </section>
+      </div></details>
 
-      <section class="block" aria-labelledby="h-frame">
-        <h2 id="h-frame">Cornice</h2>
+      <details class="drawer" data-group="cover"><summary><h2 id="h-frame">Cornice</h2></summary><div class="dbody">
         <label class="chk"><input type="checkbox" data-k="frameOn"> Mostra la cornice a due bordi</label>
         <div class="sub" data-show="frameOn=true">
           <div class="chips" data-seg="frameTarget" data-show="maskType!=none">
@@ -325,10 +342,9 @@
             <label class="color"><input type="color" data-k="frame2Color"> Bordo interno</label>
           </div>
         </div>
-      </section>
+      </div></details>
 
-      <section class="block" aria-labelledby="h-mask">
-        <h2 id="h-mask">Maschera</h2>
+      <details class="drawer" data-group="cover"><summary><h2 id="h-mask">Maschera</h2></summary><div class="dbody">
         <div class="chips" data-seg="maskType">
           <button type="button" data-v="none" aria-pressed="false">Nessuna</button>
           <button type="button" data-v="rect" aria-pressed="false">Rettangolare</button>
@@ -377,7 +393,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </div></details>
     </div>
 
     <aside class="stage" aria-label="Anteprima">
@@ -411,8 +427,8 @@
   </div>
 
   <div id="view-data" class="dview">
-    <section class="block" aria-labelledby="d-act">
-      <h2 id="d-act">Carta</h2>
+  <div class="dmain">
+    <details class="drawer" data-group="data"><summary><h2 id="d-act">Carta</h2></summary><div class="dbody">
       <div class="jump">
         <input id="dimport" type="file" accept=".png,.json,image/png,application/json" hidden>
         <button type="button" class="btn" id="dimportBtn">Importa PNG o JSON</button>
@@ -421,18 +437,16 @@
       </div>
       <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.</p>
       <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-char">
-      <h2 id="d-char">Personaggio</h2>
+    <details class="drawer" data-group="data" open><summary><h2 id="d-char">Personaggio</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Nome</b></span><input type="text" data-f="name" maxlength="120" autocomplete="off" spellcheck="false"></label>
       <label class="df"><span class="dfh"><b>Descrizione del personaggio</b><span class="tk" data-tk="description"></span></span><textarea data-f="description" rows="10" spellcheck="false"></textarea></label>
       <label class="df"><span class="dfh"><b>Sommario della personalità</b><span class="tk" data-tk="personality"></span></span><textarea data-f="personality" rows="4" spellcheck="false"></textarea></label>
       <label class="df"><span class="dfh"><b>Scenario</b><span class="tk" data-tk="scenario"></span></span><textarea data-f="scenario" rows="4" spellcheck="false"></textarea></label>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-first">
-      <h2 id="d-first">Messaggi iniziali</h2>
+    <details class="drawer sub2" data-group="data"><summary><h2 id="d-first">Messaggi iniziali</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Primo messaggio</b><span class="tk" data-tk="first_mes"></span></span><textarea data-f="first_mes" rows="8" spellcheck="false"></textarea></label>
       <div class="stack">
         <div class="dfh"><b style="font-size:13px;font-weight:500">Messaggi alternativi</b></div>
@@ -446,16 +460,14 @@
           <div><button type="button" class="btn" id="grpAdd">Aggiungi saluto di gruppo</button></div>
         </div>
       </details>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-ex">
-      <h2 id="d-ex">Esempi di dialogo</h2>
+    <details class="drawer sub2" data-group="data"><summary><h2 id="d-ex">Esempi di dialogo</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Esempi di dialogo</b><span class="tk" data-tk="mes_example"></span></span><textarea data-f="mes_example" rows="9" spellcheck="false"></textarea></label>
       <p class="sm">Inizia ogni esempio con &lt;START&gt; su una nuova riga.</p>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-adv">
-      <h2 id="d-adv">Definizioni avanzate</h2>
+    <details class="drawer sub2" data-group="data"><summary><h2 id="d-adv">Definizioni avanzate</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Prompt principale</b><span class="tk" data-tk="system_prompt"></span></span><textarea data-f="system_prompt" rows="3" spellcheck="false" placeholder="Se compilato sostituisce il prompt principale predefinito."></textarea></label>
       <label class="df"><span class="dfh"><b>Post-History Instructions</b><span class="tk" data-tk="post_history"></span></span><textarea data-f="post_history" rows="3" spellcheck="false" placeholder="Se compilato sostituisce le istruzioni post-history predefinite."></textarea></label>
       <label class="df"><span class="dfh"><b>Nota del personaggio</b><span class="tk" data-tk="dp_prompt"></span></span><textarea data-f="dp_prompt" rows="4" spellcheck="false" placeholder="Testo inserito in chat alla profondità e col ruolo scelti qui sotto."></textarea></label>
@@ -471,17 +483,15 @@
         <div class="ends"><span>Timido</span><span>Normale</span><span>Chiacchierone</span></div>
         <p class="sm">Quanto spesso il personaggio parla nelle chat di gruppo.</p>
       </div>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-lore">
-      <h2 id="d-lore">Lorebook</h2>
+    <details class="drawer sub2" data-group="data"><summary><h2 id="d-lore">Lorebook</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Nome del lorebook</b><span class="tk" id="bookTk"></span></span><input type="text" data-f="book" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Es. Lorebook di Kat"></label>
       <div class="stack" id="entries"></div>
       <div><button type="button" class="btn" id="entAdd">Aggiungi voce</button></div>
-    </section>
+    </div></details>
 
-    <section class="block" aria-labelledby="d-meta">
-      <h2 id="d-meta">Metadati del creatore</h2>
+    <details class="drawer sub2" data-group="data"><summary><h2 id="d-meta">Metadati del creatore</h2></summary><div class="dbody">
       <p class="sm">Non vengono inviati al modello, quindi non entrano nei totali.</p>
       <div class="grid2">
         <label class="df"><span class="dfh"><b>Creato da</b></span><input type="text" data-f="creator" maxlength="120" autocomplete="off"></label>
@@ -489,7 +499,12 @@
       </div>
       <label class="df"><span class="dfh"><b>Note del creatore</b><span class="tk off" data-tk="notes"></span></span><textarea data-f="notes" rows="4" spellcheck="false"></textarea></label>
       <label class="df"><span class="dfh"><b>Tag</b></span><input type="text" data-f="tags" autocomplete="off" spellcheck="false" placeholder="Separati da virgole"></label>
-    </section>
+    </div></details>
+  </div>
+  <aside class="dside" aria-label="Copertina">
+    <canvas id="dprev" width="560" height="840" role="img" aria-label="Anteprima della carta"></canvas>
+    <button type="button" class="btn" id="dedit">Modifica la copertina</button>
+  </aside>
   </div>
 </main>
 
@@ -594,6 +609,8 @@
  "Fissi": "Fixed",
  "Lingua": "Language",
  "Aspetto": "Appearance",
+ "Copertina": "Cover",
+ "Modifica la copertina": "Edit the cover",
  "Modalità normale": "Light mode",
  "Modalità scura": "Dark mode",
  "Immagine": "Image",
@@ -1469,7 +1486,18 @@
     cap.classList.toggle('warn', !!LAST.d && d < 6);
   }
 
-  function render() { draw(card, 800); drawMinis(); }
+  function drawPrev() {
+    const cv = $('dprev');
+    if (!cv) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.round(280 * dpr);
+    if (cv.width !== w) { cv.width = w; cv.height = Math.round(w * 1.5); }
+    const c = cv.getContext('2d');
+    c.imageSmoothingQuality = 'high';
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.drawImage(card, 0, 0, cv.width, cv.height);
+  }
+  function render() { draw(card, 800); drawMinis(); drawPrev(); }
   let raf = 0;
   function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', schedule);
@@ -1909,6 +1937,14 @@
     newCard();
   });
   $('togo').addEventListener('click', () => showView('cover'));
+
+  /* Cassetti: se ne apre uno alla volta per pagina */
+  document.querySelectorAll('details.drawer').forEach(d => d.addEventListener('toggle', () => {
+    if (!d.open) return;
+    document.querySelectorAll('details.drawer[data-group="' + d.dataset.group + '"]').forEach(o => { if (o !== d) o.open = false; });
+    if (d.contains($('flist'))) buildList();
+  }));
+  $('dedit').addEventListener('click', () => showView('cover'));
 
   /* Cambio vista */
   const VIEWS = { dati: $('view-data'), cover: $('view-cover') };
