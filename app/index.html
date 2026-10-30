@@ -62,7 +62,7 @@
 
   .fld { display: grid; gap: 6px; }
   .fld > span, .rng > span { font-size: 13px; font-weight: 500; }
-  input[type="text"], textarea, select {
+  input[type="text"], input[type="password"], textarea, select {
     width: 100%; font: inherit; color: inherit; background: var(--raised);
     border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px;
   }
@@ -204,9 +204,8 @@
   .drawer > summary::after { content: ""; flex: none; width: 10px; height: 10px; margin-right: 6px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform 0.15s; }
   .drawer[open] > summary::after { transform: rotate(-135deg); }
   .drawer > summary:hover h2 { color: var(--accent); }
-  .drawer h2 { font: 700 28px/1.15 var(--font-title); letter-spacing: 0.02em; text-transform: none; color: var(--fg); text-wrap: balance; }
-  .drawer.sub2 h2 { font-size: 14px; }
-  .drawer.sub2 > summary::after { width: 8px; height: 8px; }
+  .drawer h2, .atitle { margin: 0; font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; text-transform: none; color: var(--fg); text-wrap: balance; }
+  .drawer > summary::after { width: 8px; height: 8px; }
   .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
   .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
   .dmain { min-width: 0; }
@@ -223,6 +222,32 @@
   .themes button:first-child { border-left: 0; }
   .themes button:hover { color: var(--fg); }
   .themes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+
+  /* Pagina API e bacchetta */
+  .views button[data-ready="1"]::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 8px; border-radius: 50%; background: currentColor; vertical-align: middle; opacity: 0.85; }
+  .apiview { max-width: 760px; margin-inline: auto; display: grid; gap: 22px; padding-bottom: 48px; }
+  .apibox { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 18px; min-width: 0; }
+  .apibox:first-child { border-top: 0; padding-top: 0; }
+  .apibox a { color: var(--accent); word-break: break-all; }
+  .mrow { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+  .mrow input { flex: 1 1 240px; min-width: 0; }
+  .sm.warn { color: var(--warn); }
+  .dfl { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .wand {
+    flex: none; width: 28px; height: 24px; padding: 0; display: inline-grid; place-items: center; line-height: 1;
+    font: 15px/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--fg); cursor: pointer;
+  }
+  .wand:hover:not(:disabled) { border-color: var(--accent); background: var(--sel); }
+  .wand:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(1); }
+  dialog.wdlg { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); box-shadow: 0 24px 60px rgba(0,0,0,0.45); overflow: auto; }
+  dialog.wdlg::backdrop { background: rgba(0,0,0,0.55); }
+  .wd { display: grid; gap: 14px; padding: 18px; }
+  .wdh { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .wdh h3 { margin: 0; font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .wexc { white-space: pre-wrap; max-height: 150px; overflow: auto; font-size: 13px; line-height: 1.45; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--muted); }
+  .wq { display: grid; gap: 6px; }
+  .wq b { font-size: 13px; font-weight: 500; }
 </style>
 
 <main class="app">
@@ -231,6 +256,7 @@
     <nav class="views" aria-label="Vista">
       <button type="button" data-view="dati" aria-pressed="true">Dati</button>
       <button type="button" data-view="cover" aria-pressed="false">Cover</button>
+      <button type="button" data-view="api" aria-pressed="false">API</button>
     </nav>
     <button type="button" class="btn" id="dnew">Nuova carta</button>
     <div class="tot" aria-live="polite">
@@ -426,6 +452,48 @@
   </div>
   </div>
 
+  <div id="view-api" class="apiview" hidden>
+    <section class="apibox">
+      <h2 class="atitle">Scelta dell'API</h2>
+      <div class="chips fit" id="provs" role="group" aria-label="Scelta dell'API"></div>
+      <p class="sm" id="provNote"></p>
+      <p class="sm"><a id="provDoc" target="_blank" rel="noopener noreferrer" hidden></a></p>
+    </section>
+    <section class="apibox">
+      <h2 class="atitle">Connessione</h2>
+      <div class="df" id="rUrl">
+        <span class="dfh"><b>Indirizzo del server (base URL)</b></span>
+        <input type="text" id="aUrl" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:5001/v1" aria-label="Indirizzo del server (base URL)">
+        <div class="chips fit" id="presets"><button type="button" id="aScan">Cerca server locali</button></div>
+      </div>
+      <label class="df" id="rKey"><span class="dfh"><b id="aKeyLbl">Chiave API</b></span><input type="password" id="aKey" autocomplete="off" spellcheck="false"></label>
+      <label class="chk" id="rRem"><input type="checkbox" id="aRem"> Ricorda la chiave su questo dispositivo</label>
+      <p class="sm" id="keyNote">La chiave resta solo in questo browser e viene inviata soltanto al servizio scelto. Non finisce mai nel PNG o nel JSON.</p>
+      <div class="df" id="rModel">
+        <span class="dfh"><b>Modello</b></span>
+        <div class="mrow"><input type="text" id="aModel" list="mlist" autocomplete="off" spellcheck="false" placeholder="Nome del modello" aria-label="Modello"><datalist id="mlist"></datalist><button type="button" class="btn" id="aModels">Carica i modelli</button></div>
+      </div>
+    </section>
+    <section class="apibox" id="sParams">
+      <h2 class="atitle">Parametri</h2>
+      <label class="chk"><input type="checkbox" id="pAuto"> Rileva automaticamente i parametri migliori per questo modello</label>
+      <div class="grid2">
+        <label class="df"><span class="dfh"><b>Temperatura</b></span><input type="number" id="pTemp" step="0.05" min="0" max="2"></label>
+        <label class="df"><span class="dfh"><b>Top P</b></span><input type="number" id="pTopP" step="0.05" min="0" max="1"></label>
+        <label class="df"><span class="dfh"><b>Token massimi in risposta</b></span><input type="number" id="pMax" step="50" min="16"></label>
+        <label class="df loc"><span class="dfh"><b>Top K</b></span><input type="number" id="pTopK" step="1" min="0"></label>
+        <label class="df loc"><span class="dfh"><b>Min P</b></span><input type="number" id="pMinP" step="0.01" min="0" max="1"></label>
+        <label class="df loc"><span class="dfh"><b>Penalità di ripetizione</b></span><input type="number" id="pRep" step="0.01" min="0.5" max="2"></label>
+        <label class="df loc"><span class="dfh"><b>Contesto del server (token)</b></span><input type="number" id="pCtx" step="256" min="512"></label>
+      </div>
+      <p class="sm" id="pInfo"></p>
+    </section>
+    <section class="apibox">
+      <h2 class="atitle">Prova</h2>
+      <div class="ctl"><button type="button" class="btn primary" id="aTest">Rileva e prova la connessione</button><button type="button" class="btn quiet" id="aClear">Dimentica queste impostazioni</button></div>
+      <p class="sm" id="astatus" role="status"></p>
+    </section>
+  </div>
   <div id="view-data" class="dview">
   <div class="dmain">
     <details class="drawer" data-group="data"><summary><h2 id="d-act">Carta</h2></summary><div class="dbody">
@@ -506,6 +574,7 @@
     <button type="button" class="btn" id="dedit">Modifica la copertina</button>
   </aside>
   </div>
+  <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
 </main>
 
 <script>
@@ -797,6 +866,75 @@
  "JSON salvato come {fn}.": "JSON saved as {fn}.",
  "Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.": "Imported: {n}. Lorebook entries are collapsed; open them to edit.",
  "Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.": "No SillyTavern data found in this file. Use a PNG exported from SillyTavern or a card JSON.",
+ "Scelta dell'API": "Choose the API",
+ "Connessione": "Connection",
+ "Parametri": "Parameters",
+ "Prova": "Test",
+ "Indirizzo del server (base URL)": "Server address (base URL)",
+ "Chiave API": "API key",
+ "Chiave API (facoltativa)": "API key (optional)",
+ "Ricorda la chiave su questo dispositivo": "Remember the key on this device",
+ "La chiave resta solo in questo browser e viene inviata soltanto al servizio scelto. Non finisce mai nel PNG o nel JSON.": "The key stays in this browser only and is sent only to the chosen service. It never goes into the PNG or the JSON.",
+ "Modello": "Model",
+ "Nome del modello": "Model name",
+ "Carica i modelli": "Load models",
+ "Rileva automaticamente i parametri migliori per questo modello": "Detect the best parameters for this model automatically",
+ "Temperatura": "Temperature",
+ "Token massimi in risposta": "Max response tokens",
+ "Penalità di ripetizione": "Repetition penalty",
+ "Contesto del server (token)": "Server context (tokens)",
+ "Rileva e prova la connessione": "Detect and test the connection",
+ "Dimentica queste impostazioni": "Forget these settings",
+ "Cerca server locali": "Find local servers",
+ "Claude (integrato)": "Claude (built-in)",
+ "Una sola chiave per moltissimi modelli. L'elenco dei modelli è pubblico e si carica anche senza chiave.": "One key for a huge range of models. The model list is public and loads even without a key.",
+ "Compatibile con lo standard OpenAI. Se l'elenco dei modelli non si carica, scrivi il nome del modello a mano.": "OpenAI-compatible. If the model list does not load, type the model name by hand.",
+ "I modelli di ragionamento (serie o, gpt-5) non accettano la temperatura: li riconosco e la tolgo da solo.": "Reasoning models (o-series, gpt-5) do not accept temperature: I recognise them and remove it automatically.",
+ "Chiamata diretta dal browser con l'intestazione prevista da Anthropic. Invio la temperatura ma non top P insieme.": "Direct browser call using the header Anthropic requires. I send temperature but not top P together with it.",
+ "Server locale o sconosciuto compatibile con OpenAI (KoboldCpp, LM Studio, Ollama, text-generation-webui, llama.cpp, vLLM…). Il server deve accettare le richieste dal browser (CORS).": "Local or unknown OpenAI-compatible server (KoboldCpp, LM Studio, Ollama, text-generation-webui, llama.cpp, vLLM…). The server must accept requests from the browser (CORS).",
+ "Usa il Claude con cui stai guardando questa pagina, senza chiavi. Funziona solo dentro l'artifact di Claude e consuma il tuo utilizzo.": "Uses the Claude you are viewing this page with, no keys needed. It only works inside the Claude artifact and uses your own Claude usage.",
+ "Modello di ragionamento riconosciuto: non invio temperatura né top P e alzo il limite di token.": "Reasoning model recognised: I send no temperature or top P and raise the token limit.",
+ "Il modello dichiara di non supportare la temperatura: la tolgo.": "The model says it does not support temperature: I remove it.",
+ "Limite di token ridotto a {n} in base al contesto ({c}).": "Token limit lowered to {n} based on the context ({c}).",
+ "Profilo per scrittura creativa di schede: creativo ma controllato.": "Profile for creative card writing: creative but controlled.",
+ "Parametri impostati a mano. Un campo vuoto non viene inviato.": "Parameters set by hand. An empty field is not sent.",
+ "Parametri che questo modello ha rifiutato e che non invio più: {x}.": "Parameters this model rejected and I no longer send: {x}.",
+ "Interrotto.": "Stopped.",
+ "Non riesco a raggiungere il server. Controlla l'indirizzo e che il servizio sia acceso. Nell'artifact pubblicato il browser blocca le chiamate verso altri siti: usa l'app .exe oppure \"Claude (integrato)\". Per un server locale serve anche il CORS attivo.": "Can't reach the server. Check the address and that the service is running. In the published artifact the browser blocks calls to other sites: use the .exe app or \"Claude (built-in)\". A local server also needs CORS enabled.",
+ "Chiave rifiutata ({s}). Controllala e riprova.": "Key rejected ({s}). Check it and try again.",
+ "Indirizzo o modello non trovato ({s}). Controlla il base URL e il nome del modello.": "Address or model not found ({s}). Check the base URL and the model name.",
+ "Troppe richieste o credito esaurito ({s}). Riprova tra poco.": "Too many requests or out of credit ({s}). Try again shortly.",
+ "Il modello ha risposto con un testo vuoto. Se è un modello di ragionamento, alza i token massimi.": "The model returned empty text. If it is a reasoning model, raise the max tokens.",
+ "Claude (integrato) non è disponibile qui, oppure hai negato il permesso.": "Claude (built-in) is not available here, or you denied permission.",
+ "Scegli o scrivi un modello.": "Choose or type a model.",
+ "Inserisci la chiave API.": "Enter the API key.",
+ "Inserisci l'indirizzo del server.": "Enter the server address.",
+ "Non trovo server locali sulle porte più comuni. Avvia il server e riprova, oppure scrivi l'indirizzo.": "No local servers found on the usual ports. Start the server and try again, or type the address.",
+ "Errore del servizio: {m}": "Service error: {m}",
+ "Cerco server locali…": "Looking for local servers…",
+ "Leggo l'elenco dei modelli…": "Reading the model list…",
+ "Invio una richiesta di prova…": "Sending a test request…",
+ "Connessione riuscita in {s} s. Parametri usati: {p}.": "Connected in {s} s. Parameters used: {p}.",
+ "Trovati {n} modelli: scegline uno scrivendo nel campo.": "Found {n} models: pick one by typing in the field.",
+ "Il servizio non ha elencato modelli: scrivi il nome a mano.": "The service listed no models: type the name by hand.",
+ "Trovato: {n} su {u}.": "Found: {n} at {u}.",
+ "Impostazioni dimenticate.": "Settings forgotten.",
+ "Ottimizza con l'IA": "Optimize with AI",
+ "Scrivi prima un po' di testo": "Write some text first",
+ "Chiudi": "Close",
+ "Il testo verrà riscritto in inglese e ottimizzato per questo campo. Niente cambia nel campo finché non premi \"Applica al campo\".": "The text will be rewritten in English and optimized for this field. Nothing changes in the field until you press \"Apply to field\".",
+ "Indicazioni facoltative (tono, dettagli da aggiungere…)": "Optional directions (tone, details to add…)",
+ "Ottimizza subito": "Optimize now",
+ "Fammi delle domande": "Ask me questions",
+ "Rispondi a ciò che sai, lascia vuoto il resto.": "Answer what you know, leave the rest empty.",
+ "Genera": "Generate",
+ "Indietro": "Back",
+ "Risultato (puoi modificarlo)": "Result (you can edit it)",
+ "Applica al campo": "Apply to field",
+ "Rigenera": "Regenerate",
+ "Sto lavorando…": "Working…",
+ "Nessuna domanda utile: ottimizzo direttamente.": "No useful questions: optimizing directly.",
+ "Stop": "Stop",
  "Nuova carta pronta.": "New card ready."
 };
   function tr(str, v) {
@@ -868,7 +1006,7 @@
     syncTabs(); buildList(); buildStops();
     buildStrList($('altList'), K.alt, 'alt', 'Messaggio alternativo');
     buildStrList($('grpList'), K.group, 'grp', 'Saluto di gruppo');
-    buildEntries(); refreshTokens(); render();
+    buildEntries(); refreshTokens(); apiRelang(); refreshWands(); render();
   }
   document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
 
@@ -1755,7 +1893,7 @@
     const info = $('embedinfo');
     if (info) info.textContent = K.entries.length === 1 ? tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, 1 voce di lorebook.', { t: nf(total) }) : tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, {n} voci di lorebook.', { t: nf(total), n: K.entries.length });
   }
-  const afterEdit = () => { refreshTokens(); saveDataSoon(); };
+  const afterEdit = () => { refreshTokens(); saveDataSoon(); if (typeof refreshWands === 'function') refreshWands(); };
 
   /* Campi fissi */
   const F = [...document.querySelectorAll('[data-f]')];
@@ -1784,6 +1922,7 @@
       const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = tr('Rimuovi');
       right.append(tk, del); head.append(b, right);
       const ta = mk('textarea'); ta.rows = 5; ta.value = txt; ta.spellcheck = false; ta.setAttribute('aria-label', tr(label) + ' ' + (i + 1));
+      right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => setVal(ta, v), () => b.textContent), tk);
       ta.addEventListener('input', () => { arr[i] = ta.value; afterEdit(); });
       del.addEventListener('click', () => { arr.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); });
       item.append(head, ta); box.appendChild(item);
@@ -1835,7 +1974,10 @@
       body.appendChild(g1);
       const ta = mk('textarea'); ta.rows = 6; ta.value = e.content; ta.spellcheck = false; ta.setAttribute('aria-label', tr('Contenuto della voce {n}', { n: i + 1 }));
       ta.addEventListener('input', () => { e.content = ta.value; afterEdit(); });
-      body.appendChild(field(tr('Contenuto'), ta));
+      const cwrap = mk('div', 'fld'), chead = mk('div', 'dfh'), cleft = mk('span', 'dfl'), cl = mk('span');
+      cl.textContent = tr('Contenuto');
+      cleft.append(cl, makeWand('entry', () => ta.value, v => setVal(ta, v), () => tr('Contenuto della voce {n}', { n: i + 1 })));
+      chead.appendChild(cleft); cwrap.append(chead, ta); body.appendChild(cwrap);
       const flags = mk('div', 'inline');
       flags.appendChild(check(tr('Attiva'), e.enabled, v => { e.enabled = v; upd(); afterEdit(); }));
       flags.appendChild(check(tr('Sempre inviata (senza parole chiave)'), e.constant, v => { e.constant = v; upd(); afterEdit(); }));
@@ -1946,13 +2088,543 @@
   }));
   $('dedit').addEventListener('click', () => showView('cover'));
 
+  /* ---------- API e bacchetta 🪄 ---------- */
+  const AKEY = 'st-card-creator-api';
+  const PROVS = {
+    openrouter: { name: 'OpenRouter', base: 'https://openrouter.ai/api/v1', doc: 'https://openrouter.ai/docs/api_reference/overview', kind: 'oai', key: true,
+      note: "Una sola chiave per moltissimi modelli. L'elenco dei modelli è pubblico e si carica anche senza chiave." },
+    nanogpt: { name: 'Nano-GPT', base: 'https://api.nano-gpt.com/api/v1', doc: 'https://docs.nano-gpt.com/introduction', kind: 'oai', key: true,
+      note: "Compatibile con lo standard OpenAI. Se l'elenco dei modelli non si carica, scrivi il nome del modello a mano." },
+    openai: { name: 'ChatGPT', base: 'https://api.openai.com/v1', doc: 'https://platform.openai.com/docs/api-reference', kind: 'oai', key: true,
+      note: 'I modelli di ragionamento (serie o, gpt-5) non accettano la temperatura: li riconosco e la tolgo da solo.' },
+    anthropic: { name: 'Claude', base: 'https://api.anthropic.com/v1', doc: 'https://docs.anthropic.com/en/api/overview', kind: 'anthropic', key: true,
+      note: 'Chiamata diretta dal browser con l\'intestazione prevista da Anthropic. Invio la temperatura ma non top P insieme.' },
+    custom: { name: 'Custom', base: '', doc: '', kind: 'oai', key: false,
+      note: 'Server locale o sconosciuto compatibile con OpenAI (KoboldCpp, LM Studio, Ollama, text-generation-webui, llama.cpp, vLLM…). Il server deve accettare le richieste dal browser (CORS).' },
+    sample: { name: 'Claude (integrato)', base: '', doc: '', kind: 'sample',
+      note: 'Usa il Claude con cui stai guardando questa pagina, senza chiavi. Funziona solo dentro l\'artifact di Claude e consuma il tuo utilizzo.' }
+  };
+  const LOCAL = [['KoboldCpp', 'http://127.0.0.1:5001/v1'], ['LM Studio', 'http://127.0.0.1:1234/v1'], ['Ollama', 'http://127.0.0.1:11434/v1'], ['text-generation-webui', 'http://127.0.0.1:5000/v1'], ['llama.cpp', 'http://127.0.0.1:8080/v1']];
+  const API0 = () => ({ prov: 'openrouter', url: '', model: {}, auto: true, params: { temperature: 0.8, top_p: 0.95, max_tokens: 1500, top_k: null, min_p: null, repetition_penalty: null, ctx: null }, drop: {}, swap: {}, remember: false, saved: false });
+  let API = API0();
+  let KEYS = {};
+  const META = {};
+  let CSAMPLE = null;
+
+  function apiLoad() {
+    try {
+      const o = JSON.parse(localStorage.getItem(AKEY) || 'null');
+      if (!o || typeof o !== 'object') return;
+      const d = API0();
+      API = Object.assign(d, o, { params: Object.assign(d.params, o.params || {}), model: o.model || {}, drop: o.drop || {}, swap: o.swap || {}, saved: true });
+      if (!PROVS[API.prov]) API.prov = 'openrouter';
+      if (o.keys && API.remember) KEYS = o.keys;
+    } catch (e) { /* ignora */ }
+  }
+  function apiSave() {
+    API.saved = true;
+    try {
+      const o = Object.assign({}, API);
+      if (API.remember) o.keys = KEYS;
+      localStorage.setItem(AKEY, JSON.stringify(o));
+    } catch (e) { /* ignora */ }
+  }
+  const timeoutSignal = ms => { const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal; };
+  function normUrl(x) {
+    x = String(x || '').trim();
+    if (!x) return '';
+    if (!/^https?:\/\//i.test(x)) x = 'http://' + x;
+    x = x.replace(/\/+$/, '').replace(/\/chat\/completions$/i, '').replace(/\/models$/i, '');
+    try { const u = new URL(x); if (u.pathname === '/' || u.pathname === '') x = u.origin + '/v1'; } catch (e) { return ''; }
+    return x;
+  }
+  const baseUrl = () => (API.prov === 'custom' ? normUrl(API.url) : PROVS[API.prov].base);
+  function apiReady() {
+    const P = PROVS[API.prov];
+    if (!P) return false;
+    if (P.kind === 'sample') return !!CSAMPLE;
+    if (!String(API.model[API.prov] || '').trim()) return false;
+    if (API.prov === 'custom') return !!baseUrl();
+    return !!String(KEYS[API.prov] || '').trim();
+  }
+  const REASON = /(^|[\/\-_ ])(o1|o3|o4)(-|$|\b)|gpt-5|deepseek-r1|reasoner|thinking|qwq|magistral/i;
+  function autoParams(prov, model, meta) {
+    const notes = [];
+    const p = { temperature: 0.8, top_p: 0.95, max_tokens: 1500, top_k: null, min_p: null, repetition_penalty: null };
+    if (prov === 'custom') Object.assign(p, { temperature: 0.7, top_p: 0.9, max_tokens: 1024, top_k: 40, min_p: 0.05, repetition_penalty: 1.1 });
+    if (prov === 'anthropic') p.top_p = null;
+    if (REASON.test(model || '') && prov !== 'custom') {
+      p.temperature = null; p.top_p = null; p.max_tokens = 6000;
+      notes.push(tr('Modello di ragionamento riconosciuto: non invio temperatura né top P e alzo il limite di token.'));
+    }
+    if (meta && meta.params) {
+      if (!meta.params.includes('temperature') && p.temperature != null) { p.temperature = null; notes.push(tr('Il modello dichiara di non supportare la temperatura: la tolgo.')); }
+      if (!meta.params.includes('top_p') && p.top_p != null) p.top_p = null;
+    }
+    const ctx = (meta && meta.ctx) || (prov === 'custom' && API.params.ctx) || null;
+    if (ctx) {
+      const cap = Math.max(256, Math.floor(ctx / 3));
+      if (p.max_tokens > cap) { p.max_tokens = cap; notes.push(tr('Limite di token ridotto a {n} in base al contesto ({c}).', { n: cap, c: nf(ctx) })); }
+    }
+    if (!notes.length) notes.push(tr('Profilo per scrittura creativa di schede: creativo ma controllato.'));
+    return { p, notes };
+  }
+  const numOrNull = v => { if (v === null || v === undefined || v === '') return null; const n = Number(v); return Number.isFinite(n) ? n : null; };
+  function curParams() {
+    const prov = API.prov, model = API.model[prov] || '';
+    const src = API.auto ? autoParams(prov, model, (META[prov] || {})[model]).p : API.params;
+    const o = {};
+    ['temperature', 'top_p', 'max_tokens', 'top_k', 'min_p', 'repetition_penalty'].forEach(k => { o[k] = numOrNull(src[k]); });
+    if (prov !== 'custom') { o.top_k = null; o.min_p = null; o.repetition_penalty = null; }
+    if (!o.max_tokens) o.max_tokens = 1500;
+    return o;
+  }
+
+  /* Chiamata al modello, con adattamento automatico ai parametri rifiutati */
+  const BAD = ['temperature', 'top_p', 'top_k', 'min_p', 'repetition_penalty', 'max_completion_tokens', 'max_tokens'];
+  function buildReq(prov, model, p, drop, swap, msgs) {
+    const P = PROVS[prov], key = String(KEYS[prov] || '').trim();
+    const put = (b, k, v) => { if (v !== null && v !== undefined && !drop.has(k)) b[k] = v; };
+    if (P.kind === 'anthropic') {
+      const sys = msgs.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+      const body = { model, max_tokens: p.max_tokens, messages: msgs.filter(m => m.role !== 'system') };
+      if (sys) body.system = sys;
+      put(body, 'temperature', p.temperature === null ? null : Math.min(1, p.temperature));
+      return { url: baseUrl() + '/messages', body, headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } };
+    }
+    const body = { model, messages: msgs, stream: false };
+    const newer = prov === 'openai' && /^(o\d|gpt-5)/i.test(model);
+    const maxName = (newer !== !!swap) ? 'max_completion_tokens' : 'max_tokens';
+    put(body, maxName, p.max_tokens);
+    put(body, 'temperature', newer ? null : p.temperature);
+    put(body, 'top_p', newer ? null : p.top_p);
+    if (prov === 'custom') { put(body, 'top_k', p.top_k); put(body, 'min_p', p.min_p); put(body, 'repetition_penalty', p.repetition_penalty); }
+    const headers = { 'Content-Type': 'application/json' };
+    if (key) headers.Authorization = 'Bearer ' + key;
+    return { url: baseUrl() + '/chat/completions', body, headers };
+  }
+  function pullText(prov, j) {
+    let t = '';
+    if (PROVS[prov].kind === 'anthropic') t = (j && j.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    else {
+      const c = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      t = Array.isArray(c) ? c.map(x => x.text || '').join('') : (c || '');
+    }
+    return String(t).replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  }
+  const errMsg = (j, txt) => String((j && (j.error && (j.error.message || j.error) || j.message || j.detail)) || txt || '').slice(0, 400);
+  async function callSample(msgs, o) {
+    if (!CSAMPLE) throw { code: 'sample' };
+    const sys = msgs.filter(m => m.role === 'system').map(m => m.content).join('\n\n');
+    const usr = msgs.filter(m => m.role !== 'system').map(m => m.content).join('\n\n');
+    try {
+      const r = await CSAMPLE((sys ? sys + '\n\n---\n\n' : '') + usr, { cache: false, signal: o.signal });
+      return { text: String(r.text || '').trim(), dropped: [] };
+    } catch (e) {
+      const c = e && e.code;
+      if (c === 'cancelled') throw { code: 'abort' };
+      if (c === 'not_granted' || c === 'sampling_disabled' || c === 'not_declared' || c === 'capability_disabled') throw { code: 'sample' };
+      if (c === 'rate_limited') throw { code: 'rate', status: 429 };
+      throw { code: 'http', msg: (e && e.message) || '' };
+    }
+  }
+  async function callLLM(msgs, o) {
+    o = o || {};
+    const prov = API.prov, P = PROVS[prov];
+    if (P.kind === 'sample') return callSample(msgs, o);
+    const model = String(API.model[prov] || '').trim();
+    if (!model) throw { code: 'nomodel' };
+    const dk = prov + '|' + model;
+    const drop = new Set(API.drop[dk] || []);
+    let swap = !!API.swap[dk];
+    const p = curParams();
+    for (let n = 0; n < 6; n++) {
+      const rq = buildReq(prov, model, p, drop, swap, msgs);
+      let res;
+      try { res = await fetch(rq.url, { method: 'POST', headers: rq.headers, body: JSON.stringify(rq.body), signal: o.signal }); }
+      catch (e) { if (e && e.name === 'AbortError') throw { code: 'abort' }; throw { code: 'net', msg: String(e && e.message || e) }; }
+      const txt = await res.text();
+      let j = null; try { j = JSON.parse(txt); } catch (e) { /* non JSON */ }
+      if (res.ok) {
+        const text = pullText(prov, j);
+        if (!text) throw { code: 'empty' };
+        API.drop[dk] = [...drop]; API.swap[dk] = swap; apiSave();
+        return { text, dropped: [...drop] };
+      }
+      const em = errMsg(j, txt), lm = em.toLowerCase();
+      if (res.status === 400 || res.status === 422) {
+        if (prov !== 'anthropic' && lm.includes('max_tokens') && lm.includes('max_completion_tokens') && n < 2) { swap = !swap; continue; }
+        const bad = BAD.find(k => lm.includes(k) && k in rq.body && !(prov === 'anthropic' && k === 'max_tokens'));
+        if (bad) { drop.add(bad); continue; }
+      }
+      throw { code: res.status === 401 || res.status === 403 ? 'auth' : res.status === 404 ? 'notfound' : res.status === 429 ? 'rate' : 'http', status: res.status, msg: em };
+    }
+    throw { code: 'http', msg: 'retries' };
+  }
+  function errKey(e) {
+    const c = e && e.code;
+    if (c === 'abort') return ['Interrotto.'];
+    if (c === 'net') return ['Non riesco a raggiungere il server. Controlla l\'indirizzo e che il servizio sia acceso. Nell\'artifact pubblicato il browser blocca le chiamate verso altri siti: usa l\'app .exe oppure "Claude (integrato)". Per un server locale serve anche il CORS attivo.'];
+    if (c === 'auth') return ['Chiave rifiutata ({s}). Controllala e riprova.', { s: e.status }];
+    if (c === 'notfound') return ['Indirizzo o modello non trovato ({s}). Controlla il base URL e il nome del modello.', { s: e.status }];
+    if (c === 'rate') return ['Troppe richieste o credito esaurito ({s}). Riprova tra poco.', { s: e.status || 429 }];
+    if (c === 'empty') return ['Il modello ha risposto con un testo vuoto. Se è un modello di ragionamento, alza i token massimi.'];
+    if (c === 'sample') return ['Claude (integrato) non è disponibile qui, oppure hai negato il permesso.'];
+    if (c === 'nomodel') return ['Scegli o scrivi un modello.'];
+    if (c === 'nokey') return ['Inserisci la chiave API.'];
+    if (c === 'nourl') return ['Inserisci l\'indirizzo del server.'];
+    if (c === 'nolocal') return ['Non trovo server locali sulle porte più comuni. Avvia il server e riprova, oppure scrivi l\'indirizzo.'];
+    return ['Errore del servizio: {m}', { m: String(e && e.msg || e && e.message || e).slice(0, 240) }];
+  }
+
+  /* Modelli e server locali */
+  function metaFrom(j) {
+    const arr = Array.isArray(j) ? j : (j && (j.data || j.models) || []);
+    const map = {};
+    arr.forEach(m => {
+      const id = typeof m === 'string' ? m : (m && (m.id || m.name));
+      if (!id) return;
+      map[id] = { ctx: (m && (m.context_length || m.max_context_length || (m.top_provider && m.top_provider.context_length))) || null, params: m && Array.isArray(m.supported_parameters) ? m.supported_parameters : null };
+    });
+    return map;
+  }
+  function getHeaders(prov) {
+    const key = String(KEYS[prov] || '').trim(), h = {};
+    if (PROVS[prov].kind === 'anthropic') { if (key) { h['x-api-key'] = key; h['anthropic-version'] = '2023-06-01'; h['anthropic-dangerous-direct-browser-access'] = 'true'; } }
+    else if (key) h.Authorization = 'Bearer ' + key;
+    return h;
+  }
+  async function loadModels() {
+    const prov = API.prov, P = PROVS[prov];
+    if (P.kind === 'sample') return 0;
+    const base = baseUrl();
+    if (!base) throw { code: 'nourl' };
+    if (prov === 'anthropic' && !String(KEYS[prov] || '').trim()) throw { code: 'nokey' };
+    let res;
+    try { res = await fetch(base + '/models' + (prov === 'anthropic' ? '?limit=1000' : ''), { headers: getHeaders(prov), signal: timeoutSignal(15000) }); }
+    catch (e) { throw { code: 'net' }; }
+    if (!res.ok) throw { code: res.status === 401 || res.status === 403 ? 'auth' : 'http', status: res.status, msg: 'HTTP ' + res.status };
+    META[prov] = metaFrom(await res.json());
+    fillModels();
+    return Object.keys(META[prov]).length;
+  }
+  function fillModels() {
+    const dl = $('mlist');
+    dl.textContent = '';
+    Object.keys(META[API.prov] || {}).sort().slice(0, 1500).forEach(id => { const o = mk('option'); o.value = id; dl.appendChild(o); });
+  }
+  async function scanLocal() {
+    const r = await Promise.all(LOCAL.map(async ([n, u]) => {
+      try { const res = await fetch(u + '/models', { signal: timeoutSignal(2500) }); if (!res.ok) return null; return { n, u, j: await res.json() }; } catch (e) { return null; }
+    }));
+    return r.filter(Boolean);
+  }
+
+  /* Pagina API */
+  const PIDS = { temperature: 'pTemp', top_p: 'pTopP', max_tokens: 'pMax', top_k: 'pTopK', min_p: 'pMinP', repetition_penalty: 'pRep', ctx: 'pCtx' };
+  function renderProvs() {
+    const box = $('provs');
+    box.textContent = '';
+    Object.keys(PROVS).forEach(k => {
+      if (k === 'sample' && !CSAMPLE) return;
+      const b = mk('button'); b.type = 'button'; b.dataset.prov = k;
+      b.textContent = k === 'sample' ? tr('Claude (integrato)') : PROVS[k].name;
+      b.addEventListener('click', () => { API.prov = k; apiSave(); apiRender(); refreshWands(); say('astatus', '', null, false); });
+      box.appendChild(b);
+    });
+  }
+  function paramsView() {
+    const prov = API.prov, model = API.model[prov] || '';
+    const A = autoParams(prov, model, (META[prov] || {})[model]);
+    const v = API.auto ? Object.assign({ ctx: API.params.ctx }, A.p) : API.params;
+    Object.keys(PIDS).forEach(k => {
+      const el = $(PIDS[k]);
+      if (document.activeElement !== el) el.value = v[k] === null || v[k] === undefined ? '' : v[k];
+      el.disabled = API.auto && k !== 'ctx';
+    });
+    const dr = API.drop[prov + '|' + model] || [];
+    let t = API.auto ? A.notes.join(' ') : tr('Parametri impostati a mano. Un campo vuoto non viene inviato.');
+    if (dr.length) t += ' ' + tr('Parametri che questo modello ha rifiutato e che non invio più: {x}.', { x: dr.join(', ') });
+    $('pInfo').textContent = t;
+  }
+  function readyDot() { const b = document.querySelector('[data-view="api"]'); if (b) b.dataset.ready = apiReady() ? '1' : ''; }
+  function apiRender() {
+    const P = PROVS[API.prov], isC = API.prov === 'custom', isS = P.kind === 'sample';
+    document.querySelectorAll('#provs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.prov === API.prov)));
+    $('provNote').textContent = tr(P.note);
+    const doc = $('provDoc'); doc.hidden = !P.doc; if (P.doc) { doc.href = P.doc; doc.textContent = P.doc; }
+    $('rUrl').hidden = !isC; $('presets').hidden = !isC;
+    ['rKey', 'rRem', 'keyNote', 'rModel', 'sParams'].forEach(id => { $(id).hidden = isS; });
+    document.querySelectorAll('.loc').forEach(e => { e.hidden = !isC; });
+    $('aKeyLbl').textContent = tr(isC ? 'Chiave API (facoltativa)' : 'Chiave API');
+    $('aUrl').value = API.url; $('aKey').value = KEYS[API.prov] || ''; $('aRem').checked = !!API.remember;
+    $('aModel').value = API.model[API.prov] || ''; $('pAuto').checked = !!API.auto;
+    fillModels(); paramsView(); readyDot();
+  }
+  function apiRelang() { renderProvs(); apiRender(); }
+  function apiChanged() { apiSave(); paramsView(); readyDot(); refreshWands(); }
+  async function runTest() {
+    const btn = $('aTest');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const prov = API.prov, P = PROVS[prov];
+      if (P.kind !== 'sample') {
+        if (prov === 'custom' && !API.url.trim()) {
+          say('astatus', 'Cerco server locali…', null, false);
+          const found = await scanLocal();
+          if (!found.length) throw { code: 'nolocal' };
+          API.url = found[0].u; META.custom = metaFrom(found[0].j); $('aUrl').value = API.url;
+        }
+        if (P.key && !String(KEYS[prov] || '').trim()) throw { code: 'nokey' };
+        say('astatus', "Leggo l'elenco dei modelli…", null, false);
+        try { await loadModels(); } catch (e) { /* l'elenco è facoltativo */ }
+        if (!String(API.model[prov] || '').trim()) {
+          const ids = Object.keys(META[prov] || {});
+          if (prov === 'custom' && ids.length) { API.model[prov] = ids[0]; $('aModel').value = ids[0]; } else throw { code: 'nomodel' };
+        }
+      }
+      apiSave(); paramsView();
+      say('astatus', 'Invio una richiesta di prova…', null, false);
+      const t0 = performance.now();
+      const r = await callLLM([{ role: 'user', content: 'Reply with the single word OK.' }]);
+      const p = curParams();
+      const ps = P.kind === 'sample' ? '—' : Object.keys(p).filter(k => p[k] !== null && !(r.dropped || []).includes(k)).map(k => k + ' ' + p[k]).join(' · ');
+      say('astatus', 'Connessione riuscita in {s} s. Parametri usati: {p}.', { s: ((performance.now() - t0) / 1000).toFixed(1), p: ps }, false);
+      paramsView();
+    } catch (e) {
+      const k = errKey(e); say('astatus', k[0], k[1] || null, true);
+    } finally { btn.disabled = false; readyDot(); refreshWands(); }
+  }
+  async function initSample() {
+    try { if (window.claude && window.claude.use) { const s = await window.claude.use('sample'); if (s) CSAMPLE = s; } } catch (e) { /* assente */ }
+    if (CSAMPLE && !API.saved) API.prov = 'sample';
+    if (!CSAMPLE && API.prov === 'sample') API.prov = 'openrouter';
+    renderProvs(); apiRender(); refreshWands();
+  }
+  function apiInit() {
+    apiLoad();
+    const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
+    on('aUrl', 'input', e => { API.url = e.target.value; apiChanged(); });
+    on('aKey', 'input', e => { KEYS[API.prov] = e.target.value; apiChanged(); });
+    on('aRem', 'change', e => { API.remember = e.target.checked; apiChanged(); });
+    on('aModel', 'input', e => { API.model[API.prov] = e.target.value; apiChanged(); });
+    on('pAuto', 'change', e => {
+      if (!e.target.checked) { const A = autoParams(API.prov, API.model[API.prov] || '', (META[API.prov] || {})[API.model[API.prov] || '']); Object.assign(API.params, A.p); }
+      API.auto = e.target.checked; apiChanged();
+    });
+    Object.keys(PIDS).forEach(k => $(PIDS[k]).addEventListener('input', e => { API.params[k] = numOrNull(e.target.value); apiSave(); readyDot(); if (k === 'ctx') paramsView(); }));
+    on('aModels', 'click', async () => {
+      const b = $('aModels'); b.disabled = true;
+      try {
+        say('astatus', "Leggo l'elenco dei modelli…", null, false);
+        const n = await loadModels();
+        say('astatus', n ? 'Trovati {n} modelli: scegline uno scrivendo nel campo.' : 'Il servizio non ha elencato modelli: scrivi il nome a mano.', { n }, !n);
+        if (API.prov === 'custom' && n === 1 && !API.model.custom) { API.model.custom = Object.keys(META.custom)[0]; $('aModel').value = API.model.custom; apiChanged(); }
+        paramsView();
+      } catch (e) { const k = errKey(e); say('astatus', k[0], k[1] || null, true); } finally { b.disabled = false; }
+    });
+    on('aTest', 'click', runTest);
+    on('aScan', 'click', async () => {
+      const b = $('aScan'); b.disabled = true;
+      say('astatus', 'Cerco server locali…', null, false);
+      try {
+        const f = await scanLocal();
+        if (!f.length) throw { code: 'nolocal' };
+        API.url = f[0].u; META.custom = metaFrom(f[0].j); $('aUrl').value = API.url;
+        const ids = Object.keys(META.custom);
+        if (ids.length && !API.model.custom) { API.model.custom = ids[0]; $('aModel').value = ids[0]; }
+        apiChanged(); fillModels();
+        say('astatus', 'Trovato: {n} su {u}.', { n: f[0].n, u: f[0].u }, false);
+      } catch (e) { const k = errKey(e); say('astatus', k[0], k[1] || null, true); } finally { b.disabled = false; }
+    });
+    on('aClear', 'click', () => {
+      try { localStorage.removeItem(AKEY); } catch (e) { /* ignora */ }
+      const keepProv = API.prov; API = API0(); API.prov = keepProv; KEYS = {};
+      Object.keys(META).forEach(k => delete META[k]);
+      apiRender(); refreshWands(); say('astatus', 'Impostazioni dimenticate.', null, false);
+    });
+    const pr = $('presets');
+    LOCAL.forEach(([n, u]) => {
+      const b = mk('button'); b.type = 'button'; b.textContent = n;
+      b.addEventListener('click', () => { API.url = u; $('aUrl').value = u; apiChanged(); });
+      pr.insertBefore(b, $('aScan'));
+    });
+    initStaticWands();
+    renderProvs(); apiRender(); refreshWands();
+    initSample();
+  }
+
+  /* Bacchetta 🪄 */
+  const WF = {
+    description: ['Character description', 'The always-sent core definition of the character: appearance, background, speech and behaviour, relationships, abilities, quirks. Open with the character\'s essence in 2-3 sentences that set tone, skills and emotional hooks through concrete imagery, never a generic opener like "Elena is a bard who plays music". Then dense, concrete third-person prose or tight descriptive lines. Show, do not label. Use {{char}} for the character. No filler.'],
+    personality: ['Personality summary', 'A compact summary of temperament in three layers: Public Persona (how {{char}} presents to strangers), Private Self (how they act alone or with people they trust), Core Wound (the emotional scar that drives their actions). Keep the author\'s contradictions (for example brave but anxious): they give the model material for nuanced replies. One short line per layer, no filler.'],
+    scenario: ['Scenario', 'The situation and setting of the roleplay: where, when, and why {{char}} and {{user}} meet. 2 to 6 sentences of neutral narration, no dialogue.'],
+    first_mes: ['First message', 'The opening roleplay message sent by {{char}}. In character, with actions and dialogue, vivid but not bloated. It sets the scene and ends with a hook that invites {{user}} to reply. Never speak, act or think for {{user}}.'],
+    alt: ['Alternate greeting', 'An alternate opening message from {{char}}. Same rules as a first message: in character, sets the scene, ends with a hook, never speaks or acts for {{user}}. Keep the idea of the author text.'],
+    group: ['Group chat greeting', 'A greeting used in group chats: shorter than a normal opening, works with other characters present, in character, never speaks or acts for {{user}}.'],
+    mes_example: ['Dialogue examples', 'Example exchanges in SillyTavern format. Each example starts with <START> on its own line, followed by alternating lines "{{user}}: ..." and "{{char}}: ...". Treat each example as a mini-scene, not a bare sample: together they must show the speech pattern (formal, slang, poetic), the emotional range (for example sarcasm, vulnerability, anger), and knowledge specific to the character, with physical actions written the same way in every line. Keep {{user}} lines short.'],
+    system_prompt: ['Main prompt', 'Instructions to the model about style, perspective and rules. Imperative and concise. Keep any {{original}} placeholder if present.'],
+    post_history: ['Post-history instructions', 'Short imperative reminders placed after the chat history (style, format, constraints). Very concise.'],
+    dp_prompt: ["Character's note", 'A short note injected into the chat at a given depth: reminders about voice, state or style. Concise.'],
+    notes: ["Creator's notes", 'Human-facing notes shown to the person choosing the card (NOT sent to the model): what the character is, the setting, recommended usage, content notes. Friendly, clear, short.'],
+    entry: ['Lorebook entry', 'A lorebook entry injected when its keywords appear: factual, self-contained world or character information in neutral concise prose, no dialogue. Name the subject explicitly at the start.']
+  };
+  let WANDS = [];
+  const setVal = (ta, v) => { ta.value = v; ta.dispatchEvent(new Event('input', { bubbles: true })); };
+  function updateWand(w) {
+    const ok = apiReady(), has = String(w.get() || '').trim().length >= 3;
+    w.b.hidden = !ok;
+    w.b.disabled = !has;
+    w.b.setAttribute('aria-disabled', String(!has));
+    const t = has ? tr("Ottimizza con l'IA") : tr("Scrivi prima un po' di testo");
+    w.b.title = t; w.b.setAttribute('aria-label', t);
+  }
+  function refreshWands() { WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); }
+  function makeWand(kind, get, set, label) {
+    const b = mk('button', 'wand'); b.type = 'button'; b.textContent = '🪄';
+    const w = { b, get };
+    b.addEventListener('click', () => { if (!b.disabled) openWand({ kind, get, set, label: label() }); });
+    WANDS.push(w); updateWand(w);
+    return b;
+  }
+  function initStaticWands() {
+    document.querySelectorAll('textarea[data-f]').forEach(ta => {
+      const k = ta.dataset.f;
+      if (!WF[k]) return;
+      const lbl = ta.closest('label.df');
+      if (!lbl) return;
+      const div = mk('div', 'df');
+      while (lbl.firstChild) div.appendChild(lbl.firstChild);
+      lbl.replaceWith(div);
+      const head = div.querySelector('.dfh'), b = head.querySelector('b');
+      b.id = 'lb-' + k; ta.setAttribute('aria-labelledby', b.id);
+      const left = mk('span', 'dfl');
+      head.insertBefore(left, head.firstChild);
+      left.append(b, makeWand(k, () => K[k], v => setVal(ta, v), () => b.textContent));
+    });
+  }
+
+  /* Finestra della bacchetta */
+  let WD = null;
+  function cardContext(kind) {
+    const parts = [];
+    if (K.name.trim()) parts.push('Name: ' + K.name.trim());
+    if (kind !== 'description' && K.description.trim()) parts.push('Description: ' + K.description.trim().slice(0, 1200));
+    else if (kind === 'description' && K.personality.trim()) parts.push('Personality: ' + K.personality.trim().slice(0, 400));
+    return parts.join('\n');
+  }
+  function wandMessages(st, mode) {
+    const g = WF[st.f.kind];
+    const text = String(st.f.get() || '').trim();
+    const ctx = cardContext(st.f.kind);
+    const sys = mode === 'ask'
+      ? 'You help authors write SillyTavern roleplay character cards.'
+      : ['You are an expert editor of SillyTavern roleplay character cards.',
+        'Rewrite the author\'s text so it is optimized for the given card field.',
+        'Rules: output ONLY the final text for the field, with no preface, no explanation, no markdown fences and no surrounding quotes.',
+        'Always write in English, even if the author text is in another language (translate it).',
+        'Keep the author\'s facts, names, tone and intent. Fill small gaps tastefully, but do not invent major facts that the author or the answers do not support.',
+        'Keep {{char}}, {{user}} and other SillyTavern macros exactly as they are. Never write {{user}}\'s actions, thoughts or speech.',
+        'Be token-efficient: concrete, no filler, no repetition.'].join('\n');
+    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + '\n';
+    if (ctx) u += '\nCARD CONTEXT (for consistency only, do not copy it):\n' + ctx + '\n';
+    u += '\nAUTHOR TEXT (any language):\n<<<\n' + text + '\n>>>\n';
+    if (mode === 'ask') {
+      u += '\nAsk the 3 to 5 most useful, specific questions whose answers would let you write a much better version of this field (missing concrete details, voice, relationships, goals, constraints). Do not ask what the text already answers. Write the questions in ' + (LANG === 'it' ? 'Italian' : 'English') + '.\nReply with ONLY a JSON array of strings.';
+    } else {
+      if (st.extra.trim()) u += '\nAUTHOR INSTRUCTIONS:\n' + st.extra.trim() + '\n';
+      const qa = st.qs.map((q, i) => [q, (st.ans[i] || '').trim()]).filter(x => x[1]);
+      if (qa.length) u += '\nANSWERS TO CLARIFYING QUESTIONS (use them):\n' + qa.map(x => 'Q: ' + x[0] + '\nA: ' + x[1]).join('\n') + '\n';
+      u += '\nReturn only the final English text for this field.';
+    }
+    return [{ role: 'system', content: sys }, { role: 'user', content: u }];
+  }
+  function cleanOut(t) {
+    t = String(t || '').trim().replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/, '').trim();
+    if (/^"[\s\S]*"$/.test(t) && !t.slice(1, -1).includes('"')) t = t.slice(1, -1).trim();
+    return t;
+  }
+  function parseQs(t) {
+    const a = t.indexOf('['), b = t.lastIndexOf(']');
+    if (a >= 0 && b > a) { try { const j = JSON.parse(t.slice(a, b + 1)); if (Array.isArray(j)) return j.map(String).map(s => s.trim()).filter(Boolean).slice(0, 5); } catch (e) { /* prova le righe */ } }
+    return t.split('\n').map(s => s.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, '').trim()).filter(s => s.length > 8 && /\?$/.test(s)).slice(0, 5);
+  }
+  function openWand(f) {
+    WD = { f, step: 'choose', extra: '', qs: [], ans: [], result: '', busy: false, ctl: null, msg: null };
+    drawWd();
+    const d = $('wdlg');
+    if (!d.open) d.showModal();
+  }
+  function closeWd() { if (WD && WD.ctl) WD.ctl.abort(); WD = null; const d = $('wdlg'); if (d.open) d.close(); }
+  async function wdRun(mode) {
+    const st = WD;
+    if (!st || st.busy) return;
+    st.busy = true; st.msg = null; st.ctl = new AbortController(); drawWd();
+    try {
+      const r = await callLLM(wandMessages(st, mode), { signal: st.ctl.signal });
+      if (WD !== st) return;
+      if (mode === 'ask') {
+        st.qs = parseQs(r.text); st.ans = st.qs.map(() => '');
+        if (st.qs.length) st.step = 'questions';
+        else { st.busy = false; st.ctl = null; st.msg = ['Nessuna domanda utile: ottimizzo direttamente.']; return wdRun('edit'); }
+      } else { st.result = cleanOut(r.text); st.step = 'result'; }
+    } catch (e) {
+      if (WD !== st) return;
+      st.msg = e && e.code === 'abort' ? ['Interrotto.'] : errKey(e); st.warn = !(e && e.code === 'abort');
+    }
+    if (WD === st) { st.busy = false; st.ctl = null; drawWd(); }
+  }
+  function drawWd() {
+    const st = WD, box = $('wdbody');
+    box.textContent = '';
+    if (!st) return;
+    const head = mk('div', 'wdh'), h = mk('h3'), x = mk('button', 'btn quiet');
+    h.textContent = '🪄 ' + st.f.label; x.type = 'button'; x.textContent = tr('Chiudi'); x.addEventListener('click', closeWd);
+    head.append(h, x); box.appendChild(head);
+    const btn = (txt, fn, cls, dis) => { const b = mk('button', 'btn' + (cls ? ' ' + cls : '')); b.type = 'button'; b.textContent = tr(txt); b.disabled = !!dis; b.addEventListener('click', fn); return b; };
+    const row = mk('div', 'ctl');
+    if (st.step === 'choose') {
+      const p = mk('p', 'sm'); p.textContent = tr('Il testo verrà riscritto in inglese e ottimizzato per questo campo. Niente cambia nel campo finché non premi "Applica al campo".'); box.appendChild(p);
+      const ex = mk('div', 'wexc'); const t = String(st.f.get() || '').trim(); ex.textContent = t.length > 360 ? t.slice(0, 360) + '…' : t; box.appendChild(ex);
+      const ex2 = mk('input'); ex2.type = 'text'; ex2.value = st.extra; ex2.placeholder = tr('Indicazioni facoltative (tono, dettagli da aggiungere…)'); ex2.setAttribute('aria-label', ex2.placeholder);
+      ex2.addEventListener('input', () => { st.extra = ex2.value; }); box.appendChild(ex2);
+      row.append(btn('Ottimizza subito', () => wdRun('edit'), 'primary', st.busy), btn('Fammi delle domande', () => wdRun('ask'), '', st.busy));
+    } else if (st.step === 'questions') {
+      const p = mk('p', 'sm'); p.textContent = tr('Rispondi a ciò che sai, lascia vuoto il resto.'); box.appendChild(p);
+      st.qs.forEach((q, i) => {
+        const w = mk('div', 'wq'), b = mk('b'), ta = mk('textarea');
+        b.textContent = q; ta.rows = 2; ta.value = st.ans[i] || ''; ta.setAttribute('aria-label', q);
+        ta.addEventListener('input', () => { st.ans[i] = ta.value; }); w.append(b, ta); box.appendChild(w);
+      });
+      row.append(btn('Genera', () => wdRun('edit'), 'primary', st.busy), btn('Indietro', () => { st.step = 'choose'; st.msg = null; drawWd(); }, '', st.busy));
+    } else {
+      const w = mk('div', 'wq'), b = mk('b'), ta = mk('textarea'), tk = mk('span', 'tk');
+      b.textContent = tr('Risultato (puoi modificarlo)'); ta.rows = 12; ta.value = st.result; ta.spellcheck = false; ta.setAttribute('aria-label', b.textContent);
+      const upd = () => { tk.textContent = nf(tok(ta.value)) + ' ' + tr('token'); };
+      ta.addEventListener('input', () => { st.result = ta.value; upd(); }); upd();
+      const hh = mk('div', 'dfh'); hh.append(b, tk); w.append(hh, ta); box.appendChild(w);
+      row.append(
+        btn('Applica al campo', () => { const v = st.result.trim(); if (!v) return; st.f.set(v); closeWd(); refreshWands(); }, 'primary', st.busy),
+        btn('Rigenera', () => wdRun('edit'), '', st.busy),
+        btn('Indietro', () => { st.step = 'choose'; st.msg = null; drawWd(); }, '', st.busy)
+      );
+    }
+    if (st.busy) { const s = mk('span', 'sm'); s.textContent = tr('Sto lavorando…'); row.append(s, btn('Stop', () => { if (st.ctl) st.ctl.abort(); }, 'quiet')); }
+    box.appendChild(row);
+    if (st.msg) { const m = mk('p', 'sm' + (st.warn ? ' warn' : '')); m.setAttribute('role', 'status'); m.textContent = tr(st.msg[0], st.msg[1] || null); box.appendChild(m); }
+  }
+  $('wdlg').addEventListener('close', () => { if (WD) { if (WD.ctl) WD.ctl.abort(); WD = null; } });
+  $('wdlg').addEventListener('click', e => { if (e.target === $('wdlg')) closeWd(); });
+
   /* Cambio vista */
-  const VIEWS = { dati: $('view-data'), cover: $('view-cover') };
+  const VIEWS = { dati: $('view-data'), cover: $('view-cover'), api: $('view-api') };
   function showView(v) {
     if (!VIEWS[v]) v = 'dati';
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     if (v === 'cover') { buildList(); render(); }
+    if (v === 'api') { apiRender(); }
     if (location.hash !== '#' + v) {
       try { history.replaceState(null, '', '#' + v); } catch (e) { try { location.hash = v; } catch (e2) { /* ignora */ } }
     }
@@ -1966,12 +2638,12 @@
   loadGallery();
   initLive();
   applyLangUI();
+  apiInit();
   syncData();
   syncUI();
   ensureFonts();
-  showView(location.hash === '#cover' ? 'cover' : 'dati');
+  showView(['cover', 'api'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'dati');
   render();
 })();
 </script>
-
 </body></html>

@@ -33,7 +33,9 @@ app.whenReady().then(async () => {
   const win = new BrowserWindow({
     width: 1280, height: 860, minWidth: 420, minHeight: 600,
     backgroundColor: '#0f1217', title: 'ST Card Creator',
-    icon: path.join(__dirname, 'build', 'icon.ico')
+    icon: path.join(__dirname, 'build', 'icon.ico'),
+    // L'app carica solo i suoi file locali. webSecurity disattivata: serve per chiamare le API (OpenRouter, server locali, ecc.) senza blocchi CORS.
+    webPreferences: { webSecurity: false }
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.loadURL('http://127.0.0.1:' + port + '/');
