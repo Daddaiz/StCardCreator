@@ -24,16 +24,14 @@
     --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
     --font-title: 'Cinzel', 'Trajan Pro', Georgia, 'Times New Roman', serif;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
+  :root:not([data-theme="light"]) {
       --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
-      --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 238, 200, 0.85)) drop-shadow(0 0 10px rgba(255, 214, 140, 0.45));
+      --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
       color-scheme: dark;
-    }
   }
   :root[data-theme="dark"] {
     --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
-    --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 238, 200, 0.85)) drop-shadow(0 0 10px rgba(255, 214, 140, 0.45));
+    --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
     color-scheme: dark;
   }
 
@@ -131,7 +129,7 @@
   .stop output { text-align: right; }
 
   .stage { min-width: 0; display: grid; gap: 16px; }
-  @media (min-width: 900px) { .stage { position: sticky; top: 164px; max-height: calc(100vh - 184px); overflow: auto; padding-bottom: 2px; } }
+  @media (min-width: 900px) { .stage { position: sticky; top: 180px; max-height: calc(100vh - 200px); overflow: auto; padding-bottom: 2px; } }
   @media (max-width: 899px) { .stage { order: -1; } }
   .cardwrap { background: var(--stage); border-radius: 12px; padding: 18px; display: grid; place-items: center; }
   .cardwrap.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
@@ -150,15 +148,42 @@
   body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 30; }
   .bar {
     position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg);
-    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 22px;
     padding-block: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line);
   }
   .brand { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
   .views { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
   .views button { font: 500 14px var(--font-ui); padding: 8px 20px; border: 0; border-left: 1px solid var(--line); background: none; color: var(--fg); cursor: pointer; }
   .views button:first-child { border-left: 0; }
+  [hidden] { display: none !important; }
+  .dsv { color: var(--muted); font-size: 11px; min-height: 1em; }
+  .undo { position: fixed; left: 16px; bottom: 16px; z-index: 40; max-width: min(420px, calc(100vw - 32px)); font: 500 13px var(--font-ui); padding: 10px 16px; border-radius: 99px; border: 1px solid var(--accent); background: var(--surface); color: var(--fg); cursor: pointer; box-shadow: 0 8px 28px rgba(0,0,0,0.4); text-align: left; }
+  .undo:hover { background: var(--sel); }
+  .chkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 14px; }
+  .rec .tk { white-space: normal; }
+  .chk-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); font-size: 13px; }
+  .chk-tag { font: 500 11px var(--font-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+  .chk-row.err .chk-tag, .chk-row.warn .chk-tag { color: var(--warn); }
+  .chk-row.err { border-color: var(--warn); }
+  .badge.bad { border-color: var(--warn); color: var(--warn); }
+  .chkline { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted); min-height: 1.4em; }
+  .chkline.warn { color: var(--warn); }
+  /* Sfondo leggermente magico */
+  :root { --aura-a: rgba(128, 88, 210, 0.07); --aura-b: rgba(226, 172, 92, 0.1); }
+  :root:not([data-theme="light"]) { --aura-a: rgba(124, 84, 206, 0.17); --aura-b: rgba(226, 172, 92, 0.07); }
+  :root { --bgfx: radial-gradient(900px 620px at 10% -6%, var(--aura-a), transparent 70%), radial-gradient(820px 580px at 94% 106%, var(--aura-b), transparent 70%); }
+  body { background: var(--bgfx), var(--bg); background-attachment: fixed; }
+  #magic { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .app { position: relative; z-index: 1; }
+  .bar { background: var(--bgfx), var(--bg); background-attachment: fixed; }
+  .navgrp { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
+  .apibtn:hover { border-color: var(--muted); }
+  .apibtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .foot { display: flex; justify-content: center; padding: 56px 0 36px; }
+  .foot img { display: block; width: 197px; height: auto; }
   .views button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
-  .tot { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tot { display: grid; gap: 4px; font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
   .tot b { color: var(--fg); font-weight: 500; }
 
   /* Vista Dati */
@@ -190,7 +215,7 @@
   input[type="range"].wide { width: 100%; accent-color: var(--accent); }
   .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
   .jump { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .logo { display: block; height: 112px; width: auto; max-width: 100%; filter: var(--logo-glow); }
+  .logo { display: block; height: 124px; width: auto; max-width: 100%; filter: var(--logo-glow); }
   .flags { display: flex; gap: 8px; align-items: center; }
   .flag { width: 38px; height: 28px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; background: none; cursor: pointer; display: block; opacity: 0.65; }
   .flag svg { display: block; width: 100%; height: 100%; }
@@ -209,7 +234,7 @@
   .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
   .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
   .dmain { min-width: 0; }
-  .dside { position: sticky; top: 156px; display: grid; gap: 12px; justify-items: center; }
+  .dside { position: sticky; top: 172px; display: grid; gap: 12px; justify-items: center; }
   .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
   @media (max-width: 899px) {
     .dview { grid-template-columns: minmax(0, 1fr); }
@@ -224,7 +249,7 @@
   .themes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
 
   /* Pagina API e bacchetta */
-  .views button[data-ready="1"]::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 8px; border-radius: 50%; background: currentColor; vertical-align: middle; opacity: 0.85; }
+  .apibtn[data-ready="1"]::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 8px; border-radius: 50%; background: currentColor; vertical-align: middle; opacity: 0.85; }
   .apiview { max-width: 760px; margin-inline: auto; display: grid; gap: 22px; padding-bottom: 48px; }
   .apibox { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 18px; min-width: 0; }
   .apibox:first-child { border-top: 0; padding-top: 0; }
@@ -250,19 +275,23 @@
   .wq b { font-size: 13px; font-weight: 500; }
 </style>
 
+<canvas id="magic" aria-hidden="true"></canvas>
 <main class="app">
   <header class="bar">
-    <h1 class="brand"><img class="logo" src="logo.png" width="358" height="140" alt="ST Card Creator"></h1>
-    <nav class="views" aria-label="Vista">
-      <button type="button" data-view="dati" aria-pressed="true">Dati</button>
-      <button type="button" data-view="cover" aria-pressed="false">Cover</button>
-      <button type="button" data-view="api" aria-pressed="false">API</button>
-    </nav>
-    <button type="button" class="btn" id="dnew">Nuova carta</button>
+    <h1 class="brand"><img class="logo" src="logo.png" width="116" height="124" alt="ST Card Creator"></h1>
+    <div class="navgrp">
+      <button type="button" class="btn" id="dnew">Nuova carta</button>
+      <nav class="views" aria-label="Vista">
+        <button type="button" data-view="dati" aria-pressed="true">Dati</button>
+        <button type="button" data-view="cover" aria-pressed="false">Cover</button>
+      </nav>
+    </div>
     <div class="tot" aria-live="polite">
       <span>Totale <b id="totAll">0</b> token</span>
       <span>Fissi <b id="totFix">0</b> token</span>
+      <span class="dsv" id="dsv"></span>
     </div>
+    <button type="button" class="apibtn" data-view="api" aria-pressed="false">API</button>
     <div class="themes" role="group" aria-label="Aspetto">
       <button type="button" data-theme-set="light" aria-pressed="false" title="Modalità normale" aria-label="Modalità normale">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
@@ -271,21 +300,13 @@
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
-    <div class="flags" role="group" aria-label="Lingua">
-      <button type="button" class="flag" data-lang="it" aria-pressed="true" title="Italiano" aria-label="Italiano">
-        <svg viewBox="0 0 3 2" aria-hidden="true" focusable="false"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#ffffff"/><rect x="2" width="1" height="2" fill="#ce2b37"/></svg>
-      </button>
-      <button type="button" class="flag" data-lang="en" aria-pressed="false" title="English" aria-label="English">
-        <svg viewBox="0 0 60 30" preserveAspectRatio="none" aria-hidden="true" focusable="false"><clipPath id="fl-s"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="fl-t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(#fl-s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#fl-t)" stroke="#c8102e" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#ffffff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#c8102e" stroke-width="6"/></g></svg>
-      </button>
-    </div>
   </header>
 
   <div id="view-cover" hidden>
   <div class="layout">
     <div class="controls">
 
-      <details class="drawer" data-group="cover" open><summary><h2 id="h-img">Immagine</h2></summary><div class="dbody">
+      <details class="drawer" data-group="cover"><summary><h2 id="h-img">Immagine</h2></summary><div class="dbody">
         <div class="filerow">
           <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
           <button type="button" class="btn" id="pick">Carica PNG</button>
@@ -435,8 +456,10 @@
           <option value="1200">1200 × 1800</option>
         </select>
         <button type="button" class="btn primary" id="export">Scarica PNG</button>
+        <button type="button" class="btn" id="djson">Scarica JSON</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
+      <div class="chkline" id="chkline"></div>
       <p class="hint" id="embedinfo"></p>
 
       <div style="display:grid;gap:12px">
@@ -496,18 +519,34 @@
   </div>
   <div id="view-data" class="dview">
   <div class="dmain">
-    <details class="drawer" data-group="data"><summary><h2 id="d-act">Carta</h2></summary><div class="dbody">
+    <details class="drawer" data-group="data"><summary><h2 id="d-act">Import Card</h2></summary><div class="dbody">
       <div class="jump">
         <input id="dimport" type="file" accept=".png,.json,image/png,application/json" hidden>
         <button type="button" class="btn" id="dimportBtn">Importa PNG o JSON</button>
-        <button type="button" class="btn" id="djson">Scarica JSON</button>
         <button type="button" class="btn primary" id="togo">Vai alla Cover</button>
       </div>
-      <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.</p>
+      <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.</p>
       <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
+      <div class="stack">
+        <div class="dfh"><b>Recent cards</b><span class="tk">saved in this browser</span></div>
+        <div class="stack" id="recent"></div>
+      </div>
     </div></details>
 
-    <details class="drawer" data-group="data" open><summary><h2 id="d-char">Personaggio</h2></summary><div class="dbody">
+    <details class="drawer" data-group="data"><summary><h2 id="d-gen">Generate from idea</h2></summary><div class="dbody">
+      <p class="sm" id="genNote"></p>
+      <label class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="4" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></label>
+      <div class="df"><span class="dfh"><b>Fields to write</b></span><div class="chkgrid" id="genFields"></div></div>
+      <div class="df">
+        <span class="dfh"><b>Existing text</b></span>
+        <label class="chk"><input type="radio" name="genMode" value="empty" checked> Fill only empty fields</label>
+        <label class="chk"><input type="radio" name="genMode" value="all"> Overwrite the selected fields</label>
+      </div>
+      <div class="ctl"><button type="button" class="btn primary" id="genGo">Generate</button><button type="button" class="btn" id="genStop" hidden>Stop</button></div>
+      <p class="sm" id="genStatus" role="status"></p>
+    </div></details>
+
+    <details class="drawer" data-group="data"><summary><h2 id="d-char">Personaggio</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Nome</b></span><input type="text" data-f="name" maxlength="120" autocomplete="off" spellcheck="false"></label>
       <label class="df"><span class="dfh"><b>Descrizione del personaggio</b><span class="tk" data-tk="description"></span></span><textarea data-f="description" rows="10" spellcheck="false"></textarea></label>
       <label class="df"><span class="dfh"><b>Sommario della personalità</b><span class="tk" data-tk="personality"></span></span><textarea data-f="personality" rows="4" spellcheck="false"></textarea></label>
@@ -556,7 +595,13 @@
     <details class="drawer sub2" data-group="data"><summary><h2 id="d-lore">Lorebook</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Nome del lorebook</b><span class="tk" id="bookTk"></span></span><input type="text" data-f="book" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Es. Lorebook di Kat"></label>
       <div class="stack" id="entries"></div>
-      <div><button type="button" class="btn" id="entAdd">Aggiungi voce</button></div>
+      <div class="ctl">
+        <button type="button" class="btn" id="entAdd">Aggiungi voce</button>
+        <button type="button" class="btn" id="entSuggest">🪄 Suggest entries from the description</button>
+        <button type="button" class="btn" id="entImportBtn">Import lorebook JSON</button>
+        <input id="entImport" type="file" accept=".json,application/json" hidden>
+      </div>
+      <p class="sm" id="loreStatus" role="status"></p>
     </div></details>
 
     <details class="drawer sub2" data-group="data"><summary><h2 id="d-meta">Metadati del creatore</h2></summary><div class="dbody">
@@ -568,12 +613,19 @@
       <label class="df"><span class="dfh"><b>Note del creatore</b><span class="tk off" data-tk="notes"></span></span><textarea data-f="notes" rows="4" spellcheck="false"></textarea></label>
       <label class="df"><span class="dfh"><b>Tag</b></span><input type="text" data-f="tags" autocomplete="off" spellcheck="false" placeholder="Separati da virgole"></label>
     </div></details>
+
+    <details class="drawer" data-group="data"><summary><h2 id="d-chk">Card check <span class="badge" id="chkBadge"></span></h2></summary><div class="dbody">
+      <div class="stack" id="chkList"></div>
+      <p class="sm">These are rules of thumb, not format errors. Nothing blocks the export except a missing name.</p>
+    </div></details>
   </div>
   <aside class="dside" aria-label="Copertina">
     <canvas id="dprev" width="560" height="840" role="img" aria-label="Anteprima della carta"></canvas>
     <button type="button" class="btn" id="dedit">Modifica la copertina</button>
   </aside>
   </div>
+  <button type="button" class="undo" id="undoBtn" hidden></button>
+  <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
 </main>
 
@@ -584,8 +636,7 @@
   /* ---------- Lingua ---------- */
   const LKEY = 'st-card-creator-lang';
   const isIt = () => /^it/i.test((navigator.language || ''));
-  let LANG = isIt() ? 'it' : 'en';
-  try { const sv = localStorage.getItem(LKEY); if (sv === 'it' || sv === 'en') LANG = sv; } catch (e) { /* ignora */ }
+  let LANG = 'en';
   const TKEY = 'st-card-creator-theme';
   let THEME = 'dark';
   try { const st0 = localStorage.getItem(TKEY); if (st0 === 'light' || st0 === 'dark') THEME = st0; } catch (e) { /* ignora */ }
@@ -765,7 +816,7 @@
  "Importa PNG o JSON": "Import PNG or JSON",
  "Scarica JSON": "Download JSON",
  "Vai alla Cover": "Go to Cover",
- "Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.": "The PNG is exported from the Cover view and contains everything you write on this page. Data is not saved: download the JSON if you want to keep it.",
+ "Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.": "The PNG is exported from the Cover view and contains everything you write on this page. Data is not saved: download the JSON from the Cover view if you want to keep it.",
  "I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. \"Fissi\" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. \"Totale\" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.": "Token counts are a rough estimate, not the exact count from your model's tokenizer. \"Fixed\" are the fields SillyTavern always sends: description, personality, scenario, dialogue examples, prompts, the character's note and always-on lorebook entries. \"Total\" also counts the first message, alternate greetings and the other enabled lorebook entries, even though only one greeting is used in a chat.",
  "Personaggio": "Character",
  "Descrizione del personaggio": "Character description",
@@ -954,7 +1005,7 @@
   const DEFS = {
     hint: "Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.",
     cmsg: 'Qualsiasi famiglia di fonts.google.com, scritta col nome esatto.',
-    dstatus: 'Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.',
+    dstatus: 'Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.',
     fileinfo: "Immagine d'esempio",
     minfo: 'Nessuna immagine caricata',
     status: ''
@@ -1635,9 +1686,9 @@
     c.clearRect(0, 0, cv.width, cv.height);
     c.drawImage(card, 0, 0, cv.width, cv.height);
   }
-  function render() { draw(card, 800); drawMinis(); drawPrev(); }
+  function render() { draw(card, 800); drawMinis(); drawPrev(); renderChecks(); }
   let raf = 0;
-  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+  function schedule() { saveDataSoon(); if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', schedule);
 
   /* ---------- Esportazione ---------- */
@@ -1867,7 +1918,6 @@
   }
 
   let K = defaultData();
-  function saveDataSoon() { /* i dati non vengono conservati tra una sessione e l'altra */ }
 
   /* Token e totali */
   function textFor(key) {
@@ -1893,7 +1943,7 @@
     const info = $('embedinfo');
     if (info) info.textContent = K.entries.length === 1 ? tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, 1 voce di lorebook.', { t: nf(total) }) : tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, {n} voci di lorebook.', { t: nf(total), n: K.entries.length });
   }
-  const afterEdit = () => { refreshTokens(); saveDataSoon(); if (typeof refreshWands === 'function') refreshWands(); };
+  const afterEdit = () => { refreshTokens(); saveDataSoon(); refreshWands(); renderChecks(); };
 
   /* Campi fissi */
   const F = [...document.querySelectorAll('[data-f]')];
@@ -1922,7 +1972,7 @@
       const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = tr('Rimuovi');
       right.append(tk, del); head.append(b, right);
       const ta = mk('textarea'); ta.rows = 5; ta.value = txt; ta.spellcheck = false; ta.setAttribute('aria-label', tr(label) + ' ' + (i + 1));
-      right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => setVal(ta, v), () => b.textContent), tk);
+      right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => setVal(ta, v), () => b.textContent, { undo: v => { arr[i] = v; buildStrList(box, arr, prefix, label); afterEdit(); } }), tk);
       ta.addEventListener('input', () => { arr[i] = ta.value; afterEdit(); });
       del.addEventListener('click', () => { arr.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); });
       item.append(head, ta); box.appendChild(item);
@@ -1967,16 +2017,20 @@
       };
       const body = mk('div', 'ebody');
       body.appendChild(field(tr('Titolo (solo per te)'), input('text', e.title, v => { e.title = v; upd(); }, { autocomplete: 'off' })));
-      body.appendChild(field(tr('Parole chiave (separate da virgole)'), input('text', e.keys, v => { e.keys = v; upd(); }, { autocomplete: 'off', spellcheck: 'false' })));
+      const kin = input('text', e.keys, v => { e.keys = v; upd(); }, { autocomplete: 'off', spellcheck: 'false', 'aria-label': tr('Parole chiave (separate da virgole)') });
+      const kwrap = mk('div', 'fld'), khead = mk('div', 'dfh'), kleft = mk('span', 'dfl'), kl = mk('b');
+      kl.textContent = tr('Parole chiave (separate da virgole)');
+      kleft.append(kl, makeWand('keys', () => e.content, v => { kin.value = v; e.keys = v; upd(); afterEdit(); }, () => tr('Parole chiave (separate da virgole)'), { cur: () => e.keys, undo: v => { e.keys = v; kin.value = v; upd(); afterEdit(); } }));
+      khead.appendChild(kleft); kwrap.append(khead, kin); body.appendChild(kwrap);
       const g1 = mk('div', 'egrid');
       g1.appendChild(field(tr('Parole chiave secondarie'), input('text', e.sec, v => { e.sec = v; }, { autocomplete: 'off', spellcheck: 'false' })));
       g1.appendChild(field(tr('Logica delle secondarie'), select(LOGIC, e.logic, v => { e.logic = +v; })));
       body.appendChild(g1);
       const ta = mk('textarea'); ta.rows = 6; ta.value = e.content; ta.spellcheck = false; ta.setAttribute('aria-label', tr('Contenuto della voce {n}', { n: i + 1 }));
       ta.addEventListener('input', () => { e.content = ta.value; afterEdit(); });
-      const cwrap = mk('div', 'fld'), chead = mk('div', 'dfh'), cleft = mk('span', 'dfl'), cl = mk('span');
+      const cwrap = mk('div', 'fld'), chead = mk('div', 'dfh'), cleft = mk('span', 'dfl'), cl = mk('b');
       cl.textContent = tr('Contenuto');
-      cleft.append(cl, makeWand('entry', () => ta.value, v => setVal(ta, v), () => tr('Contenuto della voce {n}', { n: i + 1 })));
+      cleft.append(cl, makeWand('entry', () => ta.value, v => setVal(ta, v), () => tr('Contenuto della voce {n}', { n: i + 1 }), { undo: v => { e.content = v; buildEntries(); afterEdit(); } }));
       chead.appendChild(cleft); cwrap.append(chead, ta); body.appendChild(cwrap);
       const flags = mk('div', 'inline');
       flags.appendChild(check(tr('Attiva'), e.enabled, v => { e.enabled = v; upd(); afterEdit(); }));
@@ -2034,25 +2088,25 @@
         if (!raw) throw new Error('nodata');
         obj = JSON.parse(decodeB64(raw));
       }
-      K = fromCard(obj);
-      syncData(); schedule();
+      K = fromCard(obj); DID = null; clearUndo();
+      syncData(); schedule(); saveDataSoon(); renderChecks();
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
     } catch (err) {
       say('dstatus', 'Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.', null, true);
     }
   });
   $('djson').addEventListener('click', async () => {
-    if (!K.name.trim()) { say('dstatus', 'Scrivi prima il nome della carta.', null, true); return; }
+    if (!K.name.trim()) { say('status', 'Scrivi prima il nome della carta.', null, true); return; }
     try {
       const fn = slug(K.name) + '.json';
       await saveBlob(new Blob([JSON.stringify(buildCard('v3'), null, 2)], { type: 'application/json' }), fn);
-      say('dstatus', 'JSON salvato come {fn}.', { fn }, false);
+      say('status', 'JSON salvato come {fn}.', { fn }, false);
     } catch (err) {
-      say('dstatus', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
+      say('status', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
     }
   });
   function newCard() {
-    K = defaultData();
+    K = defaultData(); DID = null; clearUndo();
     if (IMGURL) URL.revokeObjectURL(IMGURL);
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
@@ -2238,6 +2292,7 @@
     const drop = new Set(API.drop[dk] || []);
     let swap = !!API.swap[dk];
     const p = curParams();
+    if (o.maxTokens) p.max_tokens = Math.max(p.max_tokens, o.maxTokens);
     for (let n = 0; n < 6; n++) {
       const rq = buildReq(prov, model, p, drop, swap, msgs);
       let res;
@@ -2480,11 +2535,11 @@
     const t = has ? tr("Ottimizza con l'IA") : tr("Scrivi prima un po' di testo");
     w.b.title = t; w.b.setAttribute('aria-label', t);
   }
-  function refreshWands() { WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); }
-  function makeWand(kind, get, set, label) {
+  function refreshWands() { WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); genReady(); refreshLoreBtn(); }
+  function makeWand(kind, get, set, label, opts) {
     const b = mk('button', 'wand'); b.type = 'button'; b.textContent = '🪄';
     const w = { b, get };
-    b.addEventListener('click', () => { if (!b.disabled) openWand({ kind, get, set, label: label() }); });
+    b.addEventListener('click', () => { if (!b.disabled) openWand({ kind, get, set, label: label(), cur: opts && opts.cur, undo: opts && opts.undo }); });
     WANDS.push(w); updateWand(w);
     return b;
   }
@@ -2579,6 +2634,7 @@
     const st = WD, box = $('wdbody');
     box.textContent = '';
     if (!st) return;
+    if (st.mode === 'lore') { drawLore(st); return; }
     const head = mk('div', 'wdh'), h = mk('h3'), x = mk('button', 'btn quiet');
     h.textContent = '🪄 ' + st.f.label; x.type = 'button'; x.textContent = tr('Chiudi'); x.addEventListener('click', closeWd);
     head.append(h, x); box.appendChild(head);
@@ -2605,7 +2661,7 @@
       ta.addEventListener('input', () => { st.result = ta.value; upd(); }); upd();
       const hh = mk('div', 'dfh'); hh.append(b, tk); w.append(hh, ta); box.appendChild(w);
       row.append(
-        btn('Applica al campo', () => { const v = st.result.trim(); if (!v) return; st.f.set(v); closeWd(); refreshWands(); }, 'primary', st.busy),
+        btn('Applica al campo', () => { const v = st.result.trim(); if (!v) return; const f = st.f, prev = f.cur ? f.cur() : f.get(); f.set(v); pushUndo('AI edit · ' + f.label, () => (f.undo || f.set)(prev)); closeWd(); refreshWands(); }, 'primary', st.busy),
         btn('Rigenera', () => wdRun('edit'), '', st.busy),
         btn('Indietro', () => { st.step = 'choose'; st.msg = null; drawWd(); }, '', st.busy)
       );
@@ -2633,17 +2689,439 @@
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
   window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS[v]) showView(v); });
 
+  /* ---------- Sfondo: polvere di luce ---------- */
+  (function magic() {
+    const cv = $('magic');
+    if (!cv || !cv.getContext) return;
+    const c = cv.getContext('2d');
+    const still = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    let W = 0, H = 0, P = [], t = 0, last = 0;
+    const spawn = init => ({ x: Math.random() * W, y: init ? Math.random() * H : H + 12, r: 0.5 + Math.random() * 1.4, vy: 0.07 + Math.random() * 0.2, ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 0.9, sw: 5 + Math.random() * 14, tone: Math.random() < 0.7 ? 0 : 1 });
+    function size() {
+      const d = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth; H = window.innerHeight;
+      cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+      c.setTransform(d, 0, 0, d, 0, 0);
+      P = Array.from({ length: Math.round(Math.min(60, Math.max(22, W * H / 30000))) }, () => spawn(true));
+    }
+    function paint() {
+      const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+      const cols = dark ? [[255, 224, 156], [196, 168, 255]] : [[176, 124, 44], [122, 84, 196]];
+      const k = dark ? 1 : 0.5;
+      c.clearRect(0, 0, W, H);
+      P.forEach(p => {
+        const x = p.x + Math.sin(t * p.sp + p.ph) * p.sw;
+        const a = (0.22 + 0.5 * (0.5 + 0.5 * Math.sin(t * p.sp * 1.7 + p.ph))) * k;
+        const col = cols[p.tone].join(',');
+        c.fillStyle = 'rgba(' + col + ',' + (a * 0.16).toFixed(3) + ')';
+        c.beginPath(); c.arc(x, p.y, p.r * 4.5, 0, 6.2832); c.fill();
+        c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')';
+        c.beginPath(); c.arc(x, p.y, p.r, 0, 6.2832); c.fill();
+      });
+    }
+    function frame(ts) {
+      requestAnimationFrame(frame);
+      if (document.hidden || ts - last < 33) return;
+      const dt = Math.min((ts - last) / 1000, 0.1); last = ts;
+      t += dt;
+      P.forEach(p => { p.y -= p.vy * dt * 60; if (p.y < -12) Object.assign(p, spawn(false)); });
+      paint();
+    }
+    size(); paint();
+    window.addEventListener('resize', () => { size(); paint(); });
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => setTimeout(paint, 0)));
+    if (!still) requestAnimationFrame(frame);
+  })();
+
+  /* ---------- Annulla, bozze, controllo, generazione, lorebook ---------- */
+  Object.assign(WF, {
+    name: ['Character name', 'Only the name: one to four words, no quotes, no title, no explanation.'],
+    tags: ['Tags', 'Five to eight short lowercase tags (genre, species, role, tone), comma-separated, no hashtags, no explanation.'],
+    tagline: ['Cover tagline', 'A short evocative tagline for the card cover: one or two short lines, at most 90 characters, no quotes, no hashtags.'],
+    keys: ['Lorebook keywords', 'A comma-separated list of 3 to 8 short trigger keywords or phrases, lowercase, that should activate this entry when they appear in the chat (names, places, objects, synonyms). The author text is the entry content: derive the keywords from it. Output ONLY the comma-separated list.']
+  });
+
+  /* Annulla */
+  const UNDO = [];
+  function drawUndo() {
+    const b = $('undoBtn');
+    b.hidden = !UNDO.length;
+    if (UNDO.length) b.textContent = '↶ Undo: ' + UNDO[UNDO.length - 1].label + (UNDO.length > 1 ? ' (+' + (UNDO.length - 1) + ')' : '');
+  }
+  function pushUndo(label, fn) { UNDO.push({ label, fn }); if (UNDO.length > 20) UNDO.shift(); drawUndo(); }
+  function clearUndo() { UNDO.length = 0; drawUndo(); }
+  $('undoBtn').addEventListener('click', () => {
+    const u = UNDO.pop();
+    if (u) { try { u.fn(); } catch (e) { /* ignora */ } }
+    drawUndo(); refreshWands(); renderChecks();
+  });
+
+  /* Dopo una modifica al modello dati fatta da codice */
+  function afterModel() { syncData(); schedule(); saveDataSoon(); refreshWands(); renderChecks(); }
+
+  /* Bozze salvate nel browser */
+  const DKEY = 'st-card-creator-drafts-v1';
+  let DID = null, DTIMER = 0, DREADY = false;
+  const isPristine = () => JSON.stringify(sanitize(K)) === JSON.stringify(defaultData()) && S.desc === EX.desc[LANG];
+  function loadDrafts() {
+    try { const o = JSON.parse(localStorage.getItem(DKEY) || 'null'); if (o && Array.isArray(o.list)) return o; } catch (e) { /* ignora */ }
+    return { cur: null, list: [] };
+  }
+  function putDrafts(o) { try { localStorage.setItem(DKEY, JSON.stringify(o)); return true; } catch (e) { return false; } }
+  function saveDataSoon() {
+    if (!DREADY) return;
+    clearTimeout(DTIMER);
+    DTIMER = setTimeout(saveDraft, 700);
+  }
+  function saveDraft() {
+    if (!DREADY) return;
+    if (!DID) {
+      if (isPristine()) return;
+      DID = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+    const d = loadDrafts();
+    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink } };
+    d.list = d.list.filter(x => x.id !== DID);
+    d.list.unshift(rec);
+    d.list = d.list.slice(0, 12);
+    d.cur = DID;
+    const ok = putDrafts(d);
+    const t = new Date();
+    $('dsv').textContent = ok ? 'Draft saved ' + String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0') : 'Draft not saved (browser storage unavailable or full)';
+    renderRecent();
+  }
+  function applyDraft(r) {
+    K = sanitize(r.K); DID = r.id;
+    if (r.cover) {
+      if (typeof r.cover.name === 'string') S.name = r.cover.name;
+      if (typeof r.cover.desc === 'string') S.desc = r.cover.desc;
+      S.nameLink = r.cover.link !== false;
+    }
+  }
+  function initDrafts() {
+    const d = loadDrafts();
+    const r = d.list.find(x => x.id === d.cur);
+    if (r) applyDraft(r);
+  }
+  const draftTok = k => ['description', 'personality', 'scenario', 'first_mes', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'].reduce((a, f) => a + tok(str(k[f])), 0);
+  function renderRecent() {
+    const box = $('recent');
+    if (!box) return;
+    const d = loadDrafts();
+    box.textContent = '';
+    if (!d.list.length) {
+      const p = mk('p', 'sm'); p.textContent = 'Nothing saved yet. Your work is saved in this browser automatically after your first edit.'; box.appendChild(p); return;
+    }
+    d.list.forEach(r => {
+      const item = mk('div', 'item rec');
+      const head = mk('div', 'ihead'), b = mk('b'), meta = mk('span', 'tk');
+      b.textContent = (r.name || '').trim() || 'Untitled card';
+      const when = new Date(r.ts);
+      meta.textContent = (r.id === DID ? 'current · ' : '') + when.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' · ≈ ' + nf(draftTok(r.K || {})) + ' tokens';
+      const ctl = mk('span', 'ctl');
+      const open = mk('button', 'btn'); open.type = 'button'; open.textContent = 'Open'; open.disabled = r.id === DID;
+      const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = 'Delete';
+      let armed = 0;
+      open.addEventListener('click', () => {
+        saveDraft();
+        applyDraft(r); clearUndo(); syncData(); syncUI(); schedule(); renderChecks(); renderRecent();
+        say('dstatus', 'Opened: ' + ((r.name || '').trim() || 'Untitled card'), null, false);
+      });
+      del.addEventListener('click', () => {
+        if (!armed) { armed = 1; del.textContent = 'Sure?'; setTimeout(() => { armed = 0; del.textContent = 'Delete'; }, 3000); return; }
+        const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== r.id); if (dd.cur === r.id) dd.cur = null; putDrafts(dd);
+        if (DID === r.id) DID = null;
+        renderRecent();
+      });
+      ctl.append(open, del); head.append(b, ctl); item.append(head, meta); box.appendChild(item);
+    });
+  }
+
+  /* Controllo della carta */
+  let CHKSIG = '';
+  const MACRO_BAD = /\{\{user\}\}\s+(?:says?|said|replies|replied|answers?|answered|nods?|nodded|smiles?|smiled|feels?|felt|thinks?|thought|walks?|walked|takes?|took|looks?|looked|whispers?|whispered|laughs?|laughed|sighs?|sighed|steps?|stepped|turns?|turned|asks?|asked)\b|^\s*\{\{user\}\}\s*:/im;
+  function runChecks() {
+    const out = [];
+    const add = (lvl, msg, go) => out.push({ lvl, msg, go });
+    const t = k => tok(K[k] || '');
+    const on = K.entries.filter(e => e.enabled);
+    const fixed = ['description', 'personality', 'scenario', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'].reduce((a, k) => a + t(k), 0) + on.filter(e => e.constant).reduce((a, e) => a + tok(e.content), 0);
+    if (!K.name.trim()) add('err', 'The card has no name: the PNG cannot be exported.', 'd-char');
+    if (!K.description.trim()) add('warn', 'The description is empty. It is the core of the character and is always sent to the model.', 'd-char');
+    else if (t('description') < 40) add('tip', 'The description is very short (' + t('description') + ' tokens). Appearance, speech and background help the model stay in character.', 'd-char');
+    if (fixed > 1500) add('warn', 'Permanent tokens are about ' + nf(fixed) + '. Above roughly 1,500 they eat a large part of small context windows: trim, or move details into lorebook entries.', 'd-char');
+    if (!K.first_mes.trim()) add('warn', 'There is no first message: the chat will start empty.', 'd-first');
+    const greetings = [['the first message', K.first_mes]].concat(K.alt.map((s, i) => ['alternate message ' + (i + 1), s]), K.group.map((s, i) => ['group greeting ' + (i + 1), s]));
+    greetings.forEach(([n, s]) => { if (s && MACRO_BAD.test(s)) add('warn', 'In ' + n + ', {{user}} seems to speak or act. Greetings should only write {{char}} and the scene.', 'd-first'); });
+    const fields = [['description', K.description, 'd-char'], ['personality', K.personality, 'd-char'], ['scenario', K.scenario, 'd-char'], ['first message', K.first_mes, 'd-first'], ['dialogue examples', K.mes_example, 'd-ex'], ['main prompt', K.system_prompt, 'd-adv'], ['post-history instructions', K.post_history, 'd-adv'], ["character's note", K.dp_prompt, 'd-adv']];
+    K.alt.forEach((s, i) => fields.push(['alternate message ' + (i + 1), s, 'd-first']));
+    fields.forEach(([n, s, go]) => { if (s && ((s.match(/\{\{/g) || []).length !== (s.match(/\}\}/g) || []).length)) add('warn', 'Unbalanced {{ }} in the ' + n + '. A macro will not be replaced.', go); });
+    if (K.mes_example.trim() && !/<START>/i.test(K.mes_example)) add('warn', 'The dialogue examples have no <START> line. SillyTavern uses it to separate examples.', 'd-ex');
+    if (!K.mes_example.trim()) add('tip', 'No dialogue examples. A few short exchanges teach a character\'s voice better than any description.', 'd-ex');
+    K.entries.forEach((e, i) => {
+      const nm = 'Lorebook entry ' + (i + 1) + (e.title.trim() ? ' (' + e.title.trim() + ')' : '');
+      if (!e.content.trim()) add('warn', nm + ' has no content.', 'd-lore');
+      else if (e.enabled && !e.constant && !split(e.keys).length) add('warn', nm + ' has no keywords and is not "always on": it will never trigger.', 'd-lore');
+    });
+    const blank = K.alt.filter(s => !s.trim()).length + K.group.filter(s => !s.trim()).length;
+    if (blank) add('tip', blank + ' empty alternate/group greeting' + (blank > 1 ? 's are' : ' is') + ' not exported.', 'd-first');
+    if (!IMG) add('warn', 'The cover still uses the sample image. Upload your own PNG in the Cover tab.', 'cover');
+    const meta = [!K.tags.trim() && 'tags', !K.creator.trim() && 'creator', !K.notes.trim() && "creator's notes"].filter(Boolean);
+    if (meta.length) add('tip', 'Missing ' + meta.join(', ') + '. Optional, but useful once you share the card.', 'd-meta');
+    const rank = { err: 0, warn: 1, tip: 2 };
+    return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
+  }
+  function goTo(id) {
+    if (id === 'cover') { showView('cover'); return; }
+    showView('dati');
+    const h = $(id); if (!h) return;
+    const d = h.closest('details');
+    if (d) d.open = true;
+    setTimeout(() => window.scrollTo({ top: Math.max(0, h.getBoundingClientRect().top + window.scrollY - 190), behavior: 'smooth' }), 60);
+  }
+  function renderChecks() {
+    const res = runChecks();
+    const sig = JSON.stringify(res);
+    if (sig === CHKSIG) return;
+    CHKSIG = sig;
+    const issues = res.filter(r => r.lvl !== 'tip').length, tips = res.length - issues;
+    const badge = $('chkBadge');
+    badge.textContent = res.length ? String(res.length) : 'OK';
+    badge.classList.toggle('bad', issues > 0);
+    const box = $('chkList');
+    box.textContent = '';
+    if (!res.length) { const p = mk('p', 'sm'); p.textContent = 'Nothing to report. The card looks complete.'; box.appendChild(p); }
+    const LBL = { err: 'Error', warn: 'Warning', tip: 'Tip' };
+    res.forEach(r => {
+      const row = mk('div', 'chk-row ' + r.lvl), tag = mk('span', 'chk-tag'), msg = mk('span', 'chk-msg'), go = mk('button', 'btn quiet');
+      tag.textContent = LBL[r.lvl]; msg.textContent = r.msg; go.type = 'button'; go.textContent = 'Go'; go.addEventListener('click', () => goTo(r.go));
+      row.append(tag, msg, go); box.appendChild(row);
+    });
+    const line = $('chkline');
+    line.textContent = '';
+    const s = mk('span'); s.textContent = res.length ? 'Card check: ' + (issues ? issues + ' to review' : 'no warnings') + (tips ? ', ' + tips + ' tip' + (tips > 1 ? 's' : '') : '') + '.' : 'Card check: all good.';
+    line.appendChild(s);
+    if (res.length) { const b = mk('button', 'btn quiet'); b.type = 'button'; b.textContent = 'Review'; b.addEventListener('click', () => goTo('d-chk')); line.appendChild(b); }
+    line.classList.toggle('warn', issues > 0);
+  }
+
+  /* Generazione dell'intera carta da un'idea */
+  const GEN = [['name', 'Name'], ['description', 'Description'], ['personality', 'Personality summary'], ['scenario', 'Scenario'], ['first_mes', 'First message'], ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['tagline', 'Cover tagline'], ['lore', 'Lorebook entries']];
+  const GEN_SYS = ['You are an expert author of SillyTavern roleplay character cards.',
+    'Write the requested field from scratch, from the author\'s idea, optimized for that field.',
+    'Rules: output ONLY the final text for the field, with no preface, no explanation, no markdown fences and no surrounding quotes.',
+    'Always write in English, even if the idea is in another language.',
+    'Stay consistent with the card context. Use {{char}} and {{user}} macros where natural. Never write {{user}}\'s actions, thoughts or speech.',
+    'Be token-efficient: concrete, no filler, no repetition.'].join('\n');
+  function genMessages(kind, idea) {
+    const g = WF[kind], ctx = [];
+    if (K.name.trim() && kind !== 'name') ctx.push('Name: ' + K.name.trim());
+    ['description', 'personality', 'scenario'].forEach(k => { if (k !== kind && K[k].trim()) ctx.push(WF[k][0] + ': ' + K[k].trim().slice(0, 1400)); });
+    if (kind === 'mes_example' && K.first_mes.trim()) ctx.push('First message: ' + K.first_mes.trim().slice(0, 800));
+    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + '\n';
+    if (ctx.length) u += '\nCARD CONTEXT (stay consistent, do not copy):\n' + ctx.join('\n') + '\n';
+    u += '\nAUTHOR IDEA (any language):\n<<<\n' + idea + '\n>>>\n\nReturn only the final English text for this field.';
+    return [{ role: 'system', content: GEN_SYS }, { role: 'user', content: u }];
+  }
+  function parseJSONArray(t) {
+    const a = t.indexOf('['), b = t.lastIndexOf(']');
+    if (a < 0 || b <= a) return [];
+    try { const j = JSON.parse(t.slice(a, b + 1)); return Array.isArray(j) ? j : []; } catch (e) { return []; }
+  }
+  async function suggestLore(idea, signal) {
+    const ctx = [];
+    if (K.name.trim()) ctx.push('Name: ' + K.name.trim());
+    if (K.description.trim()) ctx.push('Description: ' + K.description.trim().slice(0, 1800));
+    if (K.scenario.trim()) ctx.push('Scenario: ' + K.scenario.trim().slice(0, 800));
+    if (idea) ctx.push('Author idea: ' + idea.slice(0, 800));
+    const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
+    const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
+      (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
+      '\n\nReturn ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [3 to 6 short lowercase trigger keywords], "content": string}. The content is 1 to 4 concise English sentences of neutral prose that name the subject first. Do not contradict the card; you may expand the setting plausibly.';
+    const r = await callLLM([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 });
+    return parseJSONArray(r.text).map(x => ({
+      title: str(x && x.title).trim().slice(0, 80),
+      keys: (Array.isArray(x && x.keys) ? x.keys.map(String) : split(x && x.keys)).map(s => s.trim()).filter(Boolean).slice(0, 8).join(', '),
+      content: str(x && x.content).trim()
+    })).filter(x => x.content.length >= 10).slice(0, 8);
+  }
+  const loreEntry = x => Object.assign(newEntry(), { title: x.title, keys: x.keys, content: x.content, open: false });
+  let GEN_CTL = null;
+  function genReady() {
+    const ok = apiReady(), has = $('genIdea').value.trim().length >= 10, busy = !!GEN_CTL;
+    $('genGo').disabled = !ok || !has || busy;
+    $('genNote').textContent = ok ? 'Describe the character in a few lines, in any language. The selected fields are written one at a time in English, each with the rules for that field, and you can undo the whole generation.' : 'Set up an API in the API tab first (or use "Claude (built-in)" inside the artifact).';
+  }
+  async function genRun() {
+    if (GEN_CTL || !apiReady()) return;
+    const idea = $('genIdea').value.trim();
+    if (idea.length < 10) return;
+    const mode = document.querySelector('input[name="genMode"]:checked').value;
+    const picks = GEN.filter(([k]) => $('gf-' + k).checked);
+    if (!picks.length) { $('genStatus').textContent = 'Select at least one field.'; return; }
+    const snap = JSON.stringify(K), snapDesc = S.desc, pristine = isPristine();
+    if (pristine) { K.name = ''; K.description = ''; }
+    GEN_CTL = new AbortController();
+    $('genStop').hidden = false; genReady();
+    const st = $('genStatus'); st.classList.remove('warn');
+    let changed = 0, skipped = 0, failed = null;
+    try {
+      for (let i = 0; i < picks.length; i++) {
+        const [k, label] = picks[i];
+        if (GEN_CTL.signal.aborted) break;
+        if (k === 'lore') {
+          st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + picks.length + ')…';
+          const items = await suggestLore(idea, GEN_CTL.signal);
+          items.forEach(x => K.entries.push(loreEntry(x)));
+          if (items.length) { changed++; afterModel(); }
+          continue;
+        }
+        if (mode === 'empty' && String(k === 'tagline' ? (pristine ? '' : S.desc) : K[k] || '').trim()) { skipped++; continue; }
+        st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + picks.length + ')…';
+        const r = await callLLM(genMessages(k, idea), { signal: GEN_CTL.signal, maxTokens: k === 'mes_example' ? 2000 : 1400 });
+        let v = cleanOut(r.text);
+        if (k === 'name') v = v.split('\n')[0].replace(/^name\s*:\s*/i, '').replace(/["*#]/g, '').trim().slice(0, 80);
+        if (k === 'tags') v = v.replace(/#/g, '').replace(/\n+/g, ', ').trim();
+        if (!v) continue;
+        if (k === 'tagline') { S.desc = v.replace(/\n+/g, ' ').slice(0, 140); syncUI(); } else K[k] = v;
+        changed++; afterModel();
+      }
+    } catch (e) { failed = e; }
+    GEN_CTL = null; $('genStop').hidden = true;
+    if (changed) pushUndo('generated card', () => { K = sanitize(JSON.parse(snap)); S.desc = snapDesc; syncUI(); afterModel(); });
+    else if (pristine) { K = sanitize(JSON.parse(snap)); afterModel(); }
+    if (failed && failed.code !== 'abort') { const k = errKey(failed); st.textContent = tr(k[0], k[1] || null) + (changed ? ' What was written so far is kept (you can undo it).' : ''); st.classList.add('warn'); }
+    else st.textContent = (failed ? 'Stopped. ' : 'Done. ') + changed + ' field' + (changed === 1 ? '' : 's') + ' written' + (skipped ? ', ' + skipped + ' already filled and left as they are' : '') + '.';
+    genReady();
+  }
+
+  /* Suggerimenti per il lorebook (finestra) */
+  function openLore() {
+    if (!apiReady()) return;
+    const st = { mode: 'lore', busy: true, items: [], msg: null, ctl: new AbortController(), label: 'Lorebook suggestions' };
+    WD = st; drawWd(); if (!$('wdlg').open) $('wdlg').showModal();
+    loreRun(st);
+  }
+  async function loreRun(st) {
+    st.busy = true; st.msg = null; st.ctl = new AbortController(); drawWd();
+    try {
+      const items = await suggestLore('', st.ctl.signal);
+      if (WD !== st) return;
+      st.items = items.map(x => Object.assign({ on: true }, x));
+      if (!items.length) st.msg = ['The model returned no usable entries. Try again, or add a longer description first.'];
+    } catch (e) {
+      if (WD !== st) return;
+      st.msg = e && e.code === 'abort' ? ['Stopped.'] : errKey(e); st.warn = !(e && e.code === 'abort');
+    }
+    if (WD === st) { st.busy = false; st.ctl = null; drawWd(); }
+  }
+  function drawLore(st) {
+    const box = $('wdbody');
+    const head = mk('div', 'wdh'), h = mk('h3'), x = mk('button', 'btn quiet');
+    h.textContent = '🪄 Lorebook suggestions'; x.type = 'button'; x.textContent = 'Close'; x.addEventListener('click', closeWd);
+    head.append(h, x); box.appendChild(head);
+    const p = mk('p', 'sm'); p.textContent = st.busy ? 'Reading the card and thinking up entries…' : (st.items.length ? 'Untick what you do not want and edit freely. Entries fire only when their keywords appear in the chat.' : ''); if (p.textContent) box.appendChild(p);
+    st.items.forEach(it => {
+      const w = mk('div', 'item'), top = mk('label', 'chk'), cb = mk('input'), t = mk('input'), k = mk('input'), c = mk('textarea');
+      cb.type = 'checkbox'; cb.checked = it.on; cb.addEventListener('change', () => { it.on = cb.checked; drawLoreBtns(); });
+      t.type = 'text'; t.value = it.title; t.setAttribute('aria-label', 'Title'); t.addEventListener('input', () => { it.title = t.value; });
+      k.type = 'text'; k.value = it.keys; k.setAttribute('aria-label', 'Keywords'); k.placeholder = 'Keywords, comma-separated'; k.addEventListener('input', () => { it.keys = k.value; });
+      c.rows = 3; c.value = it.content; c.setAttribute('aria-label', 'Content'); c.addEventListener('input', () => { it.content = c.value; });
+      top.append(cb, document.createTextNode(' Add this entry')); w.append(top, t, k, c); box.appendChild(w);
+    });
+    const row = mk('div', 'ctl'); row.id = 'loreRow'; box.appendChild(row);
+    function drawLoreBtns() {
+      row.textContent = '';
+      const n = st.items.filter(i => i.on).length;
+      const add = mk('button', 'btn primary'); add.type = 'button'; add.textContent = 'Add ' + n + ' selected'; add.disabled = st.busy || !n;
+      add.addEventListener('click', () => {
+        const made = st.items.filter(i => i.on && i.content.trim()).map(loreEntry);
+        if (!made.length) return;
+        K.entries.push(...made); afterModel();
+        pushUndo('added ' + made.length + ' lorebook entr' + (made.length > 1 ? 'ies' : 'y'), () => { K.entries = K.entries.filter(e => !made.includes(e)); afterModel(); });
+        closeWd();
+      });
+      const again = mk('button', 'btn'); again.type = 'button'; again.textContent = st.items.length ? 'Suggest others' : 'Try again'; again.disabled = st.busy; again.addEventListener('click', () => loreRun(st));
+      row.append(add, again);
+      if (st.busy) { const s = mk('span', 'sm'); s.textContent = 'Working…'; const stop = mk('button', 'btn quiet'); stop.type = 'button'; stop.textContent = 'Stop'; stop.addEventListener('click', () => { if (st.ctl) st.ctl.abort(); }); row.append(s, stop); }
+    }
+    drawLoreBtns();
+    if (st.msg) { const m = mk('p', 'sm' + (st.warn ? ' warn' : '')); m.setAttribute('role', 'status'); m.textContent = tr(st.msg[0], st.msg[1] || null); box.appendChild(m); }
+  }
+
+  /* Importa un lorebook esistente */
+  function parseBook(j) {
+    const book = (j && (j.character_book || (j.data && j.data.character_book))) || j || {};
+    const raw = book.entries;
+    const arr = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
+    const num = (v, d) => (v === null || v === '' || v === undefined || !Number.isFinite(+v)) ? d : +v;
+    const keys = v => Array.isArray(v) ? v.join(', ') : str(v);
+    return {
+      name: str(book.name) || str(j && j.name),
+      list: arr.filter(e => e && typeof e === 'object').slice(0, 500).map(e => {
+        const x = e.extensions || {};
+        const pos = Number.isInteger(x.position) ? x.position : (Number.isInteger(e.position) ? e.position : (e.position === 'before_char' ? 0 : 1));
+        return sanitizeEntry({
+          title: str(e.comment) || str(e.name) || str(e.title), keys: keys(e.keys || e.key), sec: keys(e.secondary_keys || e.keysecondary), content: e.content,
+          enabled: e.disable === true ? false : e.enabled !== false, constant: !!e.constant, pos,
+          depth: num(x.depth !== undefined ? x.depth : e.depth, 4), role: num(x.role !== undefined ? x.role : e.role, 0),
+          order: num(e.insertion_order !== undefined ? e.insertion_order : e.order, 100),
+          prob: num(x.probability !== undefined ? x.probability : e.probability, 100),
+          logic: num(x.selectiveLogic !== undefined ? x.selectiveLogic : e.selectiveLogic, 0), open: false
+        });
+      })
+    };
+  }
+  $('entImportBtn').addEventListener('click', () => $('entImport').click());
+  $('entImport').addEventListener('change', async ev => {
+    const f = ev.target.files[0];
+    ev.target.value = '';
+    if (!f) return;
+    const st = $('loreStatus');
+    try {
+      const b = parseBook(JSON.parse(await f.text()));
+      if (!b.list.length) throw new Error('empty');
+      K.entries.push(...b.list);
+      if (!K.book.trim() && b.name) K.book = b.name.slice(0, 120);
+      afterModel();
+      pushUndo('imported lorebook', () => { K.entries = K.entries.filter(e => !b.list.includes(e)); afterModel(); });
+      st.textContent = 'Imported ' + b.list.length + ' entr' + (b.list.length > 1 ? 'ies' : 'y') + ' from ' + f.name + '. They are added after the existing ones.';
+      st.classList.remove('warn');
+    } catch (e) {
+      st.textContent = 'No lorebook entries found in this file. Use a SillyTavern World Info export or a card JSON that contains a lorebook.'; st.classList.add('warn');
+    }
+  });
+  $('entSuggest').addEventListener('click', openLore);
+
+  function initFeatures() {
+    const box = $('genFields');
+    GEN.forEach(([k, label]) => {
+      const l = mk('label', 'chk'), c = mk('input');
+      c.type = 'checkbox'; c.id = 'gf-' + k; c.checked = k !== 'lore';
+      l.append(c, document.createTextNode(' ' + label)); box.appendChild(l);
+    });
+    $('genIdea').addEventListener('input', genReady);
+    $('genGo').addEventListener('click', genRun);
+    $('genStop').addEventListener('click', () => { if (GEN_CTL) GEN_CTL.abort(); });
+    renderRecent(); renderChecks(); genReady(); drawUndo(); refreshLoreBtn();
+  }
+  function refreshLoreBtn() { const ok = apiReady() && K.description.trim().length >= 30; $('entSuggest').disabled = !ok; $('entSuggest').title = ok ? '' : 'Needs an API and a description of at least a few lines'; }
+
   /* ---------- Avvio ---------- */
   restore();
+  initDrafts();
   loadGallery();
   initLive();
   applyLangUI();
   apiInit();
+  initFeatures();
   syncData();
   syncUI();
   ensureFonts();
-  showView(['cover', 'api'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'dati');
+  showView('dati');
   render();
+  DREADY = true;
+  renderRecent();
 })();
 </script>
 </body></html>
