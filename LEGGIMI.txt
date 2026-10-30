@@ -1,0 +1,21 @@
+ST Card Creator - versione per Windows (exe)
+
+Serve Node.js (versione LTS) installato sul PC: https://nodejs.org
+
+1) Apri un terminale in questa cartella.
+2) npm install
+3) Per provare l'app senza creare l'exe:   npm start
+4) Per creare l'exe:                       npm run dist
+   Il file finale e' dist\ST-Card-Creator.exe (portatile, non richiede installazione, circa 90-100 MB).
+
+Note
+- Windows SmartScreen puo' avvisare perche' l'exe non e' firmato: "Ulteriori informazioni" > "Esegui comunque".
+- I font di Google Fonts richiedono la connessione a internet. Offline l'app funziona con i font di riserva.
+- Lingua, tema e stile vengono ricordati tra un avvio e l'altro; testi e immagini no.
+- Per modificare l'app, cambia app\index.html e rigenera l'exe.
+
+Senza installare nulla sul PC (con GitHub)
+1) Crea un repository su github.com e carica tutto il contenuto di questa cartella, comprese .github e .gitignore.
+2) Vai nella scheda Actions, scegli "Build exe" e premi "Run workflow".
+3) Dopo circa 3-5 minuti apri l'esecuzione conclusa e scarica "ST-Card-Creator" dagli Artifacts: dentro c'e' l'exe.
+   In alternativa, crea un tag che inizia con v (es. v1.0.0): l'exe viene allegato in automatico alla release.

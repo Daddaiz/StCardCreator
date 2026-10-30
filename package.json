@@ -1,0 +1,22 @@
+{
+  "name": "st-card-creator",
+  "version": "1.0.0",
+  "description": "ST Card Creator",
+  "main": "main.js",
+  "author": "TheDICE",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --publish never"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "it.thedice.stcardcreator",
+    "productName": "ST Card Creator",
+    "files": ["main.js", "app/**/*", "build/icon.ico"],
+    "win": { "target": ["portable"], "icon": "build/icon.ico" },
+    "portable": { "artifactName": "ST-Card-Creator.exe" }
+  }
+}

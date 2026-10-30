@@ -1,0 +1,1941 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body>
+<title>ST Card Creator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Layout: controlli a sinistra separati da filetti, palco fisso a destra con la carta e le miniature alla dimensione reale. */
+  :root {
+    --bg: #eceef3;
+    --surface: #f6f7fa;
+    --raised: #ffffff;
+    --stage: #dde1e9;
+    --line: #d3d8e1;
+    --fg: #161922;
+    --muted: #586172;
+    --accent: #2b5bd1;
+    --accent-fg: #ffffff;
+    --sel: #e3eafb;
+    --warn: #a8480a;
+    --logo-glow: none;
+    --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
+      --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 238, 200, 0.85)) drop-shadow(0 0 10px rgba(255, 214, 140, 0.45));
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
+    --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 238, 200, 0.85)) drop-shadow(0 0 10px rgba(255, 214, 140, 0.45));
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font: 15px/1.45 var(--font-ui);
+    padding-block: 28px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .app { max-width: 1080px; margin-inline: auto; }
+  .top { margin-bottom: 24px; }
+  h1 { font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance; }
+  .top p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+  .layout { display: grid; gap: 28px; align-items: start; }
+  @media (min-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; } }
+
+  .controls { min-width: 0; }
+  .block { border-top: 1px solid var(--line); padding-block: 20px; display: grid; gap: 14px; }
+  .block:first-child { border-top: 0; padding-top: 0; }
+  .sub { display: grid; gap: 14px; }
+  h2 { margin: 0; font: 500 12px/1 var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+
+  .fld { display: grid; gap: 6px; }
+  .fld > span, .rng > span { font-size: 13px; font-weight: 500; }
+  input[type="text"], textarea, select {
+    width: 100%; font: inherit; color: inherit; background: var(--raised);
+    border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px;
+  }
+  textarea { resize: vertical; min-height: 72px; line-height: 1.4; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .rng { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; }
+  .rng input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+  output { font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .inline { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+  .chk { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; font-size: 14px; }
+  .chk input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+
+  .btn {
+    font: 500 14px var(--font-ui); padding: 9px 14px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--line); background: var(--raised); color: var(--fg);
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .btn.primary:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn.quiet { background: none; border-color: transparent; color: var(--muted); padding-inline: 4px; text-decoration: underline; text-underline-offset: 3px; }
+
+  .filerow { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--font-mono); font-size: 12px; }
+  .hint { margin: 0; font-size: 13px; color: var(--muted); }
+  .hint.warn { color: var(--warn); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chips button {
+    flex: 1 1 auto; font: 500 13px var(--font-ui); padding: 8px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--raised); color: var(--fg); cursor: pointer;
+  }
+  .chips button:hover { border-color: var(--muted); }
+  .chips button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .chips.fit button { flex: 0 0 auto; padding-inline: 14px; }
+
+  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .tabs button {
+    text-align: left; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--raised); color: var(--fg); cursor: pointer; display: grid; gap: 2px; min-width: 0;
+  }
+  .tabs button small { font: 500 11px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .tabs button span { font-size: 17px; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tabs button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--sel); }
+
+  .flist { position: relative; height: 270px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
+  .grp { position: sticky; top: 0; z-index: 1; padding: 7px 12px; font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: var(--surface); border-bottom: 1px solid var(--line); }
+  .fitem { display: block; width: 100%; text-align: left; padding: 7px 12px; font-size: 21px; line-height: 1.25; background: none; border: 0; color: inherit; cursor: pointer; }
+  .fitem:hover { background: var(--surface); }
+  .fitem[aria-pressed="true"] { background: var(--sel); }
+  .fitem[aria-pressed="true"]::after { content: " \2713"; font: 500 14px var(--font-ui); color: var(--accent); }
+  .empty { margin: 0; padding: 16px 12px; font-size: 13px; color: var(--muted); }
+
+  .colors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+  .color { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+  .color input { width: 40px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); cursor: pointer; flex: none; }
+
+  #gbar { height: 22px; border-radius: 6px; border: 1px solid var(--line); }
+  .stops { display: grid; gap: 8px; }
+  .stop { display: grid; grid-template-columns: 40px minmax(0, 1fr) 44px auto; gap: 10px; align-items: center; }
+  .stop input[type="color"] { width: 40px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); cursor: pointer; }
+  .stop input[type="range"] { width: 100%; accent-color: var(--accent); margin: 0; }
+  .stop output { text-align: right; }
+
+  .stage { min-width: 0; display: grid; gap: 16px; }
+  @media (min-width: 900px) { .stage { position: sticky; top: 164px; max-height: calc(100vh - 184px); overflow: auto; padding-bottom: 2px; } }
+  @media (max-width: 899px) { .stage { order: -1; } }
+  .cardwrap { background: var(--stage); border-radius: 12px; padding: 18px; display: grid; place-items: center; }
+  .cardwrap.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
+  #card { display: block; width: min(100%, 340px); height: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
+  .export { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .export select { width: auto; flex: none; }
+  .export .btn.primary { flex: 1 1 auto; min-width: 150px; }
+  #status { min-height: 1.4em; }
+
+  .minis { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+  .minis figure { margin: 0; display: grid; gap: 6px; justify-items: start; }
+  .minis canvas { display: block; outline: 1px solid var(--line); }
+  .minis figcaption { font: 400 11px var(--font-mono); color: var(--muted); }
+
+  /* Barra superiore e cambio vista */
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 30; }
+  .bar {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+    padding-block: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line);
+  }
+  .brand { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .views { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
+  .views button { font: 500 14px var(--font-ui); padding: 8px 20px; border: 0; border-left: 1px solid var(--line); background: none; color: var(--fg); cursor: pointer; }
+  .views button:first-child { border-left: 0; }
+  .views button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+  .tot { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px 16px; font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tot b { color: var(--fg); font-weight: 500; }
+
+  /* Vista Dati */
+  input[type="number"] { width: 100%; font: inherit; color: inherit; background: var(--raised); border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px; }
+  .dview { max-width: 860px; margin-inline: auto; }
+  .df { display: grid; gap: 6px; min-width: 0; }
+  .dfh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .dfh b { font-size: 13px; font-weight: 500; }
+  .tk { font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tk.off { opacity: 0.8; }
+  .sm { font-size: 12px; color: var(--muted); margin: 0; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .item { border: 1px solid var(--line); border-radius: 8px; background: var(--raised); padding: 12px; display: grid; gap: 10px; }
+  .item textarea { background: var(--surface); }
+  .ihead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ihead b { font-size: 13px; font-weight: 500; }
+  .stack { display: grid; gap: 10px; }
+  details.entry { border: 1px solid var(--line); border-radius: 8px; background: var(--raised); }
+  details.entry > summary { list-style: none; cursor: pointer; padding: 10px 12px; display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+  details.entry > summary::-webkit-details-marker { display: none; }
+  details.entry > summary::before { content: "\25B8"; color: var(--muted); width: 12px; }
+  details.entry[open] > summary::before { content: "\25BE"; }
+  .etitle { flex: 1 1 140px; min-width: 0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { font: 500 11px var(--font-mono); padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line); color: var(--muted); }
+  .ebody { padding: 14px 12px; display: grid; gap: 14px; border-top: 1px solid var(--line); }
+  .ebody textarea { background: var(--surface); }
+  .egrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 8px; }
+  input[type="range"].wide { width: 100%; accent-color: var(--accent); }
+  .ends { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+  .jump { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .logo { display: block; height: 112px; width: auto; max-width: 100%; filter: var(--logo-glow); }
+  .flags { display: flex; gap: 8px; align-items: center; }
+  .flag { width: 38px; height: 28px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; background: none; cursor: pointer; display: block; opacity: 0.65; }
+  .flag svg { display: block; width: 100%; height: 100%; }
+  .flag:hover { opacity: 1; }
+  .flag[aria-pressed="true"] { border-color: var(--accent); opacity: 1; }
+  .btn.armed { border-color: var(--warn); color: var(--warn); }
+  .themes { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--raised); }
+  .themes button { border: 0; border-left: 1px solid var(--line); background: none; color: var(--muted); width: 38px; height: 30px; display: grid; place-items: center; cursor: pointer; padding: 0; }
+  .themes button:first-child { border-left: 0; }
+  .themes button:hover { color: var(--fg); }
+  .themes button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+</style>
+
+<main class="app">
+  <header class="bar">
+    <h1 class="brand"><img class="logo" src="logo.png" width="358" height="140" alt="ST Card Creator"></h1>
+    <nav class="views" aria-label="Vista">
+      <button type="button" data-view="dati" aria-pressed="true">Dati</button>
+      <button type="button" data-view="cover" aria-pressed="false">Cover</button>
+    </nav>
+    <button type="button" class="btn" id="dnew">Nuova carta</button>
+    <div class="tot" aria-live="polite">
+      <span>Totale <b id="totAll">0</b> token</span>
+      <span>Fissi <b id="totFix">0</b> token</span>
+    </div>
+    <div class="themes" role="group" aria-label="Aspetto">
+      <button type="button" data-theme-set="light" aria-pressed="false" title="Modalità normale" aria-label="Modalità normale">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <button type="button" data-theme-set="dark" aria-pressed="true" title="Modalità scura" aria-label="Modalità scura">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+    <div class="flags" role="group" aria-label="Lingua">
+      <button type="button" class="flag" data-lang="it" aria-pressed="true" title="Italiano" aria-label="Italiano">
+        <svg viewBox="0 0 3 2" aria-hidden="true" focusable="false"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#ffffff"/><rect x="2" width="1" height="2" fill="#ce2b37"/></svg>
+      </button>
+      <button type="button" class="flag" data-lang="en" aria-pressed="false" title="English" aria-label="English">
+        <svg viewBox="0 0 60 30" preserveAspectRatio="none" aria-hidden="true" focusable="false"><clipPath id="fl-s"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="fl-t"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(#fl-s)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#ffffff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#fl-t)" stroke="#c8102e" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#ffffff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#c8102e" stroke-width="6"/></g></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="view-cover" hidden>
+  <div class="layout">
+    <div class="controls">
+
+      <section class="block" aria-labelledby="h-img">
+        <h2 id="h-img">Immagine</h2>
+        <div class="filerow">
+          <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          <button type="button" class="btn" id="pick">Carica PNG</button>
+          <span id="fileinfo" class="muted mono">Immagine d'esempio</span>
+        </div>
+        <label class="rng"><span>Zoom</span><output data-out="zoom" data-suf="%"></output><input type="range" data-k="zoom" min="100" max="300" step="1"></label>
+        <label class="rng"><span>Sposta in orizzontale</span><output data-out="ox"></output><input type="range" data-k="ox" min="-100" max="100" step="1"></label>
+        <label class="rng"><span>Sposta in verticale</span><output data-out="oy"></output><input type="range" data-k="oy" min="-100" max="100" step="1"></label>
+      </section>
+
+      <section class="block" aria-labelledby="h-txt">
+        <h2 id="h-txt">Testo</h2>
+        <label class="chk"><input type="checkbox" data-k="nameLink"> Usa il nome della carta (vista Dati)</label>
+        <label class="fld"><span>Nome sulla copertina</span><input type="text" data-k="name" maxlength="80" autocomplete="off" spellcheck="false"></label>
+        <label class="fld"><span>Descrizione breve</span><textarea data-k="desc" rows="3" maxlength="220"></textarea></label>
+        <div class="inline">
+          <label class="chk"><input type="checkbox" data-k="upper"> Nome in maiuscolo</label>
+          <label class="chk"><input type="checkbox" data-k="rule"> Linea decorativa</label>
+        </div>
+        <div class="inline">
+          <span class="muted" style="font-size:13px">Allineamento</span>
+          <div class="chips fit" data-seg="align">
+            <button type="button" data-v="left" aria-pressed="false">Sinistra</button>
+            <button type="button" data-v="center" aria-pressed="false">Centro</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="h-font">
+        <h2 id="h-font">Font</h2>
+        <div class="tabs">
+          <button type="button" id="tabName" aria-pressed="true"><small>Nome</small><span id="tabNameF"></span></button>
+          <button type="button" id="tabDesc" aria-pressed="false"><small>Descrizione</small><span id="tabDescF"></span></button>
+        </div>
+        <div class="inline">
+          <label class="chk"><input type="checkbox" id="boldT"> <span id="boldLbl">Grassetto</span></label>
+        </div>
+        <input type="text" id="fsearch" placeholder="Cerca un font" aria-label="Cerca un font" autocomplete="off" spellcheck="false">
+        <div class="flist" id="flist"></div>
+        <form id="customForm" class="inline" style="flex-wrap:nowrap">
+          <input type="text" id="cname" placeholder="Altro font, es. Almendra SC" aria-label="Nome di un altro font di Google Fonts" autocomplete="off" spellcheck="false">
+          <button type="submit" class="btn" style="flex:none">Aggiungi</button>
+        </form>
+        <p id="cmsg" class="hint" aria-live="polite">Qualsiasi famiglia di fonts.google.com, scritta col nome esatto.</p>
+      </section>
+
+      <section class="block" aria-labelledby="h-style">
+        <h2 id="h-style">Stile del testo</h2>
+        <div class="chips" data-seg="template">
+          <button type="button" data-v="velo" aria-pressed="false">Velo</button>
+          <button type="button" data-v="pannello" aria-pressed="false">Pannello</button>
+          <button type="button" data-v="fascia" aria-pressed="false">Fascia</button>
+          <button type="button" data-v="contorno" aria-pressed="false">Contorno</button>
+        </div>
+        <label class="rng"><span>Dimensione del nome</span><output data-out="nameSize"></output><input type="range" data-k="nameSize" min="40" max="150" step="1"></label>
+        <label class="rng"><span>Dimensione della descrizione</span><output data-out="descSize"></output><input type="range" data-k="descSize" min="24" max="80" step="1"></label>
+        <label class="rng"><span>Distanza dal bordo in basso</span><output data-out="margin"></output><input type="range" data-k="margin" min="20" max="240" step="1"></label>
+        <label class="rng"><span>Intensità dello sfondo del testo</span><output data-out="panel" data-suf="%"></output><input type="range" data-k="panel" min="0" max="100" step="1"></label>
+        <label class="rng"><span>Contorno del testo</span><output data-out="outline" data-suf="%"></output><input type="range" data-k="outline" min="0" max="100" step="1"></label>
+        <div class="colors">
+          <label class="color"><input type="color" data-k="nameColor"> Nome</label>
+          <label class="color"><input type="color" data-k="descColor"> Descrizione</label>
+          <label class="color"><input type="color" data-k="accent"> Accento</label>
+          <label class="color"><input type="color" data-k="panelColor"> Sfondo del testo</label>
+        </div>
+        <div><button type="button" class="btn quiet" id="reset">Ripristina lo stile</button></div>
+      </section>
+
+      <section class="block" aria-labelledby="h-frame">
+        <h2 id="h-frame">Cornice</h2>
+        <label class="chk"><input type="checkbox" data-k="frameOn"> Mostra la cornice a due bordi</label>
+        <div class="sub" data-show="frameOn=true">
+          <div class="chips" data-seg="frameTarget" data-show="maskType!=none">
+            <button type="button" data-v="card" aria-pressed="false">Intorno alla carta</button>
+            <button type="button" data-v="hole" aria-pressed="false">Intorno al foro</button>
+          </div>
+          <label class="rng"><span>Distanza dal bordo</span><output data-out="frameInset"></output><input type="range" data-k="frameInset" min="0" max="160" step="1"></label>
+          <label class="rng"><span>Spessore del bordo esterno</span><output data-out="frame1W"></output><input type="range" data-k="frame1W" min="0" max="40" step="1"></label>
+          <label class="rng"><span>Spessore del bordo interno</span><output data-out="frame2W"></output><input type="range" data-k="frame2W" min="0" max="40" step="1"></label>
+          <label class="rng"><span>Distanza tra i due bordi</span><output data-out="frameGap"></output><input type="range" data-k="frameGap" min="0" max="60" step="1"></label>
+          <label class="rng"><span>Angoli arrotondati</span><output data-out="frameRadius"></output><input type="range" data-k="frameRadius" min="0" max="300" step="1"></label>
+          <div class="colors">
+            <label class="color"><input type="color" data-k="frame1Color"> Bordo esterno</label>
+            <label class="color"><input type="color" data-k="frame2Color"> Bordo interno</label>
+          </div>
+        </div>
+      </section>
+
+      <section class="block" aria-labelledby="h-mask">
+        <h2 id="h-mask">Maschera</h2>
+        <div class="chips" data-seg="maskType">
+          <button type="button" data-v="none" aria-pressed="false">Nessuna</button>
+          <button type="button" data-v="rect" aria-pressed="false">Rettangolare</button>
+          <button type="button" data-v="oval" aria-pressed="false">Ovale</button>
+          <button type="button" data-v="jagged" aria-pressed="false">Seghettata</button>
+          <button type="button" data-v="emboss" aria-pressed="false">Rilievo</button>
+        </div>
+        <p class="hint" data-show="maskType=none">Copre i bordi della carta e lascia l'immagine visibile in un foro al centro.</p>
+
+        <div class="sub" data-show="maskType!=none">
+          <label class="chk"><input type="checkbox" data-k="maskFit"> Adatta l'immagine al foro</label>
+          <label class="rng"><span>Margine laterale</span><output data-out="maskL"></output><input type="range" data-k="maskL" min="0" max="300" step="1"></label>
+          <label class="rng"><span>Margine in alto</span><output data-out="maskT"></output><input type="range" data-k="maskT" min="0" max="500" step="1"></label>
+          <label class="rng"><span>Margine in basso</span><output data-out="maskB"></output><input type="range" data-k="maskB" min="0" max="600" step="1"></label>
+          <label class="rng" data-show="maskType=rect|emboss"><span>Angoli del foro</span><output data-out="maskRadius"></output><input type="range" data-k="maskRadius" min="0" max="300" step="1"></label>
+          <label class="rng" data-show="maskType=jagged"><span>Dimensione dei denti</span><output data-out="maskTooth"></output><input type="range" data-k="maskTooth" min="12" max="120" step="1"></label>
+          <label class="rng"><span>Rilievo del bordo</span><output data-out="maskBevel" data-suf="%"></output><input type="range" data-k="maskBevel" min="0" max="100" step="1"></label>
+          <label class="rng"><span>Opacità della maschera</span><output data-out="maskAlpha" data-suf="%"></output><input type="range" data-k="maskAlpha" min="0" max="100" step="1"></label>
+
+          <div class="chips" data-seg="maskFill">
+            <button type="button" data-v="solid" aria-pressed="false">Tinta unita</button>
+            <button type="button" data-v="gradient" aria-pressed="false">Gradiente</button>
+            <button type="button" data-v="image" aria-pressed="false">Immagine</button>
+          </div>
+
+          <div class="colors" data-show="maskFill=solid">
+            <label class="color"><input type="color" data-k="maskColor"> Colore</label>
+          </div>
+
+          <div class="sub" data-show="maskFill=gradient">
+            <div id="gbar" aria-hidden="true"></div>
+            <div class="chips fit" data-seg="gradType">
+              <button type="button" data-v="linear" aria-pressed="false">Lineare</button>
+              <button type="button" data-v="radial" aria-pressed="false">Radiale</button>
+            </div>
+            <label class="rng" data-show="gradType=linear"><span>Angolo (0° da sinistra, 90° dall'alto)</span><output data-out="gradAngle" data-suf="°"></output><input type="range" data-k="gradAngle" min="0" max="360" step="1"></label>
+            <div class="stops" id="stops"></div>
+            <div><button type="button" class="btn" id="addStop">Aggiungi un colore</button></div>
+          </div>
+
+          <div class="sub" data-show="maskFill=image">
+            <div class="filerow">
+              <input id="mfile" type="file" accept="image/*" hidden>
+              <button type="button" class="btn" id="mpick">Carica immagine</button>
+              <span id="minfo" class="muted mono">Nessuna immagine caricata</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="stage" aria-label="Anteprima">
+      <div class="cardwrap" id="cardwrap">
+        <canvas id="card" width="800" height="1200" role="img" aria-label="Anteprima della carta"></canvas>
+      </div>
+      <p class="hint" id="hint">Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.</p>
+      <div class="export">
+        <select id="exportW" data-k="exportW" aria-label="Dimensione del file">
+          <option value="600">600 × 900</option>
+          <option value="800">800 × 1200</option>
+          <option value="1000">1000 × 1500</option>
+          <option value="1200">1200 × 1800</option>
+        </select>
+        <button type="button" class="btn primary" id="export">Scarica PNG</button>
+      </div>
+      <p class="hint" id="status" role="status" aria-live="polite"></p>
+      <p class="hint" id="embedinfo"></p>
+
+      <div style="display:grid;gap:12px">
+        <h2>In miniatura</h2>
+        <div class="minis">
+          <figure><canvas class="mini" data-w="140"></canvas><figcaption>140 px</figcaption></figure>
+          <figure><canvas class="mini" data-w="100"></canvas><figcaption>100 px</figcaption></figure>
+          <figure><canvas class="mini" data-w="64"></canvas><figcaption>64 px</figcaption></figure>
+        </div>
+        <p class="hint" id="smallcap"></p>
+      </div>
+    </aside>
+  </div>
+  </div>
+
+  <div id="view-data" class="dview">
+    <section class="block" aria-labelledby="d-act">
+      <h2 id="d-act">Carta</h2>
+      <div class="jump">
+        <input id="dimport" type="file" accept=".png,.json,image/png,application/json" hidden>
+        <button type="button" class="btn" id="dimportBtn">Importa PNG o JSON</button>
+        <button type="button" class="btn" id="djson">Scarica JSON</button>
+        <button type="button" class="btn primary" id="togo">Vai alla Cover</button>
+      </div>
+      <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.</p>
+      <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
+    </section>
+
+    <section class="block" aria-labelledby="d-char">
+      <h2 id="d-char">Personaggio</h2>
+      <label class="df"><span class="dfh"><b>Nome</b></span><input type="text" data-f="name" maxlength="120" autocomplete="off" spellcheck="false"></label>
+      <label class="df"><span class="dfh"><b>Descrizione del personaggio</b><span class="tk" data-tk="description"></span></span><textarea data-f="description" rows="10" spellcheck="false"></textarea></label>
+      <label class="df"><span class="dfh"><b>Sommario della personalità</b><span class="tk" data-tk="personality"></span></span><textarea data-f="personality" rows="4" spellcheck="false"></textarea></label>
+      <label class="df"><span class="dfh"><b>Scenario</b><span class="tk" data-tk="scenario"></span></span><textarea data-f="scenario" rows="4" spellcheck="false"></textarea></label>
+    </section>
+
+    <section class="block" aria-labelledby="d-first">
+      <h2 id="d-first">Messaggi iniziali</h2>
+      <label class="df"><span class="dfh"><b>Primo messaggio</b><span class="tk" data-tk="first_mes"></span></span><textarea data-f="first_mes" rows="8" spellcheck="false"></textarea></label>
+      <div class="stack">
+        <div class="dfh"><b style="font-size:13px;font-weight:500">Messaggi alternativi</b></div>
+        <div class="stack" id="altList"></div>
+        <div><button type="button" class="btn" id="altAdd">Aggiungi messaggio alternativo</button></div>
+      </div>
+      <details>
+        <summary class="sm" style="cursor:pointer">Saluti solo per le chat di gruppo</summary>
+        <div class="stack" style="margin-top:12px">
+          <div class="stack" id="grpList"></div>
+          <div><button type="button" class="btn" id="grpAdd">Aggiungi saluto di gruppo</button></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="block" aria-labelledby="d-ex">
+      <h2 id="d-ex">Esempi di dialogo</h2>
+      <label class="df"><span class="dfh"><b>Esempi di dialogo</b><span class="tk" data-tk="mes_example"></span></span><textarea data-f="mes_example" rows="9" spellcheck="false"></textarea></label>
+      <p class="sm">Inizia ogni esempio con &lt;START&gt; su una nuova riga.</p>
+    </section>
+
+    <section class="block" aria-labelledby="d-adv">
+      <h2 id="d-adv">Definizioni avanzate</h2>
+      <label class="df"><span class="dfh"><b>Prompt principale</b><span class="tk" data-tk="system_prompt"></span></span><textarea data-f="system_prompt" rows="3" spellcheck="false" placeholder="Se compilato sostituisce il prompt principale predefinito."></textarea></label>
+      <label class="df"><span class="dfh"><b>Post-History Instructions</b><span class="tk" data-tk="post_history"></span></span><textarea data-f="post_history" rows="3" spellcheck="false" placeholder="Se compilato sostituisce le istruzioni post-history predefinite."></textarea></label>
+      <label class="df"><span class="dfh"><b>Nota del personaggio</b><span class="tk" data-tk="dp_prompt"></span></span><textarea data-f="dp_prompt" rows="4" spellcheck="false" placeholder="Testo inserito in chat alla profondità e col ruolo scelti qui sotto."></textarea></label>
+      <div class="grid2">
+        <label class="df"><span class="dfh"><b>Profondità</b></span><input type="number" data-f="dp_depth" min="0" max="9999" step="1"></label>
+        <label class="df"><span class="dfh"><b>Ruolo</b></span>
+          <select data-f="dp_role"><option value="system">Sistema</option><option value="user">Utente</option><option value="assistant">Assistente</option></select>
+        </label>
+      </div>
+      <div class="df">
+        <span class="dfh"><b>Loquacità</b><span class="tk" id="talkOut"></span></span>
+        <input class="wide" type="range" data-f="talk" min="0" max="1" step="0.05" aria-label="Loquacità">
+        <div class="ends"><span>Timido</span><span>Normale</span><span>Chiacchierone</span></div>
+        <p class="sm">Quanto spesso il personaggio parla nelle chat di gruppo.</p>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="d-lore">
+      <h2 id="d-lore">Lorebook</h2>
+      <label class="df"><span class="dfh"><b>Nome del lorebook</b><span class="tk" id="bookTk"></span></span><input type="text" data-f="book" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Es. Lorebook di Kat"></label>
+      <div class="stack" id="entries"></div>
+      <div><button type="button" class="btn" id="entAdd">Aggiungi voce</button></div>
+    </section>
+
+    <section class="block" aria-labelledby="d-meta">
+      <h2 id="d-meta">Metadati del creatore</h2>
+      <p class="sm">Non vengono inviati al modello, quindi non entrano nei totali.</p>
+      <div class="grid2">
+        <label class="df"><span class="dfh"><b>Creato da</b></span><input type="text" data-f="creator" maxlength="120" autocomplete="off"></label>
+        <label class="df"><span class="dfh"><b>Versione del personaggio</b></span><input type="text" data-f="version" maxlength="40" autocomplete="off"></label>
+      </div>
+      <label class="df"><span class="dfh"><b>Note del creatore</b><span class="tk off" data-tk="notes"></span></span><textarea data-f="notes" rows="4" spellcheck="false"></textarea></label>
+      <label class="df"><span class="dfh"><b>Tag</b></span><input type="text" data-f="tags" autocomplete="off" spellcheck="false" placeholder="Separati da virgole"></label>
+    </section>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Lingua ---------- */
+  const LKEY = 'st-card-creator-lang';
+  const isIt = () => /^it/i.test((navigator.language || ''));
+  let LANG = isIt() ? 'it' : 'en';
+  try { const sv = localStorage.getItem(LKEY); if (sv === 'it' || sv === 'en') LANG = sv; } catch (e) { /* ignora */ }
+  const TKEY = 'st-card-creator-theme';
+  let THEME = 'dark';
+  try { const st0 = localStorage.getItem(TKEY); if (st0 === 'light' || st0 === 'dark') THEME = st0; } catch (e) { /* ignora */ }
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', THEME);
+    document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === THEME)));
+  }
+  applyTheme();
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => {
+    THEME = b.dataset.themeSet;
+    try { localStorage.setItem(TKEY, THEME); } catch (e) { /* ignora */ }
+    applyTheme();
+  }));
+  const EX = {
+    name: 'Kat',
+    desc: { it: 'Una gatta nera venuta da lontano. Di notte parla.', en: 'A black cat from far away. At night, she speaks.' },
+    description: {
+      it: 'Kat è una gatta nera venuta da un altro pianeta. Di giorno è un gatto che non parla; di notte prende forma di ragazza-gatta e torna a parlare.',
+      en: 'Kat is a black cat from another planet. By day she is a cat who cannot speak; by night she takes the shape of a cat-girl and speaks again.'
+    }
+  };
+
+  /* ---------- Dati ---------- */
+  const D = {
+    name: EX.name,
+    desc: EX.desc[LANG],
+    upper: false, rule: true, align: 'left',
+    nameFont: 'Cinzel', descFont: 'Lora', nameBold: true, descBold: true,
+    template: 'velo',
+    nameSize: 100, descSize: 54, margin: 64, panel: 75, outline: 25,
+    nameColor: '#f7f5f0', descColor: '#e8e5de', accent: '#e0a63a', panelColor: '#0a0d12',
+    zoom: 100, ox: 0, oy: 0,
+    frameOn: false, frameTarget: 'card', frameInset: 20, frame1W: 6, frame2W: 2, frameGap: 10, frameRadius: 0,
+    frame1Color: '#e0a63a', frame2Color: '#e0a63a',
+    maskType: 'none', maskFit: true, maskL: 60, maskT: 60, maskB: 240, maskRadius: 0, maskTooth: 36,
+    maskBevel: 0, maskAlpha: 100, maskFill: 'solid', maskColor: '#141a22',
+    gradType: 'linear', gradAngle: 90,
+    stops: [{ p: 0, c: '#1b2c3d' }, { p: 55, c: '#3a2b4d' }, { p: 100, c: '#0b0f15' }],
+    nameLink: true,
+    exportW: 800
+  };
+  const PRESET = {
+    velo:     { panel: 75, outline: 25, align: 'left' },
+    pannello: { panel: 72, outline: 0,  align: 'left' },
+    fascia:   { panel: 84, outline: 0,  align: 'center' },
+    contorno: { panel: 40, outline: 70, align: 'center' }
+  };
+  const ENUM = {
+    template: Object.keys(PRESET),
+    align: ['left', 'center'],
+    frameTarget: ['card', 'hole'],
+    maskType: ['none', 'rect', 'oval', 'jagged', 'emboss'],
+    maskFill: ['solid', 'gradient', 'image'],
+    gradType: ['linear', 'radial']
+  };
+  const COLOR_KEYS = ['nameColor', 'descColor', 'accent', 'panelColor', 'frame1Color', 'frame2Color', 'maskColor'];
+  const CATS = [
+    { id: 'fantasy', label: 'Fantasy', fonts: ['Cinzel', 'Cinzel Decorative', 'Uncial Antiqua', 'MedievalSharp', 'Almendra', 'Metamorphous', 'Macondo', 'Pirata One', 'UnifrakturMaguntia', 'Grenze Gotisch', 'New Rocker', 'Eagle Lake', 'IM Fell English', 'Fondamento'] },
+    { id: 'scifi', label: 'Fantascienza e tech', fonts: ['Orbitron', 'Audiowide', 'Exo 2', 'Rajdhani', 'Oxanium', 'Michroma', 'Share Tech Mono', 'Chakra Petch', 'Saira Condensed', 'Syncopate', 'Russo One', 'Teko'] },
+    { id: 'serif', label: 'Eleganti con grazie', fonts: ['Playfair Display', 'Cormorant Garamond', 'EB Garamond', 'Libre Baskerville', 'Lora', 'Merriweather', 'Crimson Pro', 'Bodoni Moda', 'DM Serif Display', 'Abril Fatface', 'Spectral'] },
+    { id: 'sans', label: 'Senza grazie', fonts: ['Montserrat', 'Oswald', 'Bebas Neue', 'Anton', 'Barlow Condensed', 'Raleway', 'Poppins', 'Josefin Sans', 'League Gothic', 'Archivo Black', 'Lexend'] },
+    { id: 'script', label: 'Corsivi e a mano', fonts: ['Caveat', 'Pacifico', 'Dancing Script', 'Great Vibes', 'Satisfy', 'Kaushan Script', 'Amatic SC', 'Permanent Marker', 'Shadows Into Light', 'Special Elite', 'Parisienne', 'Playball', 'Courgette'] },
+    { id: 'horror', label: 'Horror', fonts: ['Creepster', 'Eater', 'Metal Mania', 'Nosifer', 'Henny Penny', 'Butcherman'] }
+  ];
+  const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,'-&àèéìòùÀÈÉ";
+  const KEY = 'atelier-carte-stile-v2';
+
+  const cloneStops = () => D.stops.map(s => ({ p: s.p, c: s.c }));
+  const S = Object.assign({}, D, { custom: [], stops: cloneStops() });
+  let target = 'name';
+  let IMG = null, IMGURL = null, MASKIMG = null, MASKURL = null;
+  let U = 1;
+  let LAST = { n: 0, d: 0 };
+
+  const $ = id => document.getElementById(id);
+  const card = $('card');
+  const els = [...document.querySelectorAll('[data-k]')];
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+  /* ---------- Traduzioni (le chiavi sono i testi in italiano) ---------- */
+  const EN = {
+ "Vista": "View",
+ "Dati": "Data",
+ "Cover": "Cover",
+ "Nuova carta": "New card",
+ "Conferma: svuota tutto": "Confirm: clear everything",
+ "Totale": "Total",
+ "token": "tokens",
+ "token attivi": "active tokens",
+ "Fissi": "Fixed",
+ "Lingua": "Language",
+ "Aspetto": "Appearance",
+ "Modalità normale": "Light mode",
+ "Modalità scura": "Dark mode",
+ "Immagine": "Image",
+ "Carica PNG": "Upload PNG",
+ "Immagine d'esempio": "Sample image",
+ "Sposta in orizzontale": "Move horizontally",
+ "Sposta in verticale": "Move vertically",
+ "Testo": "Text",
+ "Usa il nome della carta (vista Dati)": "Use the card name (Data view)",
+ "Nome sulla copertina": "Cover name",
+ "Descrizione breve": "Short description",
+ "Nome in maiuscolo": "Uppercase name",
+ "Linea decorativa": "Decorative line",
+ "Allineamento": "Alignment",
+ "Sinistra": "Left",
+ "Centro": "Center",
+ "Font": "Fonts",
+ "Nome": "Name",
+ "Descrizione": "Description",
+ "Grassetto": "Bold",
+ "Grassetto per il nome": "Bold for the name",
+ "Grassetto per la descrizione": "Bold for the description",
+ "Cerca un font": "Search fonts",
+ "Altro font, es. Almendra SC": "Other font, e.g. Almendra SC",
+ "Nome di un altro font di Google Fonts": "Name of another Google Fonts font",
+ "Aggiungi": "Add",
+ "Qualsiasi famiglia di fonts.google.com, scritta col nome esatto.": "Any family from fonts.google.com, typed with its exact name.",
+ "Stile del testo": "Text style",
+ "Velo": "Veil",
+ "Pannello": "Panel",
+ "Fascia": "Band",
+ "Contorno": "Outline",
+ "Dimensione del nome": "Name size",
+ "Dimensione della descrizione": "Description size",
+ "Distanza dal bordo in basso": "Distance from the bottom edge",
+ "Intensità dello sfondo del testo": "Text background strength",
+ "Contorno del testo": "Text outline",
+ "Accento": "Accent",
+ "Sfondo del testo": "Text background",
+ "Ripristina lo stile": "Reset style",
+ "Cornice": "Frame",
+ "Mostra la cornice a due bordi": "Show the two-border frame",
+ "Intorno alla carta": "Around the card",
+ "Intorno al foro": "Around the hole",
+ "Distanza dal bordo": "Distance from the edge",
+ "Spessore del bordo esterno": "Outer border width",
+ "Spessore del bordo interno": "Inner border width",
+ "Distanza tra i due bordi": "Gap between the borders",
+ "Angoli arrotondati": "Rounded corners",
+ "Bordo esterno": "Outer border",
+ "Bordo interno": "Inner border",
+ "Maschera": "Mask",
+ "Nessuna": "None",
+ "Rettangolare": "Rectangular",
+ "Ovale": "Oval",
+ "Seghettata": "Jagged",
+ "Rilievo": "Emboss",
+ "Copre i bordi della carta e lascia l'immagine visibile in un foro al centro.": "Covers the edges of the card and leaves the image visible through a hole in the center.",
+ "Adatta l'immagine al foro": "Fit the image to the hole",
+ "Margine laterale": "Side margin",
+ "Margine in alto": "Top margin",
+ "Margine in basso": "Bottom margin",
+ "Angoli del foro": "Hole corners",
+ "Dimensione dei denti": "Tooth size",
+ "Rilievo del bordo": "Edge relief",
+ "Opacità della maschera": "Mask opacity",
+ "Tinta unita": "Solid color",
+ "Gradiente": "Gradient",
+ "Colore": "Color",
+ "Lineare": "Linear",
+ "Radiale": "Radial",
+ "Angolo (0° da sinistra, 90° dall'alto)": "Angle (0° from the left, 90° from the top)",
+ "Aggiungi un colore": "Add a color",
+ "Carica immagine": "Upload image",
+ "Nessuna immagine caricata": "No image uploaded",
+ "Anteprima": "Preview",
+ "Anteprima della carta": "Card preview",
+ "Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.": "Sample image. Upload your PNG or drag it onto the card.",
+ "Dimensione del file": "File size",
+ "Scarica PNG": "Download PNG",
+ "In miniatura": "Thumbnails",
+ "Carta": "Card",
+ "Importa PNG o JSON": "Import PNG or JSON",
+ "Scarica JSON": "Download JSON",
+ "Vai alla Cover": "Go to Cover",
+ "Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.": "The PNG is exported from the Cover view and contains everything you write on this page. Data is not saved: download the JSON if you want to keep it.",
+ "I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. \"Fissi\" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. \"Totale\" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.": "Token counts are a rough estimate, not the exact count from your model's tokenizer. \"Fixed\" are the fields SillyTavern always sends: description, personality, scenario, dialogue examples, prompts, the character's note and always-on lorebook entries. \"Total\" also counts the first message, alternate greetings and the other enabled lorebook entries, even though only one greeting is used in a chat.",
+ "Personaggio": "Character",
+ "Descrizione del personaggio": "Character description",
+ "Sommario della personalità": "Personality summary",
+ "Messaggi iniziali": "Opening messages",
+ "Primo messaggio": "First message",
+ "Messaggi alternativi": "Alternate messages",
+ "Messaggio alternativo": "Alternate message",
+ "Aggiungi messaggio alternativo": "Add alternate message",
+ "Saluti solo per le chat di gruppo": "Greetings for group chats only",
+ "Saluto di gruppo": "Group greeting",
+ "Aggiungi saluto di gruppo": "Add group greeting",
+ "Esempi di dialogo": "Dialogue examples",
+ "Inizia ogni esempio con <START> su una nuova riga.": "Begin each example with <START> on a new line.",
+ "Definizioni avanzate": "Advanced definitions",
+ "Prompt principale": "Main prompt",
+ "Se compilato sostituisce il prompt principale predefinito.": "If filled in, replaces the default main prompt.",
+ "Se compilato sostituisce le istruzioni post-history predefinite.": "If filled in, replaces the default post-history instructions.",
+ "Nota del personaggio": "Character's note",
+ "Testo inserito in chat alla profondità e col ruolo scelti qui sotto.": "Text inserted into the chat at the depth and with the role chosen below.",
+ "Profondità": "Depth",
+ "Ruolo": "Role",
+ "Sistema": "System",
+ "Utente": "User",
+ "Assistente": "Assistant",
+ "Loquacità": "Talkativeness",
+ "Timido": "Shy",
+ "Normale": "Normal",
+ "Chiacchierone": "Chatty",
+ "Quanto spesso il personaggio parla nelle chat di gruppo.": "How often the character speaks in group chats.",
+ "Nome del lorebook": "Lorebook name",
+ "Es. Lorebook di Kat": "E.g. Kat's Lorebook",
+ "Aggiungi voce": "Add entry",
+ "Metadati del creatore": "Creator's metadata",
+ "Non vengono inviati al modello, quindi non entrano nei totali.": "These are not sent to the model, so they are not counted in the totals.",
+ "Creato da": "Created by",
+ "Versione del personaggio": "Character version",
+ "Note del creatore": "Creator's notes",
+ "Tag": "Tags",
+ "Separati da virgole": "Separated by commas",
+ "Titolo (solo per te)": "Title (for you only)",
+ "Parole chiave (separate da virgole)": "Keywords (comma-separated)",
+ "Parole chiave secondarie": "Secondary keywords",
+ "Logica delle secondarie": "Secondary keywords logic",
+ "Contenuto": "Content",
+ "Contenuto della voce {n}": "Entry {n} content",
+ "Attiva": "Enabled",
+ "Sempre inviata (senza parole chiave)": "Always sent (no keywords needed)",
+ "Posizione": "Position",
+ "Ordine di inserimento": "Insertion order",
+ "Probabilità (%)": "Probability (%)",
+ "Sposta su": "Move up",
+ "Sposta giù": "Move down",
+ "Duplica": "Duplicate",
+ "Rimuovi voce": "Remove entry",
+ "Rimuovi": "Remove",
+ "Voce {n}": "Entry {n}",
+ "Sempre attiva": "Always on",
+ "Disattivata": "Disabled",
+ "Nessuna voce. Il lorebook viene incorporato nella carta solo se contiene almeno una voce.": "No entries. The lorebook is embedded in the card only if it has at least one entry.",
+ "Prima della descrizione del personaggio": "Before the character description",
+ "Dopo la descrizione del personaggio": "After the character description",
+ "Nota dell'autore (sopra)": "Author's note (top)",
+ "Nota dell'autore (sotto)": "Author's note (bottom)",
+ "A una profondità precisa": "At a specific depth",
+ "Esempi di dialogo (sopra)": "Dialogue examples (top)",
+ "Esempi di dialogo (sotto)": "Dialogue examples (bottom)",
+ "Una delle secondarie (AND ANY)": "Any secondary (AND ANY)",
+ "Tutte le secondarie (AND ALL)": "All secondaries (AND ALL)",
+ "Nessuna secondaria (NOT ANY)": "No secondary (NOT ANY)",
+ "Non tutte le secondarie (NOT ALL)": "Not all secondaries (NOT ALL)",
+ "Colore del punto {n}": "Color of point {n}",
+ "Posizione del punto {n}": "Position of point {n}",
+ "Aggiunti da te": "Added by you",
+ "Fantascienza e tech": "Sci-fi and tech",
+ "Eleganti con grazie": "Elegant serif",
+ "Senza grazie": "Sans-serif",
+ "Corsivi e a mano": "Script and handwritten",
+ "Nessun font con questo nome. Prova ad aggiungerlo qui sotto.": "No font with this name. Try adding it below.",
+ "Cerco il font…": "Looking for the font…",
+ "Aggiunto: {f}": "Added: {f}",
+ "Non trovo questo font su Google Fonts. Controlla il nome esatto.": "Can't find this font on Google Fonts. Check the exact name.",
+ "Il rapporto non è 2:3, quindi i lati vengono tagliati. Usa zoom e spostamento per scegliere l'inquadratura.": "The ratio is not 2:3, so the sides are cropped. Use zoom and move to choose the framing.",
+ "Rapporto 2:3, nessun taglio.": "Ratio 2:3, no cropping.",
+ "Non riesco a leggere questo file come immagine.": "Can't read this file as an image.",
+ "Non riesco a leggere questo file.": "Can't read this file.",
+ "A 100 px di larghezza il nome ha un corpo di {n} px e la descrizione di {d} px.": "At 100 px wide the name is {n} px tall and the description is {d} px.",
+ "A 100 px di larghezza il nome ha un corpo di {n} px.": "At 100 px wide the name is {n} px tall.",
+ " Sotto i 6 px la descrizione si legge a fatica.": " Below 6 px the description is hard to read.",
+ "Nel PNG finiscono i dati della vista Dati: ≈ {t} token, {n} voci di lorebook.": "The PNG embeds the data from the Data view: ≈ {t} tokens, {n} lorebook entries.",
+ "Nel PNG finiscono i dati della vista Dati: ≈ {t} token, 1 voce di lorebook.": "The PNG embeds the data from the Data view: ≈ {t} tokens, 1 lorebook entry.",
+ "Preparo il file…": "Preparing the file…",
+ "Salvato come {fn} ({w}×{h}) con i dati della carta incorporati.": "Saved as {fn} ({w}×{h}) with the card data embedded.",
+ "Salvataggio annullato.": "Save cancelled.",
+ "Manca il nome della carta: scrivilo nella vista Dati.": "The card has no name: write it in the Data view.",
+ "Non sono riuscito a salvare il file. Riprova.": "Couldn't save the file. Try again.",
+ "Scrivi prima il nome della carta.": "Write the card name first.",
+ "JSON salvato come {fn}.": "JSON saved as {fn}.",
+ "Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.": "Imported: {n}. Lorebook entries are collapsed; open them to edit.",
+ "Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.": "No SillyTavern data found in this file. Use a PNG exported from SillyTavern or a card JSON.",
+ "Nuova carta pronta.": "New card ready."
+};
+  function tr(str, v) {
+    let r = (LANG === 'en' && Object.prototype.hasOwnProperty.call(EN, str)) ? EN[str] : str;
+    if (v) r = r.replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m));
+    return r;
+  }
+  const LIVE = {};
+  function say(id, str, vars, warn) {
+    const e = $(id);
+    if (!e) return;
+    LIVE[id] = { s: str, v: vars };
+    e.textContent = tr(str, vars);
+    if (warn !== undefined && warn !== null) e.classList.toggle('warn', !!warn);
+  }
+  function relive() { for (const id in LIVE) $(id).textContent = tr(LIVE[id].s, LIVE[id].v); }
+  const DEFS = {
+    hint: "Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.",
+    cmsg: 'Qualsiasi famiglia di fonts.google.com, scritta col nome esatto.',
+    dstatus: 'Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON se vuoi conservarli.',
+    fileinfo: "Immagine d'esempio",
+    minfo: 'Nessuna immagine caricata',
+    status: ''
+  };
+  function initLive() { for (const id in DEFS) say(id, DEFS[id], null, false); }
+  let STATIC = null;
+  const ATTRS = ['placeholder', 'aria-label', 'title'];
+  function applyStatic() {
+    if (!STATIC) {
+      STATIC = { nodes: [], els: [] };
+      const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      while (w.nextNode()) {
+        const n = w.currentNode;
+        if (/\S/.test(n.nodeValue) && !n.parentElement.closest('script,style')) STATIC.nodes.push([n, n.nodeValue]);
+      }
+      document.querySelectorAll('[placeholder],[aria-label],[title]').forEach(el => {
+        const o = {};
+        ATTRS.forEach(a => { if (el.hasAttribute(a)) o[a] = el.getAttribute(a); });
+        STATIC.els.push([el, o]);
+      });
+    }
+    STATIC.nodes.forEach(([n, o]) => {
+      if (!n.isConnected) return;
+      const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(o);
+      n.nodeValue = m[1] + tr(m[2]) + m[3];
+    });
+    STATIC.els.forEach(([el, o]) => { for (const a in o) el.setAttribute(a, tr(o[a])); });
+  }
+  function applyLangUI() {
+    document.documentElement.lang = LANG;
+    document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === LANG)));
+    applyStatic();
+  }
+  function setLang(l) {
+    if (l !== 'it' && l !== 'en') return;
+    const prev = LANG;
+    LANG = l;
+    try { localStorage.setItem(LKEY, l); } catch (e) { /* ignora */ }
+    if (K.description === EX.description[prev]) {
+      K.description = EX.description[l];
+      const d = document.querySelector('[data-f="description"]'); if (d) d.value = K.description;
+    }
+    if (S.desc === EX.desc[prev]) {
+      S.desc = EX.desc[l];
+      const d = document.querySelector('[data-k="desc"]'); if (d) d.value = S.desc;
+    }
+    disarm();
+    applyLangUI(); relive();
+    syncTabs(); buildList(); buildStops();
+    buildStrList($('altList'), K.alt, 'alt', 'Messaggio alternativo');
+    buildStrList($('grpList'), K.group, 'grp', 'Saluto di gruppo');
+    buildEntries(); refreshTokens(); render();
+  }
+  document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+
+  /* ---------- Memoria dello stile (comodità per chi usa la pagina) ---------- */
+  function save() {
+    try {
+      const o = {};
+      for (const k in S) { if (!['name', 'desc', 'zoom', 'ox', 'oy'].includes(k)) o[k] = S[k]; }
+      localStorage.setItem(KEY, JSON.stringify(o));
+    } catch (e) { /* storage non disponibile */ }
+  }
+  function restore() {
+    try {
+      const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+      if (!o || typeof o !== 'object') return;
+      for (const k in D) {
+        if (k === 'stops' || k === 'name' || k === 'desc' || k === 'zoom' || k === 'ox' || k === 'oy') continue;
+        if (k in o && typeof o[k] === typeof D[k]) S[k] = o[k];
+      }
+      if (Array.isArray(o.custom)) S.custom = o.custom.filter(x => typeof x === 'string' && x.length < 60).slice(0, 30);
+      if (Array.isArray(o.stops)) {
+        const st = o.stops
+          .filter(s => s && typeof s.p === 'number' && typeof s.c === 'string' && /^#[0-9a-f]{6}$/i.test(s.c))
+          .map(s => ({ p: clamp(Math.round(s.p), 0, 100), c: s.c })).slice(0, 8);
+        if (st.length >= 2) S.stops = st;
+      }
+      for (const k in ENUM) { if (!ENUM[k].includes(S[k])) S[k] = D[k]; }
+      COLOR_KEYS.forEach(k => { if (!/^#[0-9a-f]{6}$/i.test(S[k])) S[k] = D[k]; });
+      if (![600, 800, 1000, 1200].includes(S.exportW)) S.exportW = D.exportW;
+    } catch (e) { /* ignora */ }
+  }
+
+  /* ---------- Font ---------- */
+  const fontP = new Map();
+  function loadCSS(url) {
+    return new Promise((res, rej) => {
+      const l = document.createElement('link');
+      l.rel = 'stylesheet'; l.href = url;
+      l.onload = () => res();
+      l.onerror = () => { l.remove(); rej(new Error('css')); };
+      document.head.appendChild(l);
+    });
+  }
+  function ensureFont(fam) {
+    if (!fontP.has(fam)) {
+      const q = fam.trim().replace(/\s+/g, '+');
+      const sample = 'Aa' + S.name + S.desc;
+      const p = loadCSS(`https://fonts.googleapis.com/css2?family=${q}:wght@400;700&display=swap`)
+        .catch(() => loadCSS(`https://fonts.googleapis.com/css2?family=${q}&display=swap`))
+        .then(() => Promise.all([
+          document.fonts.load(`400 40px "${fam}"`, sample),
+          document.fonts.load(`700 40px "${fam}"`, sample)
+        ]))
+        .then(() => true);
+      fontP.set(fam, p);
+      p.catch(() => fontP.delete(fam));
+    }
+    return fontP.get(fam);
+  }
+  const fam = f => `"${f}", system-ui, sans-serif`;
+  function loadGallery() {
+    CATS.forEach(cat => {
+      const q = cat.fonts.map(f => 'family=' + f.replace(/ /g, '+')).join('&');
+      loadCSS(`https://fonts.googleapis.com/css2?${q}&text=${encodeURIComponent(GLYPHS)}&display=swap`).catch(() => {});
+    });
+  }
+  const allFonts = () => CATS.flatMap(c => c.fonts).concat(S.custom);
+
+  /* ---------- Lista dei font ---------- */
+  const list = $('flist'), search = $('fsearch');
+  function buildList() {
+    const q = search.value.trim().toLowerCase();
+    const groups = [];
+    const custom = S.custom.filter(f => !CATS.some(c => c.fonts.includes(f)));
+    if (custom.length) groups.push({ label: tr('Aggiunti da te'), fonts: custom });
+    CATS.forEach(c => groups.push({ label: tr(c.label), fonts: c.fonts }));
+    const cur = S[target + 'Font'];
+    list.textContent = '';
+    let any = false;
+    groups.forEach(g => {
+      const fs = g.fonts.filter(f => !q || f.toLowerCase().includes(q));
+      if (!fs.length) return;
+      any = true;
+      const h = document.createElement('div');
+      h.className = 'grp'; h.textContent = g.label;
+      list.appendChild(h);
+      fs.forEach(f => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'fitem'; b.textContent = f; b.dataset.f = f;
+        b.style.fontFamily = fam(f);
+        b.setAttribute('aria-pressed', String(f.toLowerCase() === String(cur).toLowerCase()));
+        list.appendChild(b);
+      });
+    });
+    if (!any) {
+      const p = document.createElement('p');
+      p.className = 'empty';
+      p.textContent = tr('Nessun font con questo nome. Prova ad aggiungerlo qui sotto.');
+      list.appendChild(p);
+    }
+    const sel = list.querySelector('[aria-pressed="true"]');
+    if (sel && !q) list.scrollTop = Math.max(0, sel.offsetTop - list.clientHeight / 2 + 18);
+  }
+  function syncTabs() {
+    $('tabName').setAttribute('aria-pressed', String(target === 'name'));
+    $('tabDesc').setAttribute('aria-pressed', String(target === 'desc'));
+    $('tabNameF').textContent = S.nameFont;
+    $('tabNameF').style.fontFamily = fam(S.nameFont);
+    $('tabDescF').textContent = S.descFont;
+    $('tabDescF').style.fontFamily = fam(S.descFont);
+    $('boldT').checked = !!S[target + 'Bold'];
+    $('boldLbl').textContent = tr(target === 'name' ? 'Grassetto per il nome' : 'Grassetto per la descrizione');
+  }
+  $('tabName').addEventListener('click', () => { target = 'name'; syncTabs(); buildList(); });
+  $('tabDesc').addEventListener('click', () => { target = 'desc'; syncTabs(); buildList(); });
+  $('boldT').addEventListener('change', e => { S[target + 'Bold'] = e.target.checked; schedule(); save(); });
+  search.addEventListener('input', buildList);
+  list.addEventListener('click', e => {
+    const b = e.target.closest('.fitem');
+    if (!b) return;
+    const f = b.dataset.f;
+    S[target + 'Font'] = f;
+    ensureFont(f).then(schedule, () => {});
+    syncTabs(); buildList(); schedule(); save();
+  });
+  $('customForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const f = $('cname').value.trim().replace(/\s+/g, ' ');
+    if (!f) return;
+    say('cmsg', 'Cerco il font…', null, false);
+    try {
+      await ensureFont(f);
+      if (!allFonts().some(x => x.toLowerCase() === f.toLowerCase())) S.custom.unshift(f);
+      S[target + 'Font'] = f;
+      $('cname').value = '';
+      search.value = '';
+      say('cmsg', 'Aggiunto: {f}', { f }, false);
+      syncTabs(); buildList(); schedule(); save();
+    } catch (err) {
+      say('cmsg', 'Non trovo questo font su Google Fonts. Controlla il nome esatto.', null, true);
+    }
+  });
+
+  /* ---------- Gradiente: punti colore ---------- */
+  const hex2 = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  const mix = (a, b, t) => {
+    const A = hex2(a), B = hex2(b);
+    return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+  };
+  const sortedStops = () => S.stops.slice().sort((a, b) => a.p - b.p);
+  function updateBar() {
+    $('gbar').style.background = 'linear-gradient(90deg,' + sortedStops().map(s => `${s.c} ${s.p}%`).join(',') + ')';
+  }
+  function buildStops() {
+    const box = $('stops');
+    box.textContent = '';
+    S.stops.forEach((s, i) => {
+      const row = document.createElement('div');
+      row.className = 'stop';
+      const col = document.createElement('input');
+      col.type = 'color'; col.value = s.c; col.setAttribute('aria-label', tr('Colore del punto {n}', { n: i + 1 }));
+      const pos = document.createElement('input');
+      pos.type = 'range'; pos.min = '0'; pos.max = '100'; pos.step = '1'; pos.value = String(s.p);
+      pos.setAttribute('aria-label', tr('Posizione del punto {n}', { n: i + 1 }));
+      const out = document.createElement('output');
+      out.textContent = s.p + '%';
+      const del = document.createElement('button');
+      del.type = 'button'; del.className = 'btn quiet'; del.textContent = tr('Rimuovi');
+      del.disabled = S.stops.length <= 2;
+      col.addEventListener('input', () => { s.c = col.value; updateBar(); schedule(); save(); });
+      pos.addEventListener('input', () => { s.p = +pos.value; out.textContent = s.p + '%'; updateBar(); schedule(); save(); });
+      del.addEventListener('click', () => { if (S.stops.length > 2) { S.stops.splice(i, 1); buildStops(); schedule(); save(); } });
+      row.append(col, pos, out, del);
+      box.appendChild(row);
+    });
+    $('addStop').disabled = S.stops.length >= 8;
+    updateBar();
+  }
+  $('addStop').addEventListener('click', () => {
+    if (S.stops.length >= 8) return;
+    const st = sortedStops();
+    let best = 0, at = 0;
+    for (let i = 0; i < st.length - 1; i++) {
+      const gap = st[i + 1].p - st[i].p;
+      if (gap > best) { best = gap; at = i; }
+    }
+    S.stops.push({ p: Math.round((st[at].p + st[at + 1].p) / 2), c: mix(st[at].c, st[at + 1].c, 0.5) });
+    S.stops.sort((a, b) => a.p - b.p);
+    buildStops(); schedule(); save();
+  });
+
+  /* ---------- Controlli ---------- */
+  function outs() {
+    document.querySelectorAll('[data-out]').forEach(o => {
+      o.textContent = S[o.dataset.out] + (o.dataset.suf || '');
+    });
+  }
+  function syncSegs() {
+    document.querySelectorAll('[data-seg]').forEach(g => {
+      const k = g.dataset.seg;
+      g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(S[k] === b.dataset.v)));
+    });
+  }
+  function syncVis() {
+    document.querySelectorAll('[data-show]').forEach(el => {
+      const ok = el.dataset.show.split('&').every(cond => {
+        const m = /^(\w+)(!?=)(.*)$/.exec(cond);
+        if (!m) return true;
+        const has = m[3].split('|').includes(String(S[m[1]]));
+        return m[2] === '=' ? has : !has;
+      });
+      el.hidden = !ok;
+    });
+  }
+  function syncUI() {
+    els.forEach(el => {
+      const k = el.dataset.k;
+      if (el.type === 'range') S[k] = clamp(+S[k], +el.min, +el.max);
+      if (el.type === 'checkbox') el.checked = !!S[k]; else el.value = S[k];
+    });
+    outs(); syncSegs(); syncVis(); syncTabs(); buildList(); buildStops(); syncNameLink();
+  }
+  function syncNameLink() {
+    const i = document.querySelector('[data-k="name"]');
+    if (!i) return;
+    if (S.nameLink) { S.name = K.name; i.value = S.name; }
+    i.disabled = !!S.nameLink;
+  }
+  const coerce = (el, k) => el.type === 'checkbox' ? el.checked : (typeof D[k] === 'number' ? +el.value : el.value);
+  els.forEach(el => {
+    const h = () => {
+      S[el.dataset.k] = coerce(el, el.dataset.k);
+      if (el.dataset.k === 'nameLink') syncNameLink();
+      outs(); syncVis(); schedule(); save();
+    };
+    el.addEventListener('input', h);
+    if (el.tagName === 'SELECT') el.addEventListener('change', h);
+  });
+  document.querySelectorAll('[data-seg]').forEach(g => {
+    g.addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      const k = g.dataset.seg, v = b.dataset.v;
+      if (k === 'template') {
+        S.template = v; Object.assign(S, PRESET[v]); syncUI();
+      } else if (k === 'maskType') {
+        S.maskType = v;
+        if (v === 'emboss') {
+          if (S.maskBevel < 20) S.maskBevel = 70;
+          if (S.maskRadius === 0) S.maskRadius = 28;
+        }
+        syncUI();
+      } else {
+        S[k] = v; syncSegs(); syncVis();
+      }
+      schedule(); save();
+    });
+  });
+  $('reset').addEventListener('click', () => {
+    const keep = { name: S.name, desc: S.desc, custom: S.custom };
+    Object.assign(S, D, keep, { stops: cloneStops() });
+    syncUI(); ensureFonts(); schedule(); save();
+  });
+  function ensureFonts() {
+    [S.nameFont, S.descFont].forEach(f => ensureFont(f).then(schedule, () => {}));
+  }
+
+  /* ---------- Immagini ---------- */
+  function setImage(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      if (IMGURL) URL.revokeObjectURL(IMGURL);
+      IMG = im; IMGURL = url;
+      say('fileinfo', '{name} · {w}×{h}', { name: file.name, w: im.naturalWidth, h: im.naturalHeight });
+      const ratio = im.naturalWidth / im.naturalHeight;
+      if (Math.abs(ratio - 2 / 3) > 0.02) {
+        say('hint', "Il rapporto non è 2:3, quindi i lati vengono tagliati. Usa zoom e spostamento per scegliere l'inquadratura.", null, true);
+      } else {
+        say('hint', 'Rapporto 2:3, nessun taglio.', null, false);
+      }
+      schedule();
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); say('hint', 'Non riesco a leggere questo file come immagine.', null, true); };
+    im.src = url;
+  }
+  function setMaskImage(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    const url = URL.createObjectURL(file);
+    const im = new Image();
+    im.onload = () => {
+      if (MASKURL) URL.revokeObjectURL(MASKURL);
+      MASKIMG = im; MASKURL = url;
+      say('minfo', '{name} · {w}×{h}', { name: file.name, w: im.naturalWidth, h: im.naturalHeight });
+      schedule();
+    };
+    im.onerror = () => { URL.revokeObjectURL(url); say('minfo', 'Non riesco a leggere questo file.'); };
+    im.src = url;
+  }
+  $('pick').addEventListener('click', () => $('file').click());
+  $('file').addEventListener('change', e => setImage(e.target.files[0]));
+  $('mpick').addEventListener('click', () => $('mfile').click());
+  $('mfile').addEventListener('change', e => setMaskImage(e.target.files[0]));
+  const wrap = $('cardwrap');
+  ['dragenter', 'dragover'].forEach(t => wrap.addEventListener(t, e => { e.preventDefault(); wrap.classList.add('drop'); }));
+  ['dragleave', 'drop'].forEach(t => wrap.addEventListener(t, e => { e.preventDefault(); wrap.classList.remove('drop'); }));
+  wrap.addEventListener('drop', e => setImage(e.dataTransfer && e.dataTransfer.files[0]));
+
+  /* ---------- Disegno: utilità ---------- */
+  const rgba = (h, a) => { const n = parseInt(h.slice(1), 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
+  function rr(c, x, y, w, h, r) {
+    c.beginPath(); c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+  function roundSub(c, x, y, w, h, r) {
+    r = Math.min(Math.max(0, r), w / 2, h / 2);
+    if (r <= 0) { c.rect(x, y, w, h); return; }
+    c.moveTo(x + r, y);
+    c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+  const SAMPLE = new Image();
+  let sampleOk = false;
+  SAMPLE.onload = () => { sampleOk = true; schedule(); };
+  SAMPLE.src = 'kat.jpg';
+
+  /* ---------- Disegno: foro della maschera ---------- */
+  function hole(e) {
+    const w = Math.max(80, 800 - 2 * S.maskL), h = Math.max(80, 1200 - S.maskT - S.maskB);
+    return { x: S.maskL - e, y: S.maskT - e, w: w + 2 * e, h: h + 2 * e };
+  }
+  function jag(c, r) {
+    const tw = Math.max(8, S.maskTooth), d = tw * 0.6;
+    const nx = Math.max(1, Math.round(r.w / tw)), ny = Math.max(1, Math.round(r.h / tw));
+    const sx = r.w / nx, sy = r.h / ny;
+    c.moveTo(r.x, r.y);
+    for (let i = 0; i < nx; i++) { c.lineTo(r.x + (i + 0.5) * sx, r.y + d); c.lineTo(r.x + (i + 1) * sx, r.y); }
+    for (let i = 0; i < ny; i++) { c.lineTo(r.x + r.w - d, r.y + (i + 0.5) * sy); c.lineTo(r.x + r.w, r.y + (i + 1) * sy); }
+    for (let i = 0; i < nx; i++) { c.lineTo(r.x + r.w - (i + 0.5) * sx, r.y + r.h - d); c.lineTo(r.x + r.w - (i + 1) * sx, r.y + r.h); }
+    for (let i = 0; i < ny; i++) { c.lineTo(r.x + d, r.y + r.h - (i + 0.5) * sy); c.lineTo(r.x, r.y + r.h - (i + 1) * sy); }
+    c.closePath();
+  }
+  /* Aggiunge al tracciato corrente il contorno del foro, allargato di e (negativo = più stretto). */
+  function holeSub(c, e, rad) {
+    const r = hole(e), t = S.maskType;
+    if (t === 'oval') {
+      c.moveTo(r.x + r.w, r.y + r.h / 2);
+      c.ellipse(r.x + r.w / 2, r.y + r.h / 2, Math.max(1, r.w / 2), Math.max(1, r.h / 2), 0, 0, Math.PI * 2);
+      c.closePath();
+    } else if (t === 'jagged') {
+      jag(c, r);
+    } else {
+      roundSub(c, r.x, r.y, r.w, r.h, rad === undefined ? Math.max(0, S.maskRadius + e) : rad);
+    }
+  }
+
+  function drawSource(c, r, z, ox, oy) {
+    const im = IMG || (sampleOk ? SAMPLE : null);
+    const sw = im ? im.naturalWidth : 800, sh = im ? im.naturalHeight : 1200;
+    const s = Math.max(r.w / sw, r.h / sh) * z / 100;
+    const w = sw * s, h = sh * s;
+    const ex = (w - r.w) / 2, ey = (h - r.h) / 2;
+    const x = r.x - ex + (ox / 100) * ex, y = r.y - ey + (oy / 100) * ey;
+    c.save();
+    c.beginPath(); c.rect(r.x, r.y, r.w, r.h); c.clip();
+    if (im) {
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(im, x, y, w, h);
+    } else {
+      c.fillStyle = '#0b0f15'; c.fillRect(r.x, r.y, r.w, r.h);
+    }
+    c.restore();
+  }
+  function drawArt(c) {
+    const full = { x: 0, y: 0, w: 800, h: 1200 };
+    if (S.maskType !== 'none' && S.maskFit) {
+      if (S.maskAlpha < 100) drawSource(c, full, 100, 0, 0);
+      drawSource(c, hole(0), S.zoom, S.ox, S.oy);
+    } else {
+      drawSource(c, full, S.zoom, S.ox, S.oy);
+    }
+  }
+
+  function makeGradient(c) {
+    const st = sortedStops();
+    let g;
+    if (S.gradType === 'radial') {
+      g = c.createRadialGradient(400, 600, 0, 400, 600, Math.hypot(400, 600));
+    } else {
+      const th = S.gradAngle * Math.PI / 180, dx = Math.cos(th), dy = Math.sin(th);
+      const L = (Math.abs(800 * dx) + Math.abs(1200 * dy)) / 2;
+      g = c.createLinearGradient(400 - dx * L, 600 - dy * L, 400 + dx * L, 600 + dy * L);
+    }
+    st.forEach(s => g.addColorStop(clamp(s.p / 100, 0, 1), s.c));
+    return g;
+  }
+  function drawBevel(c) {
+    const k = S.maskBevel / 100, dep = 4 + k * 26;
+    // ombra proiettata dalla maschera dentro il foro
+    c.save();
+    c.beginPath(); holeSub(c, 0); c.clip();
+    c.shadowColor = `rgba(0,0,0,${0.35 + 0.4 * k})`;
+    c.shadowBlur = dep * 1.3 * U; c.shadowOffsetX = dep * 0.45 * U; c.shadowOffsetY = dep * 0.7 * U;
+    c.fillStyle = '#000';
+    c.beginPath(); c.rect(-600, -600, 2000, 2400); holeSub(c, 0); c.fill('evenodd');
+    c.restore();
+    // smusso lungo il bordo del foro: scuro in alto a sinistra, chiaro in basso a destra
+    const r = hole(0);
+    const kk = 0.5 + k / 2;
+    c.save();
+    c.beginPath(); c.rect(0, 0, 800, 1200); holeSub(c, 0); c.clip('evenodd');
+    const g = c.createLinearGradient(r.x, r.y, r.x + r.w, r.y + r.h);
+    g.addColorStop(0, `rgba(0,0,0,${0.55 * kk})`); g.addColorStop(0.45, 'rgba(0,0,0,0)');
+    g.addColorStop(0.55, 'rgba(255,255,255,0)'); g.addColorStop(1, `rgba(255,255,255,${0.7 * kk})`);
+    c.lineJoin = 'round'; c.lineWidth = dep * 1.8; c.strokeStyle = g;
+    c.beginPath(); holeSub(c, 0); c.stroke();
+    if (S.maskType === 'emboss') {
+      const g2 = c.createLinearGradient(r.x, r.y, r.x + r.w, r.y + r.h);
+      g2.addColorStop(0, `rgba(255,255,255,${0.6 * kk})`); g2.addColorStop(0.45, 'rgba(255,255,255,0)');
+      g2.addColorStop(0.55, 'rgba(0,0,0,0)'); g2.addColorStop(1, `rgba(0,0,0,${0.6 * kk})`);
+      c.lineWidth = Math.max(4, dep * 0.45); c.strokeStyle = g2;
+      c.beginPath(); holeSub(c, dep * 1.9); c.stroke();
+    }
+    c.restore();
+  }
+  function drawMask(c) {
+    if (S.maskType === 'none') return;
+    c.save();
+    c.beginPath(); c.rect(0, 0, 800, 1200); holeSub(c, 0); c.clip('evenodd');
+    c.globalAlpha = S.maskAlpha / 100;
+    if (S.maskFill === 'image' && MASKIMG) {
+      const iw = MASKIMG.naturalWidth, ih = MASKIMG.naturalHeight, s = Math.max(800 / iw, 1200 / ih);
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(MASKIMG, 400 - iw * s / 2, 600 - ih * s / 2, iw * s, ih * s);
+    } else if (S.maskFill === 'gradient') {
+      c.fillStyle = makeGradient(c); c.fillRect(0, 0, 800, 1200);
+    } else {
+      c.fillStyle = S.maskColor; c.fillRect(0, 0, 800, 1200);
+    }
+    c.restore();
+    if (S.maskBevel > 0) drawBevel(c);
+  }
+
+  /* ---------- Disegno: cornice a due bordi ---------- */
+  function drawFrame(c) {
+    if (!S.frameOn) return;
+    const w1 = S.frame1W, w2 = S.frame2W, g = S.frameGap, d = S.frameInset, R = S.frameRadius;
+    const onHole = S.frameTarget === 'hole' && S.maskType !== 'none';
+    const r1 = Math.max(0, R - w1 / 2), r2 = Math.max(0, R - w1 - g - w2 / 2);
+    const line = (w, col) => { if (w > 0) { c.lineWidth = w; c.strokeStyle = col; c.stroke(); } };
+    c.save(); c.lineJoin = 'round';
+    if (!onHole) {
+      const o1 = d + w1 / 2, o2 = d + w1 + g + w2 / 2;
+      c.beginPath(); roundSub(c, o1, o1, Math.max(4, 800 - 2 * o1), Math.max(4, 1200 - 2 * o1), r1); line(w1, S.frame1Color);
+      c.beginPath(); roundSub(c, o2, o2, Math.max(4, 800 - 2 * o2), Math.max(4, 1200 - 2 * o2), r2); line(w2, S.frame2Color);
+    } else {
+      const e2 = d + w2 / 2, e1 = d + w2 + g + w1 / 2;
+      c.beginPath(); holeSub(c, e1, r1); line(w1, S.frame1Color);
+      c.beginPath(); holeSub(c, e2, r2); line(w2, S.frame2Color);
+    }
+    c.restore();
+  }
+
+  /* ---------- Disegno: testo ---------- */
+  function wrapText(c, text, maxW) {
+    const out = [];
+    text.split(/\n/).forEach(par => {
+      const words = par.split(/\s+/).filter(Boolean);
+      if (!words.length) { out.push(''); return; }
+      let line = words[0];
+      for (let i = 1; i < words.length; i++) {
+        const t = line + ' ' + words[i];
+        if (c.measureText(t).width <= maxW) line = t; else { out.push(line); line = words[i]; }
+      }
+      out.push(line);
+    });
+    return out;
+  }
+  function fit(c, text, fontOf, size, maxW, maxLines, minF) {
+    for (let f = 1; f >= minF - 1e-6; f -= 0.04) {
+      const s = size * f; c.font = fontOf(s);
+      const lines = wrapText(c, text, maxW);
+      if (lines.length <= maxLines && lines.every(l => c.measureText(l).width <= maxW + 0.5)) return { lines, size: s, ok: true };
+    }
+    const s = size * minF; c.font = fontOf(s);
+    let lines = wrapText(c, text, maxW);
+    if (lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      let l = lines[maxLines - 1];
+      while (l.length > 1 && c.measureText(l + '…').width > maxW) l = l.slice(0, -1);
+      lines[maxLines - 1] = l.replace(/[\s.,;:]+$/, '') + '…';
+    }
+    return { lines, size: s, ok: false };
+  }
+  function drawLines(c, lines, x, y0, lh, size, color, font, align) {
+    c.font = font; c.textAlign = align; c.textBaseline = 'middle'; c.lineJoin = 'round';
+    lines.forEach((ln, i) => {
+      const y = y0 + (i + 0.5) * lh;
+      if (S.outline > 0) {
+        c.lineWidth = size * 0.2 * S.outline / 100;
+        c.strokeStyle = 'rgba(6,8,12,0.92)';
+        c.strokeText(ln, x, y);
+      }
+      c.shadowColor = 'rgba(0,0,0,0.5)';
+      c.shadowBlur = size * 0.22 * U;
+      c.shadowOffsetY = size * 0.05 * U;
+      c.fillStyle = color;
+      c.fillText(ln, x, y);
+      c.shadowColor = 'transparent'; c.shadowBlur = 0; c.shadowOffsetY = 0;
+    });
+  }
+
+  function drawCard(c) {
+    const nm = (S.upper ? S.name.toUpperCase() : S.name).trim();
+    const ds = S.desc.trim();
+    const t = S.template, a = S.panel / 100;
+    const padX = { velo: 56, pannello: 68, fascia: 62, contorno: 56 }[t];
+    const bot = { velo: S.margin, pannello: Math.max(S.margin, 50), fascia: Math.max(S.margin, 40), contorno: S.margin }[t];
+    const maxW = 800 - 2 * padX;
+    const foN = s => `${S.nameBold ? 700 : 400} ${s}px ${fam(S.nameFont)}`;
+    const foD = s => `${S.descBold ? 700 : 400} ${s}px ${fam(S.descFont)}`;
+
+    let nameL = [], nameS = 0, descL = [], descS = 0;
+    if (nm) {
+      let r = fit(c, nm, foN, S.nameSize, maxW, 1, 0.62);
+      if (!r.ok) r = fit(c, nm, foN, S.nameSize, maxW, 2, 0.5);
+      nameL = r.lines; nameS = r.size;
+    }
+    if (ds) {
+      const r = fit(c, ds, foD, S.descSize, maxW, 4, 0.7);
+      descL = r.lines; descS = r.size;
+    }
+    LAST = { n: nameS, d: descS };
+
+    const nLH = nameS * 1.12, dLH = descS * 1.3;
+    const between = (nm && ds) ? (S.rule ? 36 : 14) : 0;
+    const total = nameL.length * nLH + between + descL.length * dLH;
+    const bottomY = 1200 - bot, top = bottomY - total;
+    const x = S.align === 'center' ? 400 : padX;
+
+    if (total > 0) {
+      if (t === 'velo') {
+        const g0 = Math.max(0, top - 240);
+        const g = c.createLinearGradient(0, g0, 0, 1200);
+        g.addColorStop(0, rgba(S.panelColor, 0)); g.addColorStop(0.5, rgba(S.panelColor, a * 0.7)); g.addColorStop(1, rgba(S.panelColor, a));
+        c.fillStyle = g; c.fillRect(0, g0, 800, 1200 - g0);
+      } else if (t === 'contorno') {
+        const g0 = Math.max(0, top - 160);
+        const g = c.createLinearGradient(0, g0, 0, 1200);
+        g.addColorStop(0, rgba(S.panelColor, 0)); g.addColorStop(1, rgba(S.panelColor, a * 0.9));
+        c.fillStyle = g; c.fillRect(0, g0, 800, 1200 - g0);
+      } else if (t === 'pannello') {
+        rr(c, 30, top - 34, 740, total + 68, 28);
+        c.fillStyle = rgba(S.panelColor, a); c.fill();
+        c.strokeStyle = rgba(S.accent, 0.9); c.lineWidth = 3; c.stroke();
+      } else if (t === 'fascia') {
+        const bt = top - 34;
+        c.fillStyle = rgba(S.panelColor, a); c.fillRect(0, bt, 800, 1200 - bt);
+        c.fillStyle = S.accent; c.fillRect(0, bt, 800, 4);
+      }
+    }
+
+    drawFrame(c);
+
+    let y = top;
+    if (nameL.length) {
+      drawLines(c, nameL, x, y, nLH, nameS, S.nameColor, foN(nameS), S.align === 'center' ? 'center' : 'left');
+      y += nameL.length * nLH;
+    }
+    if (nm && ds) {
+      if (S.rule) {
+        const w = 96, rx = S.align === 'center' ? x - w / 2 : x;
+        c.fillStyle = S.accent; c.fillRect(rx, y + 14, w, 4);
+      }
+      y += between;
+    }
+    if (descL.length) {
+      drawLines(c, descL, x, y, dLH, descS, S.descColor, foD(descS), S.align === 'center' ? 'center' : 'left');
+    }
+  }
+
+  function draw(cv, W) {
+    U = W / 800;
+    cv.width = W; cv.height = Math.round(W * 1.5);
+    const c = cv.getContext('2d');
+    c.save(); c.scale(U, U);
+    drawArt(c);
+    drawMask(c);
+    drawCard(c);
+    c.restore();
+  }
+
+  function drawMinis() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    document.querySelectorAll('canvas.mini').forEach(m => {
+      const w = +m.dataset.w;
+      m.style.width = w + 'px'; m.style.height = (w * 1.5) + 'px';
+      m.width = Math.round(w * dpr); m.height = Math.round(w * 1.5 * dpr);
+      const c = m.getContext('2d');
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(card, 0, 0, m.width, m.height);
+    });
+    const f = 100 / 800;
+    const n = LAST.n * f, d = LAST.d * f;
+    const fmt = v => v.toLocaleString(LANG === 'en' ? 'en-US' : 'it-IT', { maximumFractionDigits: 1 });
+    const cap = $('smallcap');
+    if (!LAST.n && !LAST.d) { cap.textContent = ''; cap.classList.remove('warn'); return; }
+    let txt = LAST.d
+      ? tr('A 100 px di larghezza il nome ha un corpo di {n} px e la descrizione di {d} px.', { n: fmt(n), d: fmt(d) })
+      : tr('A 100 px di larghezza il nome ha un corpo di {n} px.', { n: fmt(n) });
+    if (LAST.d && d < 6) txt += tr(' Sotto i 6 px la descrizione si legge a fatica.');
+    cap.textContent = txt;
+    cap.classList.toggle('warn', !!LAST.d && d < 6);
+  }
+
+  function render() { draw(card, 800); drawMinis(); }
+  let raf = 0;
+  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', schedule);
+
+  /* ---------- Esportazione ---------- */
+  const slug = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'carta';
+  async function saveBlob(blob, filename) {
+    let dl = null;
+    try { if (typeof claude !== 'undefined' && claude.use) dl = await claude.use('downloads'); } catch (e) { dl = null; }
+    if (dl) {
+      await dl.save({ filename, data: blob });
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  $('export').addEventListener('click', async () => {
+    const btn = $('export');
+    btn.disabled = true; say('status', 'Preparo il file…', null, false);
+    try {
+      await Promise.all([ensureFont(S.nameFont), ensureFont(S.descFont)]).catch(() => {});
+      const cv = document.createElement('canvas');
+      draw(cv, S.exportW);
+      if (!K.name.trim()) throw { code: 'noname' };
+      const raw = await new Promise(r => cv.toBlob(r, 'image/png'));
+      if (!raw) throw { code: 'empty', message: 'Il file è vuoto.' };
+      const png = new Uint8Array(await raw.arrayBuffer());
+      const withData = embedChunks(png, [
+        ['chara', b64utf8(JSON.stringify(buildCard('v2')))],
+        ['ccv3', b64utf8(JSON.stringify(buildCard('v3')))]
+      ]);
+      const blob = new Blob([withData], { type: 'image/png' });
+      const fn = slug(K.name) + '.png';
+      await saveBlob(blob, fn);
+      say('status', 'Salvato come {fn} ({w}×{h}) con i dati della carta incorporati.', { fn, w: S.exportW, h: Math.round(S.exportW * 1.5) }, false);
+    } catch (err) {
+      say('status', err && err.code === 'declined' ? 'Salvataggio annullato.'
+        : err && err.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.'
+        : 'Non sono riuscito a salvare il file. Riprova.', null, true);
+    } finally {
+      btn.disabled = false;
+      render();
+    }
+  });
+
+  /* ---------- PNG: scrittura e lettura dei metadati ---------- */
+  const CRCT = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+    return t;
+  })();
+  const crc32 = u8 => { let c = 0xFFFFFFFF; for (let i = 0; i < u8.length; i++) c = CRCT[(c ^ u8[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function textChunk(key, text) {
+    const kl = key.length, n = kl + 1 + text.length;
+    const out = new Uint8Array(12 + n), dv = new DataView(out.buffer);
+    dv.setUint32(0, n);
+    out.set([0x74, 0x45, 0x58, 0x74], 4); // tEXt
+    for (let i = 0; i < kl; i++) out[8 + i] = key.charCodeAt(i);
+    out[8 + kl] = 0;
+    for (let i = 0; i < text.length; i++) out[9 + kl + i] = text.charCodeAt(i) & 255;
+    dv.setUint32(8 + n, crc32(out.subarray(4, 8 + n)));
+    return out;
+  }
+  function embedChunks(png, items) {
+    const end = png.length - 12;
+    if (end < 8 || png[end + 4] !== 0x49 || png[end + 5] !== 0x45 || png[end + 6] !== 0x4E || png[end + 7] !== 0x44) throw new Error('png');
+    const parts = items.map(([k, t]) => textChunk(k, t));
+    const total = parts.reduce((a, p) => a + p.length, 0);
+    const res = new Uint8Array(png.length + total);
+    res.set(png.subarray(0, end), 0);
+    let o = end;
+    parts.forEach(p => { res.set(p, o); o += p.length; });
+    res.set(png.subarray(end), o);
+    return res;
+  }
+  function b64utf8(str) {
+    const b = new TextEncoder().encode(str);
+    let s = '';
+    for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+  function decodeB64(t) {
+    const bin = atob(t), b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(b);
+  }
+  function readPngText(u8) {
+    const sig = [137, 80, 78, 71, 13, 10, 26, 10];
+    if (u8.length < 20 || sig.some((v, i) => u8[i] !== v)) return null;
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    const out = {};
+    let p = 8;
+    while (p + 12 <= u8.length) {
+      const len = dv.getUint32(p);
+      const type = String.fromCharCode(u8[p + 4], u8[p + 5], u8[p + 6], u8[p + 7]);
+      if (type === 'tEXt') {
+        const d = u8.subarray(p + 8, p + 8 + len), z = d.indexOf(0);
+        if (z > 0) {
+          let key = '', t = '';
+          for (let i = 0; i < z; i++) key += String.fromCharCode(d[i]);
+          for (let i = z + 1; i < d.length; i++) t += String.fromCharCode(d[i]);
+          out[key] = t;
+        }
+      }
+      if (type === 'IEND') break;
+      p += 12 + len;
+    }
+    return out;
+  }
+
+  /* ---------- Dati della carta ---------- */
+  const POS = [
+    [0, 'Prima della descrizione del personaggio'], [1, 'Dopo la descrizione del personaggio'],
+    [2, "Nota dell'autore (sopra)"], [3, "Nota dell'autore (sotto)"], [4, 'A una profondità precisa'],
+    [5, 'Esempi di dialogo (sopra)'], [6, 'Esempi di dialogo (sotto)']
+  ];
+  const LOGIC = [[0, 'Una delle secondarie (AND ANY)'], [3, 'Tutte le secondarie (AND ALL)'], [2, 'Nessuna secondaria (NOT ANY)'], [1, 'Non tutte le secondarie (NOT ALL)']];
+  const ROLES = [[0, 'Sistema'], [1, 'Utente'], [2, 'Assistente']];
+  const STR_KEYS = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt', 'creator', 'version', 'notes', 'tags', 'book'];
+
+  const mk = (t, c) => { const e = document.createElement(t); if (c) e.className = c; return e; };
+  const nf = n => n.toLocaleString(LANG === 'en' ? 'en-US' : 'it-IT');
+  const tok = s => {
+    if (!s) return 0;
+    const parts = String(s).match(/[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu) || [];
+    let n = 0;
+    for (const p of parts) n += /^[\p{L}\p{N}]+$/u.test(p) ? Math.max(1, Math.ceil(p.length / 4)) : 1;
+    return n;
+  };
+  const split = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+  const ni = (v, a, b, d) => { if (v === null || v === '' || v === undefined) return d; const n = Math.round(+v); return Number.isFinite(n) ? clamp(n, a, b) : d; };
+  const str = v => typeof v === 'string' ? v : '';
+
+  const newEntry = () => ({ title: '', keys: '', sec: '', content: '', enabled: true, constant: false, pos: 1, depth: 4, role: 0, order: 100, prob: 100, logic: 0, open: true });
+  const defaultData = () => sanitize({ name: EX.name, description: EX.description[LANG] });
+  function sanitizeEntry(e) {
+    e = e && typeof e === 'object' ? e : {};
+    return {
+      title: str(e.title), keys: str(e.keys), sec: str(e.sec), content: str(e.content),
+      enabled: e.enabled !== false, constant: !!e.constant,
+      pos: ni(e.pos, 0, 6, 1), depth: ni(e.depth, 0, 9999, 4), role: ni(e.role, 0, 2, 0),
+      order: ni(e.order, -9999, 99999, 100), prob: ni(e.prob, 0, 100, 100), logic: [0, 1, 2, 3].includes(+e.logic) ? +e.logic : 0,
+      open: !!e.open
+    };
+  }
+  function sanitize(o) {
+    o = o && typeof o === 'object' ? o : {};
+    const r = {};
+    STR_KEYS.forEach(k => { r[k] = str(o[k]); });
+    r.alt = (Array.isArray(o.alt) ? o.alt : []).filter(x => typeof x === 'string').slice(0, 100);
+    r.group = (Array.isArray(o.group) ? o.group : []).filter(x => typeof x === 'string').slice(0, 100);
+    r.dp_depth = ni(o.dp_depth, 0, 9999, 4);
+    r.dp_role = ['system', 'user', 'assistant'].includes(o.dp_role) ? o.dp_role : 'system';
+    const t = parseFloat(o.talk);
+    r.talk = Number.isFinite(t) ? clamp(Math.round(t * 20) / 20, 0, 1) : 0.5;
+    r.entries = (Array.isArray(o.entries) ? o.entries : []).slice(0, 500).map(sanitizeEntry);
+    return r;
+  }
+  function fromCard(obj) {
+    const d = obj && obj.data && typeof obj.data === 'object' ? obj.data : (obj || {});
+    const ex = d.extensions || {}, dp = ex.depth_prompt || {};
+    const book = d.character_book || {};
+    const num = (v, def) => (v === null || v === '' || v === undefined || !Number.isFinite(+v)) ? def : +v;
+    const tags = Array.isArray(d.tags) ? d.tags.join(', ') : str(d.tags);
+    return sanitize({
+      name: d.name || obj.name, description: d.description, personality: d.personality, scenario: d.scenario,
+      first_mes: d.first_mes, mes_example: d.mes_example, system_prompt: d.system_prompt, post_history: d.post_history_instructions,
+      alt: d.alternate_greetings, group: d.group_only_greetings,
+      dp_prompt: dp.prompt, dp_depth: num(dp.depth, 4), dp_role: dp.role,
+      talk: num(ex.talkativeness !== undefined ? ex.talkativeness : (d.talkativeness !== undefined ? d.talkativeness : obj.talkativeness), 0.5),
+      creator: d.creator, version: d.character_version, notes: d.creator_notes || obj.creatorcomment, tags,
+      book: str(book.name) || str(ex.world),
+      entries: (Array.isArray(book.entries) ? book.entries : []).map(e => {
+        const x = (e && e.extensions) || {};
+        return {
+          title: str(e.comment) || str(e.name), keys: (e.keys || []).join(', '), sec: (e.secondary_keys || []).join(', '), content: e.content,
+          enabled: e.enabled !== false, constant: !!e.constant,
+          pos: Number.isInteger(x.position) ? x.position : (e.position === 'before_char' ? 0 : 1),
+          depth: num(x.depth, 4), role: num(x.role, 0), order: num(e.insertion_order, 100), prob: num(x.probability, 100), logic: num(x.selectiveLogic, 0), open: false
+        };
+      })
+    });
+  }
+  function entryJSON(e, i) {
+    const sec = split(e.sec);
+    return {
+      id: i, keys: split(e.keys), secondary_keys: sec, comment: e.title, content: e.content,
+      constant: !!e.constant, selective: sec.length > 0, enabled: !!e.enabled,
+      position: e.pos === 0 ? 'before_char' : 'after_char', insertion_order: e.order, use_regex: true,
+      extensions: {
+        position: e.pos, exclude_recursion: false, display_index: i, probability: e.prob, useProbability: true,
+        depth: e.depth, selectiveLogic: e.logic, outlet_name: '', group: '', group_override: false, group_weight: 100,
+        prevent_recursion: false, delay_until_recursion: false, scan_depth: null, match_whole_words: null,
+        use_group_scoring: false, case_sensitive: null, automation_id: '', role: e.role, vectorized: false,
+        sticky: null, cooldown: null, delay: null,
+        match_persona_description: false, match_character_description: false, match_character_personality: false,
+        match_character_depth_prompt: false, match_scenario: false, match_creator_notes: false,
+        triggers: [], ignore_budget: false
+      }
+    };
+  }
+  function buildCard(spec) {
+    const v3 = spec === 'v3';
+    const name = K.name.trim();
+    const book = K.entries.length ? { entries: K.entries.map(entryJSON), name: K.book.trim() || (name + "'s Lorebook") } : null;
+    const data = {
+      name, description: K.description, personality: K.personality, scenario: K.scenario,
+      first_mes: K.first_mes, mes_example: K.mes_example, creator_notes: K.notes,
+      system_prompt: K.system_prompt, post_history_instructions: K.post_history,
+      alternate_greetings: K.alt.filter(s => s.trim())
+    };
+    if (v3) data.group_only_greetings = K.group.filter(s => s.trim());
+    data.tags = split(K.tags);
+    data.creator = K.creator;
+    data.character_version = K.version;
+    data.extensions = {
+      fav: false, talkativeness: String(K.talk), world: book ? book.name : '',
+      depth_prompt: { prompt: K.dp_prompt, depth: K.dp_depth, role: K.dp_role }
+    };
+    if (book) data.character_book = book;
+    return {
+      spec: v3 ? 'chara_card_v3' : 'chara_card_v2', spec_version: v3 ? '3.0' : '2.0', data,
+      fav: false, name, description: K.description, personality: K.personality, scenario: K.scenario,
+      first_mes: K.first_mes, mes_example: K.mes_example, tags: data.tags,
+      create_date: new Date().toISOString(), creatorcomment: K.notes, avatar: 'none', talkativeness: String(K.talk)
+    };
+  }
+
+  let K = defaultData();
+  function saveDataSoon() { /* i dati non vengono conservati tra una sessione e l'altra */ }
+
+  /* Token e totali */
+  function textFor(key) {
+    const [a, b] = key.split(':');
+    if (a === 'alt') return K.alt[+b];
+    if (a === 'grp') return K.group[+b];
+    if (a === 'ent') return K.entries[+b] ? K.entries[+b].content : '';
+    return K[a];
+  }
+  function refreshTokens() {
+    document.querySelectorAll('[data-tk]').forEach(s => { s.textContent = nf(tok(textFor(s.dataset.tk) || '')) + ' ' + tr('token'); });
+    const t = k => tok(K[k] || '');
+    const fixedK = ['description', 'personality', 'scenario', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'];
+    const on = K.entries.filter(e => e.enabled);
+    const loreFixed = on.filter(e => e.constant).reduce((a, e) => a + tok(e.content), 0);
+    const loreOther = on.filter(e => !e.constant).reduce((a, e) => a + tok(e.content), 0);
+    const fixed = fixedK.reduce((a, k) => a + t(k), 0) + loreFixed;
+    const total = fixed + t('first_mes') + K.alt.reduce((a, s) => a + tok(s), 0) + K.group.reduce((a, s) => a + tok(s), 0) + loreOther;
+    $('totAll').textContent = '≈ ' + nf(total);
+    $('totFix').textContent = '≈ ' + nf(fixed);
+    $('bookTk').textContent = nf(loreFixed + loreOther) + ' ' + tr('token attivi');
+    $('talkOut').textContent = Number(K.talk).toFixed(2);
+    const info = $('embedinfo');
+    if (info) info.textContent = K.entries.length === 1 ? tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, 1 voce di lorebook.', { t: nf(total) }) : tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, {n} voci di lorebook.', { t: nf(total), n: K.entries.length });
+  }
+  const afterEdit = () => { refreshTokens(); saveDataSoon(); };
+
+  /* Campi fissi */
+  const F = [...document.querySelectorAll('[data-f]')];
+  F.forEach(el => {
+    const h = () => {
+      const f = el.dataset.f;
+      if (f === 'dp_depth') K[f] = ni(el.value, 0, 9999, 0);
+      else if (f === 'talk') K[f] = +el.value;
+      else K[f] = el.value;
+      if (f === 'name' && S.nameLink) { syncNameLink(); schedule(); }
+      afterEdit();
+    };
+    el.addEventListener('input', h);
+    if (el.tagName === 'SELECT') el.addEventListener('change', h);
+  });
+
+  /* Elenchi di testi (messaggi alternativi, saluti di gruppo) */
+  function buildStrList(box, arr, prefix, label) {
+    box.textContent = '';
+    arr.forEach((txt, i) => {
+      const item = mk('div', 'item');
+      const head = mk('div', 'ihead');
+      const b = mk('b'); b.textContent = tr(label) + ' ' + (i + 1);
+      const right = mk('span', 'ctl');
+      const tk = mk('span', 'tk'); tk.dataset.tk = prefix + ':' + i;
+      const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = tr('Rimuovi');
+      right.append(tk, del); head.append(b, right);
+      const ta = mk('textarea'); ta.rows = 5; ta.value = txt; ta.spellcheck = false; ta.setAttribute('aria-label', tr(label) + ' ' + (i + 1));
+      ta.addEventListener('input', () => { arr[i] = ta.value; afterEdit(); });
+      del.addEventListener('click', () => { arr.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); });
+      item.append(head, ta); box.appendChild(item);
+    });
+  }
+  $('altAdd').addEventListener('click', () => { K.alt.push(''); buildStrList($('altList'), K.alt, 'alt', 'Messaggio alternativo'); afterEdit(); });
+  $('grpAdd').addEventListener('click', () => { K.group.push(''); buildStrList($('grpList'), K.group, 'grp', 'Saluto di gruppo'); afterEdit(); });
+
+  /* Lorebook */
+  const input = (type, val, on, attrs) => {
+    const x = mk('input'); x.type = type; x.value = val;
+    Object.entries(attrs || {}).forEach(([k, v]) => x.setAttribute(k, v));
+    x.addEventListener('input', () => on(x.value));
+    return x;
+  };
+  const field = (label, node) => { const l = mk('label', 'fld'); const s = mk('span'); s.textContent = label; l.append(s, node); return l; };
+  const check = (label, val, on) => {
+    const l = mk('label', 'chk'); const x = mk('input'); x.type = 'checkbox'; x.checked = !!val;
+    x.addEventListener('change', () => on(x.checked));
+    l.append(x, document.createTextNode(' ' + label)); return l;
+  };
+  const select = (opts, val, on) => {
+    const s = mk('select');
+    opts.forEach(([v, t]) => { const o = mk('option'); o.value = String(v); o.textContent = tr(t); s.appendChild(o); });
+    s.value = String(val); s.addEventListener('change', () => on(s.value)); return s;
+  };
+  function buildEntries() {
+    const box = $('entries');
+    box.textContent = '';
+    K.entries.forEach((e, i) => {
+      const det = mk('details', 'entry'); det.open = !!e.open;
+      det.addEventListener('toggle', () => { e.open = det.open; });
+      const sum = mk('summary');
+      const title = mk('span', 'etitle');
+      const b1 = mk('span', 'badge'); b1.textContent = tr('Sempre attiva');
+      const b2 = mk('span', 'badge'); b2.textContent = tr('Disattivata');
+      const tk = mk('span', 'tk'); tk.dataset.tk = 'ent:' + i;
+      sum.append(title, b1, b2, tk); det.appendChild(sum);
+      const upd = () => {
+        title.textContent = e.title.trim() || split(e.keys)[0] || tr('Voce {n}', { n: i + 1 });
+        b1.hidden = !e.constant; b2.hidden = e.enabled;
+      };
+      const body = mk('div', 'ebody');
+      body.appendChild(field(tr('Titolo (solo per te)'), input('text', e.title, v => { e.title = v; upd(); }, { autocomplete: 'off' })));
+      body.appendChild(field(tr('Parole chiave (separate da virgole)'), input('text', e.keys, v => { e.keys = v; upd(); }, { autocomplete: 'off', spellcheck: 'false' })));
+      const g1 = mk('div', 'egrid');
+      g1.appendChild(field(tr('Parole chiave secondarie'), input('text', e.sec, v => { e.sec = v; }, { autocomplete: 'off', spellcheck: 'false' })));
+      g1.appendChild(field(tr('Logica delle secondarie'), select(LOGIC, e.logic, v => { e.logic = +v; })));
+      body.appendChild(g1);
+      const ta = mk('textarea'); ta.rows = 6; ta.value = e.content; ta.spellcheck = false; ta.setAttribute('aria-label', tr('Contenuto della voce {n}', { n: i + 1 }));
+      ta.addEventListener('input', () => { e.content = ta.value; afterEdit(); });
+      body.appendChild(field(tr('Contenuto'), ta));
+      const flags = mk('div', 'inline');
+      flags.appendChild(check(tr('Attiva'), e.enabled, v => { e.enabled = v; upd(); afterEdit(); }));
+      flags.appendChild(check(tr('Sempre inviata (senza parole chiave)'), e.constant, v => { e.constant = v; upd(); afterEdit(); }));
+      body.appendChild(flags);
+      const g2 = mk('div', 'egrid');
+      const depthF = field(tr('Profondità'), input('number', e.depth, v => { e.depth = ni(v, 0, 9999, 0); }, { min: 0, max: 9999, step: 1 }));
+      const roleF = field(tr('Ruolo'), select(ROLES, e.role, v => { e.role = +v; }));
+      const showDepth = () => { depthF.hidden = roleF.hidden = e.pos !== 4; };
+      g2.appendChild(field(tr('Posizione'), select(POS, e.pos, v => { e.pos = +v; showDepth(); })));
+      g2.append(depthF, roleF);
+      g2.appendChild(field(tr('Ordine di inserimento'), input('number', e.order, v => { e.order = ni(v, -9999, 99999, 100); }, { min: -9999, max: 99999, step: 1 })));
+      g2.appendChild(field(tr('Probabilità (%)'), input('number', e.prob, v => { e.prob = ni(v, 0, 100, 100); }, { min: 0, max: 100, step: 1 })));
+      body.appendChild(g2);
+      const ctl = mk('div', 'ctl');
+      const mkBtn = (txt, fn, dis) => { const b = mk('button', 'btn'); b.type = 'button'; b.textContent = tr(txt); b.disabled = !!dis; b.addEventListener('click', fn); return b; };
+      ctl.append(
+        mkBtn('Sposta su', () => { K.entries.splice(i - 1, 0, K.entries.splice(i, 1)[0]); buildEntries(); afterEdit(); }, i === 0),
+        mkBtn('Sposta giù', () => { K.entries.splice(i + 1, 0, K.entries.splice(i, 1)[0]); buildEntries(); afterEdit(); }, i === K.entries.length - 1),
+        mkBtn('Duplica', () => { const c = Object.assign({}, e, { open: true }); K.entries.splice(i + 1, 0, c); buildEntries(); afterEdit(); }),
+        mkBtn('Rimuovi voce', () => { K.entries.splice(i, 1); buildEntries(); afterEdit(); })
+      );
+      body.appendChild(ctl);
+      det.appendChild(body); box.appendChild(det);
+      upd(); showDepth();
+    });
+    if (!K.entries.length) {
+      const p = mk('p', 'sm'); p.textContent = tr('Nessuna voce. Il lorebook viene incorporato nella carta solo se contiene almeno una voce.'); box.appendChild(p);
+    }
+  }
+  $('entAdd').addEventListener('click', () => { K.entries.push(newEntry()); buildEntries(); afterEdit(); });
+
+  function syncData() {
+    F.forEach(el => { el.value = K[el.dataset.f]; });
+    buildStrList($('altList'), K.alt, 'alt', 'Messaggio alternativo');
+    buildStrList($('grpList'), K.group, 'grp', 'Saluto di gruppo');
+    buildEntries();
+    refreshTokens();
+    syncNameLink();
+  }
+
+  /* Importa, scarica JSON, nuova carta */
+  $('dimportBtn').addEventListener('click', () => $('dimport').click());
+  $('dimport').addEventListener('change', async e => {
+    const f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      let obj;
+      if (/\.json$/i.test(f.name)) {
+        obj = JSON.parse(await f.text());
+      } else {
+        const tx = readPngText(new Uint8Array(await f.arrayBuffer()));
+        const raw = tx && (tx.ccv3 || tx.chara);
+        if (!raw) throw new Error('nodata');
+        obj = JSON.parse(decodeB64(raw));
+      }
+      K = fromCard(obj);
+      syncData(); schedule();
+      say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
+    } catch (err) {
+      say('dstatus', 'Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.', null, true);
+    }
+  });
+  $('djson').addEventListener('click', async () => {
+    if (!K.name.trim()) { say('dstatus', 'Scrivi prima il nome della carta.', null, true); return; }
+    try {
+      const fn = slug(K.name) + '.json';
+      await saveBlob(new Blob([JSON.stringify(buildCard('v3'), null, 2)], { type: 'application/json' }), fn);
+      say('dstatus', 'JSON salvato come {fn}.', { fn }, false);
+    } catch (err) {
+      say('dstatus', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
+    }
+  });
+  function newCard() {
+    K = defaultData();
+    if (IMGURL) URL.revokeObjectURL(IMGURL);
+    if (MASKURL) URL.revokeObjectURL(MASKURL);
+    IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
+    S.name = EX.name; S.desc = EX.desc[LANG]; S.zoom = 100; S.ox = 0; S.oy = 0;
+    initLive();
+    syncData(); syncUI(); schedule();
+    say('dstatus', 'Nuova carta pronta.', null, false);
+  }
+  let armed = 0;
+  const dnew = $('dnew');
+  function disarm() {
+    clearTimeout(armed); armed = 0;
+    dnew.classList.remove('armed');
+    dnew.textContent = tr('Nuova carta');
+  }
+  dnew.addEventListener('click', () => {
+    if (!armed) {
+      dnew.textContent = tr('Conferma: svuota tutto');
+      dnew.classList.add('armed');
+      armed = setTimeout(disarm, 4000);
+      return;
+    }
+    disarm();
+    newCard();
+  });
+  $('togo').addEventListener('click', () => showView('cover'));
+
+  /* Cambio vista */
+  const VIEWS = { dati: $('view-data'), cover: $('view-cover') };
+  function showView(v) {
+    if (!VIEWS[v]) v = 'dati';
+    Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
+    document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    if (v === 'cover') { buildList(); render(); }
+    if (location.hash !== '#' + v) {
+      try { history.replaceState(null, '', '#' + v); } catch (e) { try { location.hash = v; } catch (e2) { /* ignora */ } }
+    }
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+  window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS[v]) showView(v); });
+
+  /* ---------- Avvio ---------- */
+  restore();
+  loadGallery();
+  initLive();
+  applyLangUI();
+  syncData();
+  syncUI();
+  ensureFonts();
+  showView(location.hash === '#cover' ? 'cover' : 'dati');
+  render();
+})();
+</script>
+
+</body></html>
