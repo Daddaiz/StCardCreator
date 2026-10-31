@@ -1,23 +1,6 @@
-name: Build exe
-
-on:
-  workflow_dispatch:
-  push:
-    tags: ['v*']
-
-permissions:
-  contents: write
-
-jobs:
-  build:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
       - run: npm install
       - run: npm run dist
+      - run: node scripts/make-html.js
       - uses: actions/upload-artifact@v4
         with:
           name: ST-Card-Creator
@@ -26,4 +9,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/ST-Card-Creator.exe
+          files: |
+            dist/ST-Card-Creator.exe
+            dist/ST-Card-Creator.html
