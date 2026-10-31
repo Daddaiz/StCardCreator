@@ -4,12 +4,18 @@
 
 <p align="center"><img src="docs/start.png" width="760" alt="Start screen"></p>
 
+## Try it
+
+**[Open it online](https://daddaiz.github.io/StCardCreator/)**: no download, runs in your browser.
+
 ## Download
 
 Go to **Releases** and pick one:
 
 - **ST-Card-Creator.exe** for Windows. Portable, no install.
 - **ST-Card-Creator.html** for any browser. One file, nothing to install.
+
+> **Windows warning:** the exe is not code-signed, so Windows SmartScreen may say it "prevented an unrecognized app from starting". Click **More info**, then **Run anyway**. If you prefer not to, use the online version or the HTML file: they do the same thing.
 
 ## What it does
 
@@ -43,3 +49,5 @@ The AI features need an API, set in the **API** tab: OpenRouter, NanoGPT, OpenAI
 npm install
 npm run dist
 ```
+
+Pushing a tag like `v1.0.1` builds the exe and the HTML on GitHub and attaches both to a release.
