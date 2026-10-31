@@ -273,14 +273,57 @@
   .wexc { white-space: pre-wrap; max-height: 150px; overflow: auto; font-size: 13px; line-height: 1.45; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--muted); }
   .wq { display: grid; gap: 6px; }
   .wq b { font-size: 13px; font-weight: 500; }
-</style>
 
+  .brand { cursor: pointer; }
+  body.starting .app { visibility: hidden; }
+  .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px; }
+  .start[hidden] { display: none; }
+  .stin { display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
+  .stlogo { width: 116px; height: auto; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
+  .stword { width: 197px; height: auto; margin-bottom: 14px; }
+  .sbtns { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .sbtn { display: grid; gap: 8px; align-content: start; text-align: left; padding: 16px 14px; min-height: 118px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--fg); cursor: pointer; font: inherit; }
+  .sbtn b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .sbtn small { font-size: 12px; line-height: 1.4; color: var(--muted); }
+  .sbtn:hover:not(:disabled) { border-color: var(--accent); }
+  .sbtn:disabled { opacity: 0.5; cursor: default; }
+  @media (max-width: 860px) { .sbtns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 460px) { .sbtns { grid-template-columns: minmax(0, 1fr); } .sbtn { min-height: 0; } }
+  .genrow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .genrow .sm { flex: 1 1 200px; }
+  .gbar { display: flex; gap: 3px; flex: 0 1 260px; min-width: 160px; margin-left: auto; }
+  .gbar .seg { flex: 1 1 0; height: 8px; border-radius: 2px; background: var(--line); transition: background 0.25s; }
+  .gbar .seg.done { background: var(--accent); }
+  .gbar .seg.work { background: linear-gradient(90deg, var(--line), var(--accent), var(--line)); background-size: 200% 100%; animation: segw 1.1s linear infinite; }
+  @keyframes segw { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) { .gbar .seg.work { animation: none; background: var(--accent); opacity: 0.5; } }
+  .sdrow { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .sdrow select { width: auto; flex: 0 1 340px; min-width: 200px; }
+  .imgbody { display: grid; gap: 14px; }
+  .imgp { display: grid; gap: 10px; }
+  .imgf { display: grid; gap: 6px; }
+  .imgh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }</style>
+
+<div id="start" class="start" hidden role="dialog" aria-label="Start">
+  <div class="stin">
+    <img class="stlogo" src="logo.png" width="116" height="124" alt="">
+    <img class="stword" src="wordmark.png" width="197" height="57" alt="ST Card Creator">
+    <div class="sbtns">
+      <button type="button" class="sbtn" id="stResume" data-start="resume"><b>Resume</b><small>Nothing saved yet.</small></button>
+      <button type="button" class="sbtn" data-start="import"><b>Import</b><small>Load a card PNG or JSON to edit its text.</small></button>
+      <button type="button" class="sbtn" id="stNew" data-start="new"><b>New Card</b><small>Start from zero, nothing written.</small></button>
+      <button type="button" class="sbtn" data-start="gen"><b>IA Generation</b><small>Let the AI draft a card from your idea. Needs an API.</small></button>
+      <button type="button" class="sbtn" data-start="png"><b>Edit your PNG</b><small>Add text and frames to a finished image.</small></button>
+    </div>
+  </div>
+</div>
 <canvas id="magic" aria-hidden="true"></canvas>
 <main class="app">
   <header class="bar">
     <h1 class="brand"><img class="logo" src="logo.png" width="116" height="124" alt="ST Card Creator"></h1>
     <div class="navgrp">
       <button type="button" class="btn" id="dnew">Nuova carta</button>
+      <button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button>
       <nav class="views" aria-label="Vista">
         <button type="button" data-view="dati" aria-pressed="true">Dati</button>
         <button type="button" data-view="cover" aria-pressed="false">Cover</button>
@@ -459,7 +502,6 @@
         <button type="button" class="btn" id="djson">Scarica JSON</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
-      <div class="chkline" id="chkline"></div>
       <p class="hint" id="embedinfo"></p>
 
       <div style="display:grid;gap:12px">
@@ -517,25 +559,11 @@
       <p class="sm" id="astatus" role="status"></p>
     </section>
   </div>
-  <div id="view-data" class="dview">
-  <div class="dmain">
-    <details class="drawer" data-group="data"><summary><h2 id="d-act">Import Card</h2></summary><div class="dbody">
-      <div class="jump">
-        <input id="dimport" type="file" accept=".png,.json,image/png,application/json" hidden>
-        <button type="button" class="btn" id="dimportBtn">Importa PNG o JSON</button>
-        <button type="button" class="btn primary" id="togo">Vai alla Cover</button>
-      </div>
-      <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.</p>
-      <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
-      <div class="stack">
-        <div class="dfh"><b>Recent cards</b><span class="tk">saved in this browser</span></div>
-        <div class="stack" id="recent"></div>
-      </div>
-    </div></details>
-
-    <details class="drawer" data-group="data"><summary><h2 id="d-gen">Generate from idea</h2></summary><div class="dbody">
+  <div id="view-gen" class="apiview" hidden>
+    <section class="apibox">
+      <h2 class="atitle">AI-assisted generation</h2>
       <p class="sm" id="genNote"></p>
-      <label class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="4" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></label>
+      <label class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="5" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></label>
       <div class="df"><span class="dfh"><b>Fields to write</b></span><div class="chkgrid" id="genFields"></div></div>
       <div class="df">
         <span class="dfh"><b>Existing text</b></span>
@@ -543,9 +571,11 @@
         <label class="chk"><input type="radio" name="genMode" value="all"> Overwrite the selected fields</label>
       </div>
       <div class="ctl"><button type="button" class="btn primary" id="genGo">Generate</button><button type="button" class="btn" id="genStop" hidden>Stop</button></div>
-      <p class="sm" id="genStatus" role="status"></p>
-    </div></details>
-
+      <div class="genrow"><p class="sm" id="genStatus" role="status"></p><div class="gbar" id="genBar" role="progressbar" aria-label="Generation progress" aria-valuemin="0"></div></div>
+    </section>
+  </div>
+  <div id="view-data" class="dview">
+  <div class="dmain">
     <details class="drawer" data-group="data"><summary><h2 id="d-char">Personaggio</h2></summary><div class="dbody">
       <label class="df"><span class="dfh"><b>Nome</b></span><input type="text" data-f="name" maxlength="120" autocomplete="off" spellcheck="false"></label>
       <label class="df"><span class="dfh"><b>Descrizione del personaggio</b><span class="tk" data-tk="description"></span></span><textarea data-f="description" rows="10" spellcheck="false"></textarea></label>
@@ -614,10 +644,24 @@
       <label class="df"><span class="dfh"><b>Tag</b></span><input type="text" data-f="tags" autocomplete="off" spellcheck="false" placeholder="Separati da virgole"></label>
     </div></details>
 
-    <details class="drawer" data-group="data"><summary><h2 id="d-chk">Card check <span class="badge" id="chkBadge"></span></h2></summary><div class="dbody">
-      <div class="stack" id="chkList"></div>
-      <p class="sm">These are rules of thumb, not format errors. Nothing blocks the export except a missing name.</p>
+    <details class="drawer" data-group="data" hidden><summary><h2 id="d-img">Image prompts</h2></summary><div class="dbody">
+      <div class="imgbody" id="imgBody"></div>
     </div></details>
+
+    <details class="drawer" data-group="data"><summary><h2 id="d-act">Import Card</h2></summary><div class="dbody">
+      <div class="jump">
+        <input id="dimport" type="file" accept=".png,.json,image/png,application/json" hidden>
+        <button type="button" class="btn" id="dimportBtn">Importa PNG o JSON</button>
+        <button type="button" class="btn primary" id="togo">Vai alla Cover</button>
+      </div>
+      <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.</p>
+      <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
+      <div class="stack">
+        <div class="dfh"><b>Recent cards</b><span class="tk">saved in this browser</span></div>
+        <div class="stack" id="recent"></div>
+      </div>
+    </div></details>
+
   </div>
   <aside class="dside" aria-label="Copertina">
     <canvas id="dprev" width="560" height="840" role="img" aria-label="Anteprima della carta"></canvas>
@@ -661,8 +705,8 @@
 
   /* ---------- Dati ---------- */
   const D = {
-    name: EX.name,
-    desc: EX.desc[LANG],
+    name: '',
+    desc: '',
     upper: false, rule: true, align: 'left',
     nameFont: 'Cinzel', descFont: 'Lora', nameBold: true, descBold: true,
     template: 'velo',
@@ -1686,7 +1730,7 @@
     c.clearRect(0, 0, cv.width, cv.height);
     c.drawImage(card, 0, 0, cv.width, cv.height);
   }
-  function render() { draw(card, 800); drawMinis(); drawPrev(); renderChecks(); }
+  function render() { draw(card, 800); drawMinis(); drawPrev();  }
   let raf = 0;
   function schedule() { saveDataSoon(); if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', schedule);
@@ -1823,7 +1867,7 @@
   const str = v => typeof v === 'string' ? v : '';
 
   const newEntry = () => ({ title: '', keys: '', sec: '', content: '', enabled: true, constant: false, pos: 1, depth: 4, role: 0, order: 100, prob: 100, logic: 0, open: true });
-  const defaultData = () => sanitize({ name: EX.name, description: EX.description[LANG] });
+  const defaultData = () => sanitize({});
   function sanitizeEntry(e) {
     e = e && typeof e === 'object' ? e : {};
     return {
@@ -1943,7 +1987,7 @@
     const info = $('embedinfo');
     if (info) info.textContent = K.entries.length === 1 ? tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, 1 voce di lorebook.', { t: nf(total) }) : tr('Nel PNG finiscono i dati della vista Dati: ≈ {t} token, {n} voci di lorebook.', { t: nf(total), n: K.entries.length });
   }
-  const afterEdit = () => { refreshTokens(); saveDataSoon(); refreshWands(); renderChecks(); };
+  const afterEdit = () => { refreshTokens(); saveDataSoon(); refreshWands();  };
 
   /* Campi fissi */
   const F = [...document.querySelectorAll('[data-f]')];
@@ -2089,7 +2133,7 @@
         obj = JSON.parse(decodeB64(raw));
       }
       K = fromCard(obj); DID = null; clearUndo();
-      syncData(); schedule(); saveDataSoon(); renderChecks();
+      syncData(); schedule(); saveDataSoon(); 
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
     } catch (err) {
       say('dstatus', 'Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.', null, true);
@@ -2110,7 +2154,7 @@
     if (IMGURL) URL.revokeObjectURL(IMGURL);
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
-    S.name = EX.name; S.desc = EX.desc[LANG]; S.zoom = 100; S.ox = 0; S.oy = 0;
+    S.name = ''; S.desc = ''; IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
     initLive();
     syncData(); syncUI(); schedule();
     say('dstatus', 'Nuova carta pronta.', null, false);
@@ -2674,13 +2718,14 @@
   $('wdlg').addEventListener('click', e => { if (e.target === $('wdlg')) closeWd(); });
 
   /* Cambio vista */
-  const VIEWS = { dati: $('view-data'), cover: $('view-cover'), api: $('view-api') };
+  const VIEWS = { dati: $('view-data'), cover: $('view-cover'), api: $('view-api'), gen: $('view-gen') };
   function showView(v) {
     if (!VIEWS[v]) v = 'dati';
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     if (v === 'cover') { buildList(); render(); }
     if (v === 'api') { apiRender(); }
+    if (v === 'gen') { genReady(); barSync(); }
     if (location.hash !== '#' + v) {
       try { history.replaceState(null, '', '#' + v); } catch (e) { try { location.hash = v; } catch (e2) { /* ignora */ } }
     }
@@ -2753,16 +2798,16 @@
   $('undoBtn').addEventListener('click', () => {
     const u = UNDO.pop();
     if (u) { try { u.fn(); } catch (e) { /* ignora */ } }
-    drawUndo(); refreshWands(); renderChecks();
+    drawUndo(); refreshWands(); 
   });
 
   /* Dopo una modifica al modello dati fatta da codice */
-  function afterModel() { syncData(); schedule(); saveDataSoon(); refreshWands(); renderChecks(); }
+  function afterModel() { syncData(); schedule(); saveDataSoon(); refreshWands();  }
 
   /* Bozze salvate nel browser */
   const DKEY = 'st-card-creator-drafts-v1';
   let DID = null, DTIMER = 0, DREADY = false;
-  const isPristine = () => JSON.stringify(sanitize(K)) === JSON.stringify(defaultData()) && S.desc === EX.desc[LANG];
+  const isPristine = () => JSON.stringify(sanitize(K)) === JSON.stringify(defaultData()) && !S.desc.trim();
   function loadDrafts() {
     try { const o = JSON.parse(localStorage.getItem(DKEY) || 'null'); if (o && Array.isArray(o.list)) return o; } catch (e) { /* ignora */ }
     return { cur: null, list: [] };
@@ -2780,7 +2825,7 @@
       DID = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
     const d = loadDrafts();
-    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink } };
+    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink }, img: IMGP };
     d.list = d.list.filter(x => x.id !== DID);
     d.list.unshift(rec);
     d.list = d.list.slice(0, 12);
@@ -2797,11 +2842,10 @@
       if (typeof r.cover.desc === 'string') S.desc = r.cover.desc;
       S.nameLink = r.cover.link !== false;
     }
+    IMGP = (r.img && r.img.portrait) ? r.img : null; drawImg();
   }
   function initDrafts() {
-    const d = loadDrafts();
-    const r = d.list.find(x => x.id === d.cur);
-    if (r) applyDraft(r);
+    /* La bozza non si riapre da sola: si sceglie dalla schermata di avvio */
   }
   const draftTok = k => ['description', 'personality', 'scenario', 'first_mes', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'].reduce((a, f) => a + tok(str(k[f])), 0);
   function renderRecent() {
@@ -2824,7 +2868,7 @@
       let armed = 0;
       open.addEventListener('click', () => {
         saveDraft();
-        applyDraft(r); clearUndo(); syncData(); syncUI(); schedule(); renderChecks(); renderRecent();
+        applyDraft(r); clearUndo(); syncData(); syncUI(); schedule();  renderRecent();
         say('dstatus', 'Opened: ' + ((r.name || '').trim() || 'Untitled card'), null, false);
       });
       del.addEventListener('click', () => {
@@ -2835,74 +2879,6 @@
       });
       ctl.append(open, del); head.append(b, ctl); item.append(head, meta); box.appendChild(item);
     });
-  }
-
-  /* Controllo della carta */
-  let CHKSIG = '';
-  const MACRO_BAD = /\{\{user\}\}\s+(?:says?|said|replies|replied|answers?|answered|nods?|nodded|smiles?|smiled|feels?|felt|thinks?|thought|walks?|walked|takes?|took|looks?|looked|whispers?|whispered|laughs?|laughed|sighs?|sighed|steps?|stepped|turns?|turned|asks?|asked)\b|^\s*\{\{user\}\}\s*:/im;
-  function runChecks() {
-    const out = [];
-    const add = (lvl, msg, go) => out.push({ lvl, msg, go });
-    const t = k => tok(K[k] || '');
-    const on = K.entries.filter(e => e.enabled);
-    const fixed = ['description', 'personality', 'scenario', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'].reduce((a, k) => a + t(k), 0) + on.filter(e => e.constant).reduce((a, e) => a + tok(e.content), 0);
-    if (!K.name.trim()) add('err', 'The card has no name: the PNG cannot be exported.', 'd-char');
-    if (!K.description.trim()) add('warn', 'The description is empty. It is the core of the character and is always sent to the model.', 'd-char');
-    else if (t('description') < 40) add('tip', 'The description is very short (' + t('description') + ' tokens). Appearance, speech and background help the model stay in character.', 'd-char');
-    if (fixed > 1500) add('warn', 'Permanent tokens are about ' + nf(fixed) + '. Above roughly 1,500 they eat a large part of small context windows: trim, or move details into lorebook entries.', 'd-char');
-    if (!K.first_mes.trim()) add('warn', 'There is no first message: the chat will start empty.', 'd-first');
-    const greetings = [['the first message', K.first_mes]].concat(K.alt.map((s, i) => ['alternate message ' + (i + 1), s]), K.group.map((s, i) => ['group greeting ' + (i + 1), s]));
-    greetings.forEach(([n, s]) => { if (s && MACRO_BAD.test(s)) add('warn', 'In ' + n + ', {{user}} seems to speak or act. Greetings should only write {{char}} and the scene.', 'd-first'); });
-    const fields = [['description', K.description, 'd-char'], ['personality', K.personality, 'd-char'], ['scenario', K.scenario, 'd-char'], ['first message', K.first_mes, 'd-first'], ['dialogue examples', K.mes_example, 'd-ex'], ['main prompt', K.system_prompt, 'd-adv'], ['post-history instructions', K.post_history, 'd-adv'], ["character's note", K.dp_prompt, 'd-adv']];
-    K.alt.forEach((s, i) => fields.push(['alternate message ' + (i + 1), s, 'd-first']));
-    fields.forEach(([n, s, go]) => { if (s && ((s.match(/\{\{/g) || []).length !== (s.match(/\}\}/g) || []).length)) add('warn', 'Unbalanced {{ }} in the ' + n + '. A macro will not be replaced.', go); });
-    if (K.mes_example.trim() && !/<START>/i.test(K.mes_example)) add('warn', 'The dialogue examples have no <START> line. SillyTavern uses it to separate examples.', 'd-ex');
-    if (!K.mes_example.trim()) add('tip', 'No dialogue examples. A few short exchanges teach a character\'s voice better than any description.', 'd-ex');
-    K.entries.forEach((e, i) => {
-      const nm = 'Lorebook entry ' + (i + 1) + (e.title.trim() ? ' (' + e.title.trim() + ')' : '');
-      if (!e.content.trim()) add('warn', nm + ' has no content.', 'd-lore');
-      else if (e.enabled && !e.constant && !split(e.keys).length) add('warn', nm + ' has no keywords and is not "always on": it will never trigger.', 'd-lore');
-    });
-    const blank = K.alt.filter(s => !s.trim()).length + K.group.filter(s => !s.trim()).length;
-    if (blank) add('tip', blank + ' empty alternate/group greeting' + (blank > 1 ? 's are' : ' is') + ' not exported.', 'd-first');
-    if (!IMG) add('warn', 'The cover still uses the sample image. Upload your own PNG in the Cover tab.', 'cover');
-    const meta = [!K.tags.trim() && 'tags', !K.creator.trim() && 'creator', !K.notes.trim() && "creator's notes"].filter(Boolean);
-    if (meta.length) add('tip', 'Missing ' + meta.join(', ') + '. Optional, but useful once you share the card.', 'd-meta');
-    const rank = { err: 0, warn: 1, tip: 2 };
-    return out.sort((a, b) => rank[a.lvl] - rank[b.lvl]);
-  }
-  function goTo(id) {
-    if (id === 'cover') { showView('cover'); return; }
-    showView('dati');
-    const h = $(id); if (!h) return;
-    const d = h.closest('details');
-    if (d) d.open = true;
-    setTimeout(() => window.scrollTo({ top: Math.max(0, h.getBoundingClientRect().top + window.scrollY - 190), behavior: 'smooth' }), 60);
-  }
-  function renderChecks() {
-    const res = runChecks();
-    const sig = JSON.stringify(res);
-    if (sig === CHKSIG) return;
-    CHKSIG = sig;
-    const issues = res.filter(r => r.lvl !== 'tip').length, tips = res.length - issues;
-    const badge = $('chkBadge');
-    badge.textContent = res.length ? String(res.length) : 'OK';
-    badge.classList.toggle('bad', issues > 0);
-    const box = $('chkList');
-    box.textContent = '';
-    if (!res.length) { const p = mk('p', 'sm'); p.textContent = 'Nothing to report. The card looks complete.'; box.appendChild(p); }
-    const LBL = { err: 'Error', warn: 'Warning', tip: 'Tip' };
-    res.forEach(r => {
-      const row = mk('div', 'chk-row ' + r.lvl), tag = mk('span', 'chk-tag'), msg = mk('span', 'chk-msg'), go = mk('button', 'btn quiet');
-      tag.textContent = LBL[r.lvl]; msg.textContent = r.msg; go.type = 'button'; go.textContent = 'Go'; go.addEventListener('click', () => goTo(r.go));
-      row.append(tag, msg, go); box.appendChild(row);
-    });
-    const line = $('chkline');
-    line.textContent = '';
-    const s = mk('span'); s.textContent = res.length ? 'Card check: ' + (issues ? issues + ' to review' : 'no warnings') + (tips ? ', ' + tips + ' tip' + (tips > 1 ? 's' : '') : '') + '.' : 'Card check: all good.';
-    line.appendChild(s);
-    if (res.length) { const b = mk('button', 'btn quiet'); b.type = 'button'; b.textContent = 'Review'; b.addEventListener('click', () => goTo('d-chk')); line.appendChild(b); }
-    line.classList.toggle('warn', issues > 0);
   }
 
   /* Generazione dell'intera carta da un'idea */
@@ -2947,6 +2923,32 @@
   }
   const loreEntry = x => Object.assign(newEntry(), { title: x.title, keys: x.keys, content: x.content, open: false });
   let GEN_CTL = null;
+  /* Barra di avanzamento a segmenti */
+  const SEGS = () => GEN.map(([k]) => k).concat(SD.on ? ['sd'] : []);
+  function barBuild() {
+    const box = $('genBar'); if (!box) return;
+    const keys = SEGS();
+    box.textContent = '';
+    keys.forEach(k => { const s = mk('span', 'seg'); s.dataset.k = k; box.appendChild(s); });
+    barSync();
+  }
+  function barCount() { const box = $('genBar'); return box ? box.querySelectorAll('.seg.done').length : 0; }
+  function barNote() { const box = $('genBar'); if (box) { box.setAttribute('aria-valuemax', String(box.children.length)); box.setAttribute('aria-valuenow', String(barCount())); } }
+  function barSync() {
+    const box = $('genBar'); if (!box || GEN_CTL) return;
+    if (box.children.length !== SEGS().length) { barBuild(); return; }
+    box.querySelectorAll('.seg').forEach(s => {
+      const k = s.dataset.k, on = k === 'sd' ? SD.on : $('gf-' + k).checked;
+      s.className = 'seg' + (on ? '' : ' done');
+    });
+    barNote();
+  }
+  function barSet(k, state) {
+    const box = $('genBar'); if (!box) return;
+    const s = box.querySelector('.seg[data-k="' + k + '"]'); if (!s) return;
+    s.className = 'seg' + (state ? ' ' + state : '');
+    barNote();
+  }
   function genReady() {
     const ok = apiReady(), has = $('genIdea').value.trim().length >= 10, busy = !!GEN_CTL;
     $('genGo').disabled = !ok || !has || busy;
@@ -2958,41 +2960,193 @@
     if (idea.length < 10) return;
     const mode = document.querySelector('input[name="genMode"]:checked').value;
     const picks = GEN.filter(([k]) => $('gf-' + k).checked);
-    if (!picks.length) { $('genStatus').textContent = 'Select at least one field.'; return; }
+    if (!picks.length && !SD.on) { $('genStatus').textContent = 'Select at least one field.'; return; }
     const snap = JSON.stringify(K), snapDesc = S.desc, pristine = isPristine();
-    if (pristine) { K.name = ''; K.description = ''; }
+    barBuild();
     GEN_CTL = new AbortController();
     $('genStop').hidden = false; genReady();
     const st = $('genStatus'); st.classList.remove('warn');
-    let changed = 0, skipped = 0, failed = null;
+    let changed = 0, skipped = 0, failed = null, imgDone = false;
+    const total = picks.length + (SD.on ? 1 : 0);
+    let cur = null;
     try {
       for (let i = 0; i < picks.length; i++) {
         const [k, label] = picks[i];
         if (GEN_CTL.signal.aborted) break;
+        cur = k;
         if (k === 'lore') {
-          st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + picks.length + ')…';
+          barSet(k, 'work');
+          st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + total + ')…';
           const items = await suggestLore(idea, GEN_CTL.signal);
           items.forEach(x => K.entries.push(loreEntry(x)));
           if (items.length) { changed++; afterModel(); }
+          barSet(k, 'done'); cur = null;
           continue;
         }
-        if (mode === 'empty' && String(k === 'tagline' ? (pristine ? '' : S.desc) : K[k] || '').trim()) { skipped++; continue; }
-        st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + picks.length + ')…';
+        if (mode === 'empty' && String(k === 'tagline' ? (pristine ? '' : S.desc) : K[k] || '').trim()) { skipped++; barSet(k, 'done'); cur = null; continue; }
+        barSet(k, 'work');
+        st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + total + ')…';
         const r = await callLLM(genMessages(k, idea), { signal: GEN_CTL.signal, maxTokens: k === 'mes_example' ? 2000 : 1400 });
         let v = cleanOut(r.text);
         if (k === 'name') v = v.split('\n')[0].replace(/^name\s*:\s*/i, '').replace(/["*#]/g, '').trim().slice(0, 80);
         if (k === 'tags') v = v.replace(/#/g, '').replace(/\n+/g, ', ').trim();
-        if (!v) continue;
+        if (!v) { barSet(k, ''); cur = null; continue; }
         if (k === 'tagline') { S.desc = v.replace(/\n+/g, ' ').slice(0, 140); syncUI(); } else K[k] = v;
         changed++; afterModel();
+        barSet(k, 'done'); cur = null;
       }
-    } catch (e) { failed = e; }
+      if (SD.on && !GEN_CTL.signal.aborted) {
+        cur = 'sd';
+        if (mode === 'empty' && IMGP && IMGP.model === SD.model && IMGP.portrait && IMGP.portrait.pos) { skipped++; barSet('sd', 'done'); }
+        else {
+          barSet('sd', 'work');
+          st.textContent = 'Writing image prompts (' + total + '/' + total + ')…';
+          await imgRun(GEN_CTL.signal);
+          imgDone = true; barSet('sd', 'done');
+        }
+        cur = null;
+      }
+    } catch (e) { failed = e; if (cur) barSet(cur, ''); }
     GEN_CTL = null; $('genStop').hidden = true;
     if (changed) pushUndo('generated card', () => { K = sanitize(JSON.parse(snap)); S.desc = snapDesc; syncUI(); afterModel(); });
     else if (pristine) { K = sanitize(JSON.parse(snap)); afterModel(); }
     if (failed && failed.code !== 'abort') { const k = errKey(failed); st.textContent = tr(k[0], k[1] || null) + (changed ? ' What was written so far is kept (you can undo it).' : ''); st.classList.add('warn'); }
-    else st.textContent = (failed ? 'Stopped. ' : 'Done. ') + changed + ' field' + (changed === 1 ? '' : 's') + ' written' + (skipped ? ', ' + skipped + ' already filled and left as they are' : '') + '.';
-    genReady();
+    else st.textContent = (failed ? 'Stopped. ' : 'Done. ') + changed + ' field' + (changed === 1 ? '' : 's') + ' written' + (imgDone ? ', plus image prompts' : '') + (skipped ? ', ' + skipped + ' already filled and left as they are' : '') + '.';
+    genReady(); drawImg();
+  }
+
+  /* Stable Diffusion: prompt per generatori di immagini (non fanno parte della carta) */
+  const SDKEY = 'st-card-creator-gen';
+  const SD = { on: false, model: 'gpt-image-1' };
+  try { const o = JSON.parse(localStorage.getItem(SDKEY) || 'null'); if (o) { SD.on = !!o.on; if (typeof o.model === 'string') SD.model = o.model; } } catch (e) { /* ignora */ }
+  const SDSAVE = () => { try { localStorage.setItem(SDKEY, JSON.stringify(SD)); } catch (e) { /* ignora */ } };
+  const NEG_BASE = 'lowres, worst quality, low quality, bad anatomy, bad hands, extra fingers, missing fingers, cropped, text, watermark, signature, username, blurry, jpeg artifacts';
+  const SDSTYLE = {
+    nl: { neg: false, rules: 'This model understands plain natural language. Write as if briefing an art director: 2 to 4 flowing, complete sentences, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting, lighting and mood, camera framing, and the visual style or medium. Describe what should be present rather than what to avoid. No weights, no quality-tag spam, no negative prompt.' },
+    flux: { neg: false, rules: 'This is a FLUX model (Black Forest Labs). Write descriptive phrases separated by commas, like the description of an illustrated poster: subject first, then appearance, clothing, pose, setting, lighting, colors, style and composition. Concrete visual language, 40 to 90 words, no prompt weights, no quality-tag spam like "masterpiece", and no negative prompt (FLUX ignores it).' },
+    fluxedit: { neg: false, rules: 'This is a FLUX editing model (Kontext / Edit) that works from reference images. For the character portrait, write a full natural-language text-to-image description (subject, appearance, clothing, pose, setting, lighting, style) so the first image can be created and then used as the reference. For the scene, write an instruction-style edit prompt applied to that reference image, such as "Keep the character\'s face, hair and outfit exactly the same, and place them in ...", then describe the setting, pose, lighting and mood. No weights, no negative prompt.' },
+    sdxl: { neg: true, rules: 'This is an SDXL-family model. Start with quality tags ("masterpiece, best quality, highly detailed"), then the subject, then comma-separated descriptive phrases ordered by importance: appearance, clothing, pose, expression, setting, lighting, style. Keyword order matters, so put the most important things first. Keep the positive prompt under about 75 tokens per chunk. Provide a negative prompt.' },
+    sd3: { neg: true, rules: 'This is a Stable Diffusion 3 / 3.5 model. It reads short natural-language sentences well: write 2 to 3 clear sentences describing subject, appearance, clothing, pose, setting, lighting and style, optionally followed by a few quality tags. Provide a brief negative prompt (a short list of things to avoid).' },
+    pony: { neg: true, rules: 'This is a Pony Diffusion XL derivative. The positive prompt must start with the score tags "score_9, score_8_up, score_7_up", then a source tag ("source_anime", "source_cartoon", "source_furry" or "source_pony" as fits; default source_anime for anime-style art), then a rating tag that matches the card content ("rating_safe" by default), then booru-style tags: subject count (1girl, 1boy...), hair, eyes, clothing, expression, pose, setting, lighting. Lowercase tags separated by commas. The negative prompt should start with "score_6, score_5, score_4".' },
+    anime: { neg: true, rules: 'This is an anime-style tag model. Use Danbooru-style tags only: lowercase, comma-separated, ordered by importance: subject count (1girl, 1boy...), character traits, hair, eyes, clothing, expression, pose, setting, lighting. Add a rating tag only if needed (default safe content). Quality tags: {Q}. Keep it under about 75 tokens. Provide a negative prompt.' }
+  };
+  const SDM = [
+    ['A · Natural language', [['gpt-image-1', 'OpenAI GPT-Image-1', 'nl'], ['chatgpt-image', 'ChatGPT Image Generation', 'nl'], ['copilot', 'Microsoft Copilot Image Creator', 'nl'], ['designer', 'Microsoft Designer', 'nl'], ['imagen3', 'Google Imagen 3', 'nl'], ['grok-imagine', 'xAI Grok Imagine', 'nl'], ['grok-image', 'Grok Image Generation', 'nl'], ['qwen-image', 'Alibaba Qwen-Image', 'nl'], ['photon', 'Luma Photon', 'nl'], ['photon-flash', 'Luma Photon Flash', 'nl'], ['seedream', 'ByteDance Seedream', 'nl']]],
+    ['B · FLUX (Black Forest Labs)', [['flux-pro', 'FLUX.1 Pro', 'flux'], ['flux-dev', 'FLUX.1 Dev', 'flux'], ['flux-schnell', 'FLUX.1 Schnell', 'flux'], ['flux-kontext', 'FLUX Kontext', 'fluxedit'], ['flux-edit', 'FLUX Edit', 'fluxedit']]],
+    ['C · Stable Diffusion (Stability AI)', [['sdxl', 'SDXL', 'sdxl'], ['sd3', 'SD 3', 'sd3'], ['sd35', 'SD 3.5', 'sd3']]],
+    ['C · Pony family', [['pony-xl', 'Pony XL', 'pony'], ['autismmix', 'AutismMix', 'pony']]],
+    ['C · Anime tag models', [['animagine', 'Animagine XL', 'anime', 'put "masterpiece, best quality, very aesthetic, absurdres" at the END of the positive prompt, after the character tags'], ['hassaku', 'Hassaku', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['counterfeit', 'Counterfeit', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['anything', 'Anything', 'anime', 'start the positive prompt with "masterpiece, best quality"']]]
+  ];
+  const sdInfo = () => { for (const [, list] of SDM) for (const m of list) if (m[0] === SD.model) return m; return SDM[0][1][0]; };
+  let IMGP = null, IMG_CTL = null;
+  const IMG_SYS = ['You write prompts for AI image generators, for fictional roleplay characters.',
+    'Always write the prompt in English, whatever language the card is in.',
+    'Be concrete and visual: only things that can be seen. Never include names of real people, living artists, or copyrighted characters. Do not ask for text, captions or logos in the image.',
+    'Safety: if the character\'s age is not stated, depict an adult. Never sexualize anyone who is or looks like a minor or child; for such characters keep the image fully clothed, wholesome and safe-rated. Keep any rating tag consistent with the card content (default to safe).',
+    'Output exactly this format and nothing else:\nPOSITIVE:\n<the prompt>\nNEGATIVE:\n<the negative prompt, or the single word none if this model has no negative prompt>'].join('\n');
+  function imgMessages(kind) {
+    const m = sdInfo(), sty = SDSTYLE[m[2]], nm = K.name.trim() || 'the character';
+    const fix = s => str(s).replace(/\{\{char\}\}/gi, nm).replace(/\{\{user\}\}/gi, 'the user').trim();
+    const ctx = ['Name: ' + nm];
+    ['description', 'personality', 'scenario'].forEach(k => { if (K[k].trim()) ctx.push(WF[k][0] + ': ' + fix(K[k]).slice(0, 1800)); });
+    let rules = sty.rules.replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
+    if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
+    let task;
+    if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, simple background that suits the character, no text.';
+    else {
+      ctx.push('First message: ' + fix(K.first_mes).slice(0, 1600));
+      task = 'Write a prompt for an illustration of the opening scene in the first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Do not depict the user; if the user is involved, show it from their point of view.';
+    }
+    const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
+    return [{ role: 'system', content: IMG_SYS }, { role: 'user', content: u }];
+  }
+  function parseImg(t) {
+    const x = String(t || '').replace(/```[a-z]*\n?/gi, '').trim();
+    const a = x.match(/POSITIVE\s*:\s*([\s\S]*?)(?:\n\s*NEGATIVE\s*:\s*([\s\S]*))?$/i);
+    let pos = (a ? a[1] : x).trim(), neg = (a && a[2] ? a[2] : '').trim();
+    if (/^none\.?$/i.test(neg)) neg = '';
+    const clean = s => s.replace(/^["'\s]+|["'\s]+$/g, '').replace(/\n{2,}/g, '\n');
+    return { pos: clean(pos), neg: SDSTYLE[sdInfo()[2]].neg ? clean(neg) : '' };
+  }
+  async function imgRun(signal) {
+    const m = sdInfo();
+    const next = { model: m[0], portrait: null, scene: null };
+    const r1 = await callLLM(imgMessages('portrait'), { signal, maxTokens: 700 });
+    next.portrait = parseImg(r1.text);
+    if (K.first_mes.trim()) {
+      const r2 = await callLLM(imgMessages('scene'), { signal, maxTokens: 700 });
+      next.scene = parseImg(r2.text);
+    }
+    IMGP = next; saveDataSoon(); drawImg();
+  }
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; } catch (e) { /* fallback */ }
+    try {
+      const ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
+    } catch (e) { return false; }
+  }
+  function drawImg() {
+    const d = $('d-img'); if (!d) return;
+    d.closest('details').hidden = !SD.on;
+    const box = $('imgBody'); if (!SD.on) { box.textContent = ''; return; }
+    const keep = box.querySelector('#imgUrl') ? box.querySelector('#imgUrl').value : '';
+    box.textContent = '';
+    const m = sdInfo(), sty = SDSTYLE[m[2]];
+    const p0 = mk('p', 'sm'); p0.textContent = 'These prompts are not part of the card. Copy them into your image generator. Prompts are always written in English. Model: ' + m[1] + '. Change it in AI-assisted generation.';
+    box.appendChild(p0);
+    const block = (title, o, hint) => {
+      const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b');
+      b.textContent = title; h.appendChild(b);
+      const t = mk('span', 'tk'); t.textContent = hint; h.appendChild(t); w.appendChild(h);
+      const field = (lbl, key) => {
+        const row = mk('div', 'imgf'), l = mk('span', 'sm'), ta = mk('textarea'), cp = mk('button', 'btn');
+        l.textContent = lbl; ta.rows = key === 'pos' ? 5 : 3; ta.spellcheck = false; ta.value = o[key] || '';
+        ta.addEventListener('input', () => { o[key] = ta.value; saveDataSoon(); });
+        cp.type = 'button'; cp.textContent = 'Copy';
+        cp.addEventListener('click', async () => { const ok = await copyText(ta.value); cp.textContent = ok ? 'Copied' : 'Select and copy'; setTimeout(() => { cp.textContent = 'Copy'; }, 1600); });
+        const top = mk('div', 'imgh'); top.append(l, cp); row.append(top, ta); w.appendChild(row);
+      };
+      field('Prompt', 'pos');
+      if (sty.neg) field('Negative prompt', 'neg');
+      else { const n = mk('p', 'sm'); n.textContent = 'This model has no negative prompt.'; w.appendChild(n); }
+      box.appendChild(w);
+    };
+    if (IMGP && IMGP.portrait) {
+      if (IMGP.model !== m[0]) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for another model. Press the button below to write them again for ' + m[1] + '.'; box.appendChild(n); }
+      block('Character image', IMGP.portrait, 'portrait 2:3');
+      if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2');
+    } else {
+      const n = mk('p', 'sm'); n.textContent = 'No prompts yet. Write them here, or tick "Stable diffusion" when you generate a card.'; box.appendChild(n);
+    }
+    const ctl = mk('div', 'ctl'), go = mk('button', 'btn primary'), stat = mk('span', 'sm'); stat.id = 'imgStatus'; stat.setAttribute('role', 'status');
+    go.type = 'button'; go.id = 'imgGo'; go.textContent = IMGP && IMGP.portrait ? 'Write them again' : 'Write image prompts';
+    go.disabled = !apiReady() || !K.description.trim() || !!IMG_CTL;
+    go.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : '');
+    go.addEventListener('click', async () => {
+      if (IMG_CTL) return;
+      IMG_CTL = new AbortController(); go.disabled = true; stat.textContent = 'Writing prompts…'; stat.classList.remove('warn');
+      try { await imgRun(IMG_CTL.signal); IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) s.textContent = 'Done.'; }
+      catch (e) { IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) { const k = errKey(e); s.textContent = tr(k[0], k[1] || null); s.classList.add('warn'); } }
+    });
+    ctl.append(go, stat); box.appendChild(ctl);
+    const u = mk('div', 'item imgp'), uh = mk('div', 'dfh'), ub = mk('b');
+    ub.textContent = 'Put the finished image in the first message'; uh.appendChild(ub); u.appendChild(uh);
+    const ur = mk('div', 'mrow'), ui = mk('input'), ua = mk('button', 'btn');
+    ui.type = 'url'; ui.id = 'imgUrl'; ui.placeholder = 'https://… link to the image'; ui.value = keep; ui.autocomplete = 'off'; ui.spellcheck = false;
+    ua.type = 'button'; ua.textContent = 'Add under first message';
+    const ust = mk('p', 'sm'); ust.setAttribute('role', 'status');
+    ua.addEventListener('click', () => {
+      const v = ui.value.trim();
+      if (!/^https?:\/\/\S+$/i.test(v)) { ust.textContent = 'Paste a full link that starts with http:// or https://.'; ust.classList.add('warn'); return; }
+      if (!K.first_mes.trim()) { ust.textContent = 'There is no first message yet.'; ust.classList.add('warn'); return; }
+      const prev = K.first_mes;
+      K.first_mes = prev.replace(/\s+$/, '') + '\n\n![](' + v.replace(/\)/g, '%29') + ')';
+      afterModel();
+      pushUndo('image in first message', () => { K.first_mes = prev; afterModel(); });
+      ui.value = ''; ust.textContent = 'Added at the end of the first message as ![](link).'; ust.classList.remove('warn');
+    });
+    ur.append(ui, ua); u.append(ur, ust); box.appendChild(u);
   }
 
   /* Suggerimenti per il lorebook (finestra) */
@@ -3098,14 +3252,71 @@
     GEN.forEach(([k, label]) => {
       const l = mk('label', 'chk'), c = mk('input');
       c.type = 'checkbox'; c.id = 'gf-' + k; c.checked = k !== 'lore';
+      c.addEventListener('change', barSync);
       l.append(c, document.createTextNode(' ' + label)); box.appendChild(l);
     });
+    const row = mk('div', 'sdrow'), sl = mk('label', 'chk'), sc = mk('input'), sel = mk('select');
+    sc.type = 'checkbox'; sc.id = 'gf-sd'; sc.checked = SD.on;
+    sl.append(sc, document.createTextNode(' Stable diffusion'));
+    sel.id = 'sdModel'; sel.setAttribute('aria-label', 'Image model');
+    SDM.forEach(([g, list]) => {
+      const og = document.createElement('optgroup'); og.label = g;
+      list.forEach(m => { const o = document.createElement('option'); o.value = m[0]; o.textContent = m[1]; og.appendChild(o); });
+      sel.appendChild(og);
+    });
+    sel.value = sdInfo()[0]; sel.disabled = !SD.on;
+    sc.addEventListener('change', () => { SD.on = sc.checked; sel.disabled = !SD.on; SDSAVE(); barSync(); drawImg(); });
+    sel.addEventListener('change', () => { SD.model = sel.value; SDSAVE(); drawImg(); });
+    row.append(sl, sel); box.appendChild(row);
+    $('d-img').closest('details').addEventListener('toggle', ev => { if (ev.target.open) drawImg(); });
     $('genIdea').addEventListener('input', genReady);
     $('genGo').addEventListener('click', genRun);
     $('genStop').addEventListener('click', () => { if (GEN_CTL) GEN_CTL.abort(); });
-    renderRecent(); renderChecks(); genReady(); drawUndo(); refreshLoreBtn();
+    barBuild(); renderRecent(); genReady(); drawUndo(); refreshLoreBtn(); drawImg();
   }
   function refreshLoreBtn() { const ok = apiReady() && K.description.trim().length >= 30; $('entSuggest').disabled = !ok; $('entSuggest').title = ok ? '' : 'Needs an API and a description of at least a few lines'; }
+
+  /* ---------- Schermata di avvio ---------- */
+  function openDrawer(id, top) {
+    const h = $(id); if (!h) return;
+    const d = h.closest('details'); if (d) d.open = true;
+    if (top) { window.scrollTo(0, 0); return; }
+    setTimeout(() => window.scrollTo({ top: Math.max(0, h.getBoundingClientRect().top + window.scrollY - 190), behavior: 'smooth' }), 80);
+  }
+  function resumeTarget() { const d = loadDrafts(); return d.list.find(x => x.id === d.cur) || d.list[0] || null; }
+  function showStart() {
+    saveDraft();
+    const r = resumeTarget(), b = $('stResume'), sub = b.querySelector('small');
+    b.disabled = !r;
+    sub.textContent = r ? ((r.name || '').trim() || 'Untitled card') + ' · ' + new Date(r.ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Nothing saved yet.';
+    document.body.classList.add('starting');
+    $('start').hidden = false;
+    const f = r ? b : $('stNew'); f.focus({ preventScroll: true });
+  }
+  function hideStart() { $('start').hidden = true; document.body.classList.remove('starting'); window.scrollTo(0, 0); }
+  function startAct(a) {
+    if (a === 'resume') {
+      const r = resumeTarget(); if (!r) return;
+      hideStart();
+      if (r.id !== DID) { applyDraft(r); clearUndo(); syncData(); syncUI(); schedule(); renderRecent(); }
+      showView('dati'); return;
+    }
+    if (a === 'new') {
+      hideStart(); saveDraft(); newCard(); showView('dati'); return;
+    }
+    hideStart();
+    if (a === 'import') { showView('dati'); openDrawer('d-act'); return; }
+    if (a === 'gen') {
+      if (!apiReady()) { showView('api'); const s = $('astatus'); if (s) { s.textContent = 'Set up an API here, then open AI-assisted generation.'; } return; }
+      showView('gen'); return;
+    }
+    if (a === 'png') { showView('cover'); openDrawer('h-img', true); $('file').click(); }
+  }
+  function initStart() {
+    document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => startAct(b.dataset.start)));
+    document.querySelector('.brand').addEventListener('click', showStart);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('start').hidden) hideStart(); });
+  }
 
   /* ---------- Avvio ---------- */
   restore();
@@ -3121,7 +3332,8 @@
   showView('dati');
   render();
   DREADY = true;
-  renderRecent();
+  initStart();
+  showStart();
 })();
 </script>
 </body></html>
