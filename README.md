@@ -49,5 +49,3 @@ The AI features need an API, set in the **API** tab: OpenRouter, NanoGPT, OpenAI
 npm install
 npm run dist
 ```
-
-Pushing a tag like `v1.0.1` builds the exe and the HTML on GitHub and attaches both to a release.
