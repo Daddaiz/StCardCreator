@@ -312,6 +312,9 @@
   .gbar .seg.work { background: linear-gradient(90deg, var(--line), var(--accent), var(--line)); background-size: 200% 100%; animation: segw 1.1s linear infinite; }
   @keyframes segw { from { background-position: 200% 0; } to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { .gbar .seg.work { animation: none; background: var(--accent); opacity: 0.5; } }
+  .langrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; }
+  .langrow label { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 13px; }
+  .langrow svg { display: block; width: 24px; height: 16px; border-radius: 2px; box-shadow: 0 0 0 1px rgba(128,128,128,0.45); }
   .sdrow { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
   .sdrow select { width: auto; flex: 0 1 340px; min-width: 200px; }
   .imgbody { display: grid; gap: 14px; }
@@ -580,6 +583,7 @@
       <p class="sm" id="genNote"></p>
       <div class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="5" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></div>
       <div class="df"><span class="dfh"><b>Fields to write</b></span><div class="chkgrid" id="genFields"></div></div>
+      <div class="df"><span class="dfh"><b>Chat languages</b></span><div class="langrow" id="genLangs" role="group" aria-label="Chat languages"></div><p class="sm">Select the languages you chat in to optimize the Lorebook keywords.</p></div>
       <div class="df">
         <span class="dfh"><b>Existing text</b></span>
         <label class="chk"><input type="radio" name="genMode" value="empty" checked> Fill only empty fields</label>
@@ -2670,7 +2674,7 @@
         'Keep the author\'s facts, names, tone and intent. Fill small gaps tastefully, but do not invent major facts that the author or the answers do not support.',
         'Keep {{char}}, {{user}} and other SillyTavern macros exactly as they are. Never write {{user}}\'s actions, thoughts or speech.',
         'Be token-efficient: concrete, no filler, no repetition.'].join('\n');
-    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + '\n';
+    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + (st.f.kind === 'keys' ? langKeysNote() : '') + '\n';
     if (ctx) u += '\nCARD CONTEXT (for consistency only, do not copy it):\n' + ctx + '\n';
     u += '\nAUTHOR TEXT (any language):\n<<<\n' + text + '\n>>>\n';
     if (mode === 'ask') {
@@ -3007,6 +3011,17 @@
     const res = (tw.length > 1 && WEAK_KEYS.has(tw[tw.length - 1])) ? out.filter(k => k === t || !tw.includes(k)) : out;
     return res.slice(0, 5);
   };
+  function mergeKeys(x) {
+    const en = cleanKeys(Array.isArray(x && x.keys) ? x.keys : split(x && x.keys), x && x.title);
+    const seen = new Set(en), out = en.slice(), by = (x && x.keys_by_language && typeof x.keys_by_language === 'object') ? x.keys_by_language : {};
+    LANGS.filter(l => GL.includes(l[0])).forEach(l => {
+      const k = Object.keys(by).find(n => n.toLowerCase() === l[1].toLowerCase());
+      const arr = k && Array.isArray(by[k]) ? by[k] : [];
+      let n = 0;
+      arr.map(v => String(v).trim().toLowerCase()).forEach(v => { if (n < 3 && v && v.length <= 40 && !seen.has(v)) { seen.add(v); out.push(v); n++; } });
+    });
+    return out.join(', ');
+  }
   async function suggestLore(idea, signal) {
     const ctx = [];
     if (K.name.trim()) ctx.push('Name: ' + K.name.trim());
@@ -3016,11 +3031,11 @@
     const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
     const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
       (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
-      '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\nReturn ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase trigger keywords], "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Do not contradict the card; you may expand the setting plausibly.';
+      '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Do not contradict the card; you may expand the setting plausibly.';
     const r = await callLLM([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 });
     return parseJSONArray(r.text).map(x => ({
       title: str(x && x.title).trim().slice(0, 80),
-      keys: cleanKeys(Array.isArray(x && x.keys) ? x.keys : split(x && x.keys), x && x.title).join(', '),
+      keys: mergeKeys(x),
       content: str(x && x.content).trim()
     })).filter(x => x.content.length >= 10 && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
   }
@@ -3119,6 +3134,29 @@
   }
 
   /* Stable Diffusion: prompt per generatori di immagini (non fanno parte della carta) */
+  /* Lingue della chat: parole chiave del lorebook anche in queste lingue */
+  const GLKEY = 'st-card-creator-langs';
+  const FLAG = (b, extra) => '<svg viewBox="0 0 30 20" aria-hidden="true" focusable="false">' + b + (extra || '') + '</svg>';
+  const R = (x, y, w, h, c) => '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" fill="' + c + '"/>';
+  const STAR = (cx, cy, r, c) => { let d = ''; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.4 : r; d += (i ? 'L' : 'M') + (cx + rr * Math.cos(a)).toFixed(2) + ' ' + (cy + rr * Math.sin(a)).toFixed(2); } return '<path d="' + d + 'Z" fill="' + c + '"/>'; };
+  const LANGS = [
+    ['it', 'Italian', FLAG(R(0, 0, 10, 20, '#009246') + R(10, 0, 10, 20, '#fff') + R(20, 0, 10, 20, '#ce2b37'))],
+    ['de', 'German', FLAG(R(0, 0, 30, 6.7, '#000') + R(0, 6.7, 30, 6.7, '#dd0000') + R(0, 13.4, 30, 6.6, '#ffce00'))],
+    ['es', 'Spanish', FLAG(R(0, 0, 30, 5, '#aa151b') + R(0, 5, 30, 10, '#f1bf00') + R(0, 15, 30, 5, '#aa151b'))],
+    ['fr', 'French', FLAG(R(0, 0, 10, 20, '#0055a4') + R(10, 0, 10, 20, '#fff') + R(20, 0, 10, 20, '#ef4135'))],
+    ['zh', 'Chinese', FLAG(R(0, 0, 30, 20, '#de2910') + STAR(5.5, 5.5, 3.6, '#ffde00') + STAR(11, 2.2, 1.1, '#ffde00') + STAR(13, 4.6, 1.1, '#ffde00') + STAR(13, 7.6, 1.1, '#ffde00') + STAR(11, 10, 1.1, '#ffde00'))],
+    ['pt', 'Portuguese', FLAG(R(0, 0, 12, 20, '#006600') + R(12, 0, 18, 20, '#ff0000') + '<circle cx="12" cy="10" r="3.6" fill="#ffcc00"/>')],
+    ['ru', 'Russian', FLAG(R(0, 0, 30, 6.7, '#fff') + R(0, 6.7, 30, 6.7, '#0039a6') + R(0, 13.4, 30, 6.6, '#d52b1e'))],
+    ['ja', 'Japanese', FLAG(R(0, 0, 30, 20, '#fff') + '<circle cx="15" cy="10" r="5.6" fill="#bc002d"/>')],
+    ['ko', 'Korean', FLAG(R(0, 0, 30, 20, '#fff') + '<path d="M9.5 10a5.5 5.5 0 0 1 11 0z" fill="#cd2e3a"/><path d="M9.5 10a5.5 5.5 0 0 0 11 0z" fill="#0047a0"/>')],
+    ['pl', 'Polish', FLAG(R(0, 0, 30, 10, '#fff') + R(0, 10, 30, 10, '#dc143c'))]
+  ];
+  let GL = [];
+  try { const o = JSON.parse(localStorage.getItem(GLKEY) || 'null'); if (Array.isArray(o)) GL = o.filter(c => LANGS.some(l => l[0] === c)); } catch (e) { /* ignora */ }
+  const glNames = () => LANGS.filter(l => GL.includes(l[0])).map(l => l[1]);
+  const LANG_RULE = () => GL.length ? 'LANGUAGES: the author chats in ' + glNames().join(', ') + '. SillyTavern matches keywords literally against the chat text, so for EACH entry also give exactly 3 keywords per language, written the way a player would actually type them in that language (the language\'s own spelling and script; include a plural or inflected form when natural; keep the proper name as is). The same rules apply: specific to this subject, no pronouns, no emotion words, no generic nouns, no bare common words.\n\n' : '';
+  const LANG_SCHEMA = () => GL.length ? ', "keys_by_language": {' + glNames().map(n => '"' + n + '": [exactly 3 keywords]').join(', ') + '}' : '';
+  const langKeysNote = () => GL.length ? ' ALSO add exactly 3 keywords for each of these languages, written as a player would type them in that language (own spelling and script, plural or inflected form when natural; proper names stay as they are): ' + glNames().join(', ') + '. Keep one flat comma-separated list.' : '';
   const SDKEY = 'st-card-creator-gen';
   const SD = { on: false, model: 'gpt-image-1' };
   try { const o = JSON.parse(localStorage.getItem(SDKEY) || 'null'); if (o) { SD.on = !!o.on; if (typeof o.model === 'string') SD.model = o.model; } } catch (e) { /* ignora */ }
@@ -3357,6 +3395,14 @@
       c.type = 'checkbox'; c.id = 'gf-' + k; c.checked = k !== 'lore';
       c.addEventListener('change', barSync);
       l.append(c, document.createTextNode(' ' + label)); box.appendChild(l);
+    });
+    const lr = $('genLangs');
+    LANGS.forEach(l => {
+      const lb = mk('label'), cb = mk('input'), fl = mk('span');
+      cb.type = 'checkbox'; cb.checked = GL.includes(l[0]); cb.setAttribute('aria-label', l[1]);
+      fl.innerHTML = l[2]; fl.title = l[1];
+      cb.addEventListener('change', () => { GL = LANGS.map(x => x[0]).filter(c => (c === l[0] ? cb.checked : GL.includes(c))); try { localStorage.setItem(GLKEY, JSON.stringify(GL)); } catch (e) { /* ignora */ } });
+      lb.title = l[1]; lb.append(cb, fl); lr.appendChild(lb);
     });
     const row = mk('div', 'sdrow'), sl = mk('label', 'chk'), sc = mk('input'), sel = mk('select');
     sc.type = 'checkbox'; sc.id = 'gf-sd'; sc.checked = SD.on;
