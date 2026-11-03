@@ -752,6 +752,7 @@
   const S = Object.assign({}, D, { custom: [], stops: cloneStops() });
   let target = 'name';
   let IMG = null, IMGURL = null, MASKIMG = null, MASKURL = null;
+  let IMGBLOB = null, IMGNAME = '', MASKBLOB = null, MASKNAME = '', IMGDIRTY = false;
   let U = 1;
   let LAST = { n: 0, d: 0 };
 
@@ -1370,13 +1371,14 @@
   }
 
   /* ---------- Immagini ---------- */
-  function setImage(file) {
+  function setImage(file, silent) {
     if (!file || !/^image\//.test(file.type)) return;
     const url = URL.createObjectURL(file);
     const im = new Image();
     im.onload = () => {
       if (IMGURL) URL.revokeObjectURL(IMGURL);
       IMG = im; IMGURL = url;
+      IMGBLOB = file; IMGNAME = file.name || ''; if (!silent) IMGDIRTY = true;
       say('fileinfo', '{name} · {w}×{h}', { name: file.name, w: im.naturalWidth, h: im.naturalHeight });
       const ratio = im.naturalWidth / im.naturalHeight;
       if (Math.abs(ratio - 2 / 3) > 0.02) {
@@ -1389,13 +1391,14 @@
     im.onerror = () => { URL.revokeObjectURL(url); say('hint', 'Non riesco a leggere questo file come immagine.', null, true); };
     im.src = url;
   }
-  function setMaskImage(file) {
+  function setMaskImage(file, silent) {
     if (!file || !/^image\//.test(file.type)) return;
     const url = URL.createObjectURL(file);
     const im = new Image();
     im.onload = () => {
       if (MASKURL) URL.revokeObjectURL(MASKURL);
       MASKIMG = im; MASKURL = url;
+      MASKBLOB = file; MASKNAME = file.name || ''; if (!silent) IMGDIRTY = true;
       say('minfo', '{name} · {w}×{h}', { name: file.name, w: im.naturalWidth, h: im.naturalHeight });
       schedule();
     };
@@ -2154,6 +2157,7 @@
     if (IMGURL) URL.revokeObjectURL(IMGURL);
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
+    IMGBLOB = null; MASKBLOB = null; IMGNAME = ''; MASKNAME = ''; IMGDIRTY = false;
     S.name = ''; S.desc = ''; IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
     initLive();
     syncData(); syncUI(); schedule();
@@ -2680,7 +2684,11 @@
     if (!st) return;
     if (st.mode === 'lore') { drawLore(st); return; }
     const head = mk('div', 'wdh'), h = mk('h3'), x = mk('button', 'btn quiet');
-    h.textContent = '🪄 ' + st.f.label; x.type = 'button'; x.textContent = tr('Chiudi'); x.addEventListener('click', closeWd);
+    h.textContent = '🪄 ' + st.f.label; x.type = 'button'; x.textContent = tr('Chiudi');
+    x.addEventListener('click', () => {
+      if (wdDirty() && !st.arm) { st.arm = 1; x.textContent = 'Discard what I wrote?'; setTimeout(() => { if (WD === st && x.isConnected) { st.arm = 0; x.textContent = tr('Chiudi'); } }, 3500); return; }
+      closeWd();
+    });
     head.append(h, x); box.appendChild(head);
     const btn = (txt, fn, cls, dis) => { const b = mk('button', 'btn' + (cls ? ' ' + cls : '')); b.type = 'button'; b.textContent = tr(txt); b.disabled = !!dis; b.addEventListener('click', fn); return b; };
     const row = mk('div', 'ctl');
@@ -2715,7 +2723,9 @@
     if (st.msg) { const m = mk('p', 'sm' + (st.warn ? ' warn' : '')); m.setAttribute('role', 'status'); m.textContent = tr(st.msg[0], st.msg[1] || null); box.appendChild(m); }
   }
   $('wdlg').addEventListener('close', () => { if (WD) { if (WD.ctl) WD.ctl.abort(); WD = null; } });
-  $('wdlg').addEventListener('click', e => { if (e.target === $('wdlg')) closeWd(); });
+  /* Il testo scritto nella finestra non va perso per un clic fuori o un Esc */
+  const wdDirty = () => !!WD && ((WD.extra || '').trim() || (WD.ans || []).some(a => (a || '').trim()) || (WD.step === 'result' && (WD.result || '').trim()) || (WD.mode === 'lore' && (WD.items || []).length));
+  $('wdlg').addEventListener('cancel', e => { if (wdDirty()) e.preventDefault(); });
 
   /* Cambio vista */
   const VIEWS = { dati: $('view-data'), cover: $('view-cover'), api: $('view-api'), gen: $('view-gen') };
@@ -2807,7 +2817,39 @@
   /* Bozze salvate nel browser */
   const DKEY = 'st-card-creator-drafts-v1';
   let DID = null, DTIMER = 0, DREADY = false;
-  const isPristine = () => JSON.stringify(sanitize(K)) === JSON.stringify(defaultData()) && !S.desc.trim();
+  const isPristine = () => JSON.stringify(sanitize(K)) === JSON.stringify(defaultData()) && !S.desc.trim() && !IMGBLOB && !MASKBLOB;
+  /* Le immagini delle bozze stanno in IndexedDB (troppo grandi per localStorage) */
+  const IDBN = 'st-card-creator-images';
+  function idb() {
+    return new Promise((res, rej) => {
+      try {
+        const q = indexedDB.open(IDBN, 1);
+        q.onupgradeneeded = () => q.result.createObjectStore('img');
+        q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error);
+      } catch (e) { rej(e); }
+    });
+  }
+  const idbRun = (mode, fn) => idb().then(db => new Promise((res, rej) => {
+    const tx = db.transaction('img', mode), st = tx.objectStore('img'), r = fn(st);
+    tx.oncomplete = () => { db.close(); res(r && r.result); }; tx.onerror = tx.onabort = () => { db.close(); rej(tx.error); };
+  }));
+  const idbPut = (id, rec) => idbRun('readwrite', st => st.put(rec, id)).catch(() => {});
+  const idbGet = id => idbRun('readonly', st => st.get(id)).catch(() => null);
+  const idbDel = id => idbRun('readwrite', st => st.delete(id)).catch(() => {});
+  let IMGSEQ = 0;
+  function loadDraftImages(id) {
+    const seq = ++IMGSEQ;
+    if (IMGURL) URL.revokeObjectURL(IMGURL);
+    if (MASKURL) URL.revokeObjectURL(MASKURL);
+    IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null; IMGBLOB = null; MASKBLOB = null; IMGNAME = ''; MASKNAME = ''; IMGDIRTY = false;
+    schedule();
+    idbGet(id).then(rec => {
+      if (!rec || seq !== IMGSEQ || DID !== id) return;
+      const mk2 = (b, n) => new File([b], n || 'image', { type: b.type || 'image/png' });
+      if (rec.img) setImage(mk2(rec.img, rec.imgName), true);
+      if (rec.mask) setMaskImage(mk2(rec.mask, rec.maskName), true);
+    });
+  }
   function loadDrafts() {
     try { const o = JSON.parse(localStorage.getItem(DKEY) || 'null'); if (o && Array.isArray(o.list)) return o; } catch (e) { /* ignora */ }
     return { cur: null, list: [] };
@@ -2825,10 +2867,13 @@
       DID = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
     const d = loadDrafts();
-    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink }, img: IMGP };
+    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink, zoom: S.zoom, ox: S.ox, oy: S.oy }, img: IMGP };
     d.list = d.list.filter(x => x.id !== DID);
     d.list.unshift(rec);
+    const dropped = d.list.slice(12).map(x => x.id);
     d.list = d.list.slice(0, 12);
+    dropped.forEach(idbDel);
+    if (IMGDIRTY) { IMGDIRTY = false; idbPut(DID, { img: IMGBLOB, imgName: IMGNAME, mask: MASKBLOB, maskName: MASKNAME }); }
     d.cur = DID;
     const ok = putDrafts(d);
     const t = new Date();
@@ -2841,7 +2886,9 @@
       if (typeof r.cover.name === 'string') S.name = r.cover.name;
       if (typeof r.cover.desc === 'string') S.desc = r.cover.desc;
       S.nameLink = r.cover.link !== false;
+      ['zoom', 'ox', 'oy'].forEach(k => { if (typeof r.cover[k] === 'number') S[k] = r.cover[k]; });
     }
+    loadDraftImages(r.id);
     IMGP = (r.img && r.img.portrait) ? r.img : null; drawImg();
   }
   function initDrafts() {
@@ -2873,7 +2920,7 @@
       });
       del.addEventListener('click', () => {
         if (!armed) { armed = 1; del.textContent = 'Sure?'; setTimeout(() => { armed = 0; del.textContent = 'Delete'; }, 3000); return; }
-        const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== r.id); if (dd.cur === r.id) dd.cur = null; putDrafts(dd);
+        const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== r.id); if (dd.cur === r.id) dd.cur = null; putDrafts(dd); idbDel(r.id);
         if (DID === r.id) DID = null;
         renderRecent();
       });
