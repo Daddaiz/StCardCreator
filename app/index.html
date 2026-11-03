@@ -265,6 +265,14 @@
   .mrow input { flex: 1 1 240px; min-width: 0; }
   .sm.warn { color: var(--warn); }
   .dfl { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+  .xbtn svg { display: block; width: 14px; height: 14px; }
+  dialog.xdlg { width: 100vw; height: 100vh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: transparent; color: var(--fg); }
+  dialog.xdlg[open] { display: grid; place-items: center; }
+  dialog.xdlg::backdrop { background: rgba(0,0,0,0.62); }
+  .xin { width: min(1000px, 94vw); height: min(88vh, 920px); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .xin textarea { resize: none; height: 100%; min-height: 0; font-size: 15px; line-height: 1.6; }
+  .xh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .xh b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
   .wand {
     flex: none; width: 28px; height: 24px; padding: 0; display: inline-grid; place-items: center; line-height: 1;
     font: 15px/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
@@ -570,7 +578,7 @@
     <section class="apibox">
       <h2 class="atitle">AI-assisted generation</h2>
       <p class="sm" id="genNote"></p>
-      <label class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="5" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></label>
+      <div class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="5" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></div>
       <div class="df"><span class="dfh"><b>Fields to write</b></span><div class="chkgrid" id="genFields"></div></div>
       <div class="df">
         <span class="dfh"><b>Existing text</b></span>
@@ -678,6 +686,7 @@
   <button type="button" class="undo" id="undoBtn" hidden></button>
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
+  <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
 
 <script>
@@ -2027,6 +2036,7 @@
       right.append(tk, del); head.append(b, right);
       const ta = mk('textarea'); ta.rows = 5; ta.value = txt; ta.spellcheck = false; ta.setAttribute('aria-label', tr(label) + ' ' + (i + 1));
       right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => setVal(ta, v), () => b.textContent, { undo: v => { arr[i] = v; buildStrList(box, arr, prefix, label); afterEdit(); } }), tk);
+      right.insertBefore(makeExpand(ta, () => b.textContent), tk);
       ta.addEventListener('input', () => { arr[i] = ta.value; afterEdit(); });
       del.addEventListener('click', () => { arr.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); });
       item.append(head, ta); box.appendChild(item);
@@ -2084,7 +2094,7 @@
       ta.addEventListener('input', () => { e.content = ta.value; afterEdit(); });
       const cwrap = mk('div', 'fld'), chead = mk('div', 'dfh'), cleft = mk('span', 'dfl'), cl = mk('b');
       cl.textContent = tr('Contenuto');
-      cleft.append(cl, makeWand('entry', () => ta.value, v => setVal(ta, v), () => tr('Contenuto della voce {n}', { n: i + 1 }), { undo: v => { e.content = v; buildEntries(); afterEdit(); } }));
+      cleft.append(cl, makeWand('entry', () => ta.value, v => setVal(ta, v), () => tr('Contenuto della voce {n}', { n: i + 1 }), { undo: v => { e.content = v; buildEntries(); afterEdit(); } }), makeExpand(ta, () => tr('Contenuto della voce {n}', { n: i + 1 })));
       chead.appendChild(cleft); cwrap.append(chead, ta); body.appendChild(cwrap);
       const flags = mk('div', 'inline');
       flags.appendChild(check(tr('Attiva'), e.enabled, v => { e.enabled = v; upd(); afterEdit(); }));
@@ -2591,6 +2601,29 @@
     w.b.title = t; w.b.setAttribute('aria-label', t);
   }
   function refreshWands() { WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); genReady(); refreshLoreBtn(); }
+  /* Editor a tutto schermo per i campi di testo */
+  const XSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 9V3h6M3 3l6 6M15 3h6v6M21 3l-6 6M3 15v6h6M3 21l6-6M21 15v6h-6M21 21l-6-6"/></svg>';
+  let XTA = null, XDOWN = null;
+  function openExpand(ta, title) {
+    XTA = ta;
+    const x = $('xta');
+    $('xtitle').textContent = title;
+    x.value = ta.value; x.setAttribute('aria-label', title);
+    const cnt = () => { $('xtk').textContent = nf(tok(x.value)) + ' ' + tr('token'); };
+    cnt();
+    x.oninput = () => { if (XTA) { XTA.value = x.value; XTA.dispatchEvent(new Event('input', { bubbles: true })); } cnt(); };
+    const d = $('xdlg'); if (!d.open) d.showModal();
+    x.focus(); try { x.setSelectionRange(ta.selectionStart, ta.selectionEnd); } catch (e) { /* ignora */ }
+  }
+  $('xdlg').addEventListener('close', () => { const t = XTA; XTA = null; if (t && t.isConnected) { try { t.focus({ preventScroll: true }); } catch (e) { /* ignora */ } } });
+  $('xdlg').addEventListener('pointerdown', e => { XDOWN = e.target; });
+  $('xdlg').addEventListener('click', e => { if (e.target === $('xdlg') && XDOWN === $('xdlg')) $('xdlg').close(); });
+  function makeExpand(ta, label) {
+    const b = mk('button', 'wand xbtn'); b.type = 'button'; b.innerHTML = XSVG;
+    const t = 'Expand to full screen'; b.title = t; b.setAttribute('aria-label', t);
+    b.addEventListener('click', () => openExpand(ta, label()));
+    return b;
+  }
   function makeWand(kind, get, set, label, opts) {
     const b = mk('button', 'wand'); b.type = 'button'; b.textContent = '🪄';
     const w = { b, get };
@@ -2611,7 +2644,7 @@
       b.id = 'lb-' + k; ta.setAttribute('aria-labelledby', b.id);
       const left = mk('span', 'dfl');
       head.insertBefore(left, head.firstChild);
-      left.append(b, makeWand(k, () => K[k], v => setVal(ta, v), () => b.textContent));
+      left.append(b, makeWand(k, () => K[k], v => setVal(ta, v), () => b.textContent), makeExpand(ta, () => b.textContent));
     });
   }
 
@@ -3323,6 +3356,7 @@
     sel.addEventListener('change', () => { SD.model = sel.value; SDSAVE(); drawImg(); });
     row.append(sl, sel); box.appendChild(row);
     $('d-img').closest('details').addEventListener('toggle', ev => { if (ev.target.open) drawImg(); });
+    { const gi = $('genIdea'); gi.parentNode.querySelector('.dfh').appendChild(makeExpand(gi, () => 'Your idea')); }
     $('genIdea').addEventListener('input', genReady);
     $('genGo').addEventListener('click', genRun);
     $('genStop').addEventListener('click', () => { if (GEN_CTL) GEN_CTL.abort(); });
