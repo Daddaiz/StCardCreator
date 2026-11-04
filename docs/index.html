@@ -309,6 +309,7 @@
   .gbar { display: flex; gap: 3px; flex: 0 1 260px; min-width: 160px; margin-left: auto; }
   .gbar .seg { flex: 1 1 0; height: 8px; border-radius: 2px; background: var(--line); transition: background 0.25s; }
   .gbar .seg.done { background: var(--accent); }
+  .gbar .seg.warn { background: #d9a520; }
   .gbar .seg.work { background: linear-gradient(90deg, var(--line), var(--accent), var(--line)); background-size: 200% 100%; animation: segw 1.1s linear infinite; }
   @keyframes segw { from { background-position: 200% 0; } to { background-position: -200% 0; } }
   @media (prefers-reduced-motion: reduce) { .gbar .seg.work { animation: none; background: var(--accent); opacity: 0.5; } }
@@ -2991,6 +2992,53 @@
     u += '\nAUTHOR IDEA (any language):\n<<<\n' + idea + '\n>>>\n\nReturn only the final English text for this field.';
     return [{ role: 'system', content: GEN_SYS }, { role: 'user', content: u }];
   }
+  /* Controllo qualità: ritenta se la risposta è palesemente sbagliata, poi tiene comunque l'ultima versione e segnala */
+  const waitMs = (ms, sig) => new Promise((res, rej) => {
+    const t = setTimeout(res, ms);
+    if (sig) sig.addEventListener('abort', () => { clearTimeout(t); rej({ code: 'abort' }); }, { once: true });
+  });
+  async function callRobust(msgs, o) {
+    for (let n = 0; ; n++) {
+      try { return await callLLM(msgs, o); }
+      catch (e) {
+        const c = e && e.code, transient = c === 'rate' || c === 'empty' || (c === 'http' && e.status >= 500);
+        if (!transient || n >= 2) throw e;
+        await waitMs(3000 * (n + 1), o && o.signal);
+      }
+    }
+  }
+  async function callChecked(msgs, o, check) {
+    let r = await callRobust(msgs, o), why = check(r.text);
+    for (let n = 0; why && n < 2; n++) {
+      const m2 = msgs.concat([{ role: 'assistant', content: r.text }, { role: 'user', content: 'That answer was rejected: ' + why + '. Write it again, fixing exactly that problem, and keep every other rule. Return only the final result in the requested format, nothing else.' }]);
+      r = await callRobust(m2, o); why = check(r.text);
+    }
+    r.warn = why || null;
+    return r;
+  }
+  const FOREIGN = /\b(?:il|lo|gli|che|di|è|per|con|non|una|della|nel|sono|des|les|une|est|pour|dans|qui|avec|der|die|das|und|ist|nicht|mit|ein|eine|el|los|las|que|por|para|es|una|del|com|uma|não|для|что|это)\b/gi;
+  const ENGLISH = /\b(?:the|and|of|to|is|are|was|she|he|her|his|with|that|for|on|as|it|they|from|but|by)\b/gi;
+  function fieldCheck(k, t) {
+    t = String(t || '').trim();
+    if (!t) return 'it was empty';
+    if (k === 'name' || k === 'tags' || k === 'tagline') return null;
+    if (t.length < 15) return 'it is far too short';
+    if (/^(?:sure|certo|certamente|ecco|here(?:'s| is| are)|of course|okay|ok[,.!]|absolutely|claro|voici|hier ist)\b/i.test(t) || /^(?:as an ai|i(?:'m| am) sorry|i can(?:'|no)t|mi dispiace|non posso)\b/i.test(t)) return 'it starts with chatter or a refusal instead of the field text itself';
+    const words = (t.match(/[\p{L}']+/gu) || []).length;
+    if (words >= 12) {
+      const fo = (t.match(FOREIGN) || []).length, en = (t.match(ENGLISH) || []).length;
+      if (fo >= 4 && fo > en) return 'it is not written in English';
+    }
+    if (k === 'keys') return null;
+    if (['first_mes', 'alt', 'scenario', 'mes_example'].includes(k) && !/[.!?"'”’*)…~}\]`>]\s*$/.test(t)) return 'it looks cut off in the middle of a sentence; finish it and keep it complete';
+    if (k === 'description' && t.length > 3200) return 'it is much too long; keep only what the roleplay needs, about 150 to 400 tokens';
+    const nm = (K.name || '').trim().split(/\s+/)[0] || '';
+    if (nm.length >= 3 && ['description', 'personality', 'scenario', 'first_mes', 'alt', 'mes_example'].includes(k)) {
+      const cnt = (t.match(new RegExp('\\b' + nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g')) || []).length;
+      if (cnt >= 2) return 'it hard-codes the character name "' + nm + '" several times; use the {{char}} macro for the character and {{user}} for the user instead';
+    }
+    return null;
+  }
   function parseJSONArray(t) {
     const a = t.indexOf('['), b = t.lastIndexOf(']');
     if (a < 0 || b <= a) return [];
@@ -3032,12 +3080,16 @@
     const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
       (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
       '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Do not contradict the card; you may expand the setting plausibly.';
-    const r = await callLLM([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 });
-    return parseJSONArray(r.text).map(x => ({
+    const toItems = t => parseJSONArray(t).map(x => ({
       title: str(x && x.title).trim().slice(0, 80),
       keys: mergeKeys(x),
       content: str(x && x.content).trim()
-    })).filter(x => x.content.length >= 10 && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
+    })).filter(x => x.title && x.keys && x.content.length >= 10 && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
+    const r = await callChecked([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 },
+      t => toItems(t).length ? null : 'it was not a valid JSON array of objects with title, keys and content (or every entry was unusable)');
+    const items = toItems(r.text);
+    items.warn = r.warn;
+    return items;
   }
   const loreEntry = x => Object.assign(newEntry(), { title: x.title, keys: x.keys, content: x.content, open: false });
   let GEN_CTL = null;
@@ -3085,6 +3137,7 @@
     $('genStop').hidden = false; genReady();
     const st = $('genStatus'); st.classList.remove('warn');
     let changed = 0, skipped = 0, failed = null, imgDone = false;
+    const warns = [];
     const total = picks.length + (SD.on ? 1 : 0);
     let cur = null;
     try {
@@ -3098,20 +3151,22 @@
           const items = await suggestLore(idea, GEN_CTL.signal);
           items.forEach(x => K.entries.push(loreEntry(x)));
           if (items.length) { changed++; afterModel(); }
-          barSet(k, 'done'); cur = null;
+          if (items.warn || !items.length) { warns.push(label); barSet(k, 'warn'); } else barSet(k, 'done');
+          cur = null;
           continue;
         }
         if (mode === 'empty' && String(k === 'tagline' ? (pristine ? '' : S.desc) : K[k] || '').trim()) { skipped++; barSet(k, 'done'); cur = null; continue; }
         barSet(k, 'work');
         st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + total + ')…';
-        const r = await callLLM(genMessages(k, idea), { signal: GEN_CTL.signal, maxTokens: k === 'mes_example' ? 2000 : 1400 });
+        const r = await callChecked(genMessages(k, idea), { signal: GEN_CTL.signal, maxTokens: k === 'mes_example' ? 2000 : 1400 }, t => fieldCheck(k, cleanOut(t)));
         let v = cleanOut(r.text);
         if (k === 'name') v = v.split('\n')[0].replace(/^name\s*:\s*/i, '').replace(/["*#]/g, '').trim().slice(0, 80);
         if (k === 'tags') v = v.replace(/#/g, '').replace(/\n+/g, ', ').trim();
-        if (!v) { barSet(k, ''); cur = null; continue; }
+        if (!v) { warns.push(label); barSet(k, 'warn'); cur = null; continue; }
         if (k === 'tagline') { S.desc = v.replace(/\n+/g, ' ').slice(0, 140); syncUI(); } else K[k] = v;
         changed++; afterModel();
-        barSet(k, 'done'); cur = null;
+        if (r.warn) { warns.push(label); barSet(k, 'warn'); } else barSet(k, 'done');
+        cur = null;
       }
       if (SD.on && !GEN_CTL.signal.aborted) {
         cur = 'sd';
@@ -3129,7 +3184,8 @@
     if (changed) pushUndo('generated card', () => { K = sanitize(JSON.parse(snap)); S.desc = snapDesc; syncUI(); afterModel(); });
     else if (pristine) { K = sanitize(JSON.parse(snap)); afterModel(); }
     if (failed && failed.code !== 'abort') { const k = errKey(failed); st.textContent = tr(k[0], k[1] || null) + (changed ? ' What was written so far is kept (you can undo it).' : ''); st.classList.add('warn'); }
-    else st.textContent = (failed ? 'Stopped. ' : 'Done. ') + changed + ' field' + (changed === 1 ? '' : 's') + ' written' + (imgDone ? ', plus image prompts' : '') + (skipped ? ', ' + skipped + ' already filled and left as they are' : '') + '.';
+    else st.textContent = (failed ? 'Stopped. ' : 'Done. ') + changed + ' field' + (changed === 1 ? '' : 's') + ' written' + (imgDone ? ', plus image prompts' : '') + (skipped ? ', ' + skipped + ' already filled and left as they are' : '') + '.' + (warns.length && !failed ? ' Please check: ' + warns.join(', ') + ' (still not right after 2 retries; shown in yellow on the bar).' : '');
+    if (warns.length && !failed) st.classList.add('warn');
     genReady(); drawImg();
   }
 
