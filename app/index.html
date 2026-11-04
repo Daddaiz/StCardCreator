@@ -2157,8 +2157,10 @@
         if (!raw) throw new Error('nodata');
         obj = JSON.parse(decodeB64(raw));
       }
+      const isPng = !/\.json$/i.test(f.name);
       K = fromCard(obj); DID = null; clearUndo();
-      syncData(); schedule(); saveDataSoon(); 
+      syncData(); schedule(); saveDataSoon();
+      if (isPng) setImage(f.type === 'image/png' ? f : new File([f], f.name, { type: 'image/png' }));
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
     } catch (err) {
       say('dstatus', 'Non trovo dati di SillyTavern in questo file. Serve un PNG esportato da SillyTavern o un JSON della carta.', null, true);
