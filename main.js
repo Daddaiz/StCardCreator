@@ -27,10 +27,23 @@ function startServer() {
   });
 }
 
-app.whenReady().then(async () => {
+// Una sola istanza: se l'app è già aperta, la seconda copia si chiude e porta in primo piano la prima.
+let win = null;
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!win) return;
+    if (win.isMinimized()) win.restore();
+    win.show(); win.focus();
+  });
+  start();
+}
+
+function start() { app.whenReady().then(async () => {
   const port = await startServer();
   Menu.setApplicationMenu(null);
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1280, height: Math.min(1075, screen.getPrimaryDisplay().workAreaSize.height), minWidth: 420, minHeight: 600,
     backgroundColor: '#0f1217', title: 'ST Card Creator',
     icon: path.join(__dirname, 'build', 'icon.ico'),
@@ -39,5 +52,5 @@ app.whenReady().then(async () => {
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.loadURL('http://127.0.0.1:' + port + '/');
-});
+}); }
 app.on('window-all-closed', () => app.quit());
