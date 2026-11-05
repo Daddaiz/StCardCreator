@@ -308,7 +308,10 @@
   .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px calc(4vw + 16px); }
   .start[hidden] { display: none; }
   .stin { position: relative; z-index: 1; display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
-  .stfan { position: fixed; left: 25%; bottom: 0; width: 50%; height: auto; z-index: 0; pointer-events: none; user-select: none; }
+  .stfanw { position: fixed; left: 25%; bottom: 0; width: 50%; z-index: 0; pointer-events: none; user-select: none; }
+  .stfan { display: block; width: 100%; height: auto; }
+  .stshine { position: absolute; inset: 0; overflow: hidden; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+  .stshine i { position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%; transform: translateX(300%) skewX(-18deg); mix-blend-mode: screen; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,214,170,0.16) 30%, rgba(255,255,255,0.42) 50%, rgba(170,210,255,0.16) 70%, rgba(255,255,255,0) 100%); }
   .stlogo { width: auto; height: min(372px, 30vh); filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
   .upd { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 10px 14px; border: 1px solid #B39A6F; border-radius: 10px; background: var(--surface); color: var(--fg); font-size: 13.5px; line-height: 1.4; }
   .upd[hidden] { display: none; }
@@ -346,7 +349,7 @@
   .imgh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }</style>
 
 <div id="start" class="start" hidden role="dialog" aria-label="Start">
-  <img class="stfan" src="fan.webp" alt="" aria-hidden="true">
+  <div class="stfanw" aria-hidden="true"><img class="stfan" src="fan.webp" alt=""><div class="stshine"><i></i></div></div>
   <div class="stin">
     <img class="stlogo" src="logo.png" width="116" height="124" alt="">
     <div class="sbtns">
@@ -3586,6 +3589,19 @@
   }
   $('updX').addEventListener('click', () => { $('upd').hidden = true; });
 
+  /* Bagliore che attraversa l'immagine della schermata iniziale, da destra a sinistra, ogni 6-12 secondi */
+  function initShine() {
+    const fan = document.querySelector('.stfan'), sh = document.querySelector('.stshine'), band = sh && sh.firstElementChild;
+    if (!fan || !band || !band.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const u = 'url("' + fan.getAttribute('src') + '")';
+    sh.style.webkitMaskImage = u; sh.style.maskImage = u;
+    const next = () => setTimeout(() => {
+      if (!$('start').hidden && !document.hidden) band.animate([{ transform: 'translateX(300%) skewX(-18deg)' }, { transform: 'translateX(-130%) skewX(-18deg)' }], { duration: 1000, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' });
+      next();
+    }, 6000 + Math.random() * 6000);
+    next();
+  }
+
   /* ---------- Avvio ---------- */
   restore();
   initDrafts();
@@ -3602,6 +3618,7 @@
   render();
   DREADY = true;
   initStart();
+  initShine();
   showStart();
 })();
 </script>
