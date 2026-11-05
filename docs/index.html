@@ -311,11 +311,13 @@
   .stlogo { width: 116px; height: auto; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
   .stword { width: 197px; height: auto; margin-bottom: 14px; }
   .sbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
-  .sbtn { display: grid; gap: 8px; align-content: start; text-align: left; padding: 16px 14px; min-height: 118px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--fg); cursor: pointer; font: inherit; }
+  .sbtn { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 14px; row-gap: 8px; align-content: start; text-align: left; padding: 16px 14px; min-height: 118px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--fg); cursor: pointer; font: inherit; }
+  .sbtn .sic { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
+  .sbtn b { grid-column: 2; align-self: center; min-height: 28px; display: flex; align-items: center; }
   .sic { fill: none; stroke: #B39A6F; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .sbtn:disabled .sic { stroke: var(--muted); }
   .sbtn b { font: 700 16px/1.2 var(--font-title); letter-spacing: 0.02em; }
-  .sbtn small { font-size: 12px; line-height: 1.4; color: var(--muted); }
+  .sbtn small { grid-column: 2; font-size: 13.5px; line-height: 1.4; color: var(--muted); }
   .sbtn:hover:not(:disabled) { border-color: var(--accent); }
   .sbtn:disabled { opacity: 0.5; cursor: default; }
   @media (max-width: 860px) { .sbtns { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
