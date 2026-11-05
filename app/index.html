@@ -2157,6 +2157,13 @@
       if (document.hidden || !fl.offsetParent || fl.matches(':hover')) return;
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
+    fl.addEventListener('pointerenter', () => {
+      if (!fi.getAnimations().length) return;
+      const tf = getComputedStyle(fi).transform;
+      fi.getAnimations().forEach(a => a.cancel());
+      fi.style.transition = 'none'; fi.style.transform = tf; void fi.offsetWidth;
+      fi.style.transition = ''; fi.style.transform = '';
+    });
     setInterval(go, 9000); fl.addEventListener('wiggle', go); window.__wiggle = go;
   })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { updBack(); } catch (e) {} });
