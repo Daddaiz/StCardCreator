@@ -3140,8 +3140,8 @@
     return { headers: { 'Content-Type': rq.headers.get('content-type') }, body: new Uint8Array(await rq.arrayBuffer()) };
   }
   function stMsg(e) {
-    if (e && e.code === 'nobridge') return 'SillyTavern can only be reached from the desktop app (the .exe).';
-    if (e && e.code === 'net') return 'SillyTavern is not reachable at ' + stUrl() + '.';
+    if (e && e.code === 'nobridge') return 'It only works in the .exe version.';
+    if (e && e.code === 'net') return 'SillyTavern needs to be running.';
     if (e && e.code === 'login') return 'SillyTavern asks for a login. Enter your SillyTavern username and password in the API page, section SillyTavern.';
     if (e && e.code === 'badlogin') return 'SillyTavern refused the username or password. Use the login name (handle) of your SillyTavern account.';
     return (e && e.message) || 'Something went wrong while talking to SillyTavern.';
@@ -3153,7 +3153,7 @@
     const add = $('stadd'); add.disabled = !on || ST.busy; add.title = tip;
     add.textContent = STSRC ? 'Update the card on SillyTavern' : 'Add to SillyTavern';
     const n = $('sNote');
-    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (/not reachable/.test(ST.why) ? ' Start SillyTavern and the buttons turn on by themselves.' : ''));
+    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (/needs to be running/.test(ST.why) ? ' Looking for it at ' + stUrl() + '. The buttons turn on by themselves once it is up.' : ''));
   }
   setStSrc = v => { STSRC = v; updStUi(); };
   async function stCheck() {
