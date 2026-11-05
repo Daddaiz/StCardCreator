@@ -15,9 +15,9 @@
     --line: #d3d8e1;
     --fg: #161922;
     --muted: #586172;
-    --accent: #2b5bd1;
-    --accent-fg: #ffffff;
-    --sel: #e3eafb;
+    --accent: #B39A6F;
+    --accent-fg: #1a1408;
+    --sel: #efe7d6;
     --warn: #a8480a;
     --logo-glow: none;
     --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -27,12 +27,12 @@
   }
   :root:not([data-theme="light"]) {
       --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
-      --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
+      --fg: #e8ebf1; --muted: #98a2b3; --accent: #B39A6F; --accent-fg: #1a1408; --sel: #3a3226; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
       color-scheme: dark;
   }
   :root[data-theme="dark"] {
     --bg: #0f1217; --surface: #161a21; --raised: #1d222b; --stage: #090b0f; --line: #2a313c;
-    --fg: #e8ebf1; --muted: #98a2b3; --accent: #7fa6ff; --accent-fg: #0b1020; --sel: #24304d; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
+    --fg: #e8ebf1; --muted: #98a2b3; --accent: #B39A6F; --accent-fg: #1a1408; --sel: #3a3226; --warn: #f0a35a; --logo-glow: drop-shadow(0 0 2px rgba(255, 224, 160, 0.2)) drop-shadow(0 0 8px rgba(255, 196, 110, 0.08));
     color-scheme: dark;
   }
 
@@ -71,6 +71,9 @@
   textarea::-webkit-scrollbar-track { background: transparent; }
   textarea::-webkit-scrollbar-thumb { background: var(--line); border: 4px solid transparent; border-radius: 8px; background-clip: content-box; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  textarea:focus, textarea:focus-visible, select:focus, select:focus-visible, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):focus-visible { outline: none; box-shadow: none; }
+  .dfh b, .fld > span:first-child { transition: color 0.15s; }
+  .df:has(> :is(textarea, input, select):focus) .dfh b, .df:has(> :is(textarea, input, select):focus) > span:first-child, .fld:has(> :is(textarea, input, select):focus) > span:first-child, .fld:has(> :is(textarea, input, select):focus) > .dfh b { color: var(--accent); }
 
   .rng { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; }
   .rng input { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
