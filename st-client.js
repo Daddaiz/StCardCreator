@@ -16,6 +16,7 @@ function raw(base, method, path, headers, body) {
     const lib = u.protocol === 'https:' ? https : http;
     const st = state(base);
     const h = Object.assign({}, headers);
+    if (st.authHeader) h.Authorization = st.authHeader;
     const ck = Object.entries(st.cookies).map(([k, v]) => k + '=' + v).join('; ');
     if (ck) h.Cookie = ck;
     if (body && !h['Content-Length']) h['Content-Length'] = Buffer.byteLength(body);
@@ -46,18 +47,40 @@ async function token(base, fresh) {
   return st.token;
 }
 
-// req: { base, method, path, headers, body (Buffer|Uint8Array|string|null) }
+async function login(base, auth, force) {
+  const st = state(base);
+  const key = auth.user + '\n' + auth.pass;
+  if (st.login === key && !force) return;
+  st.login = key; // anche se fallisce: in "basic auth" puro l'accesso ad account non esiste, e non lo richiediamo a ogni chiamata
+  const t = await token(base, true).catch(() => '');
+  const h = { 'Content-Type': 'application/json', Authorization: 'Basic ' + Buffer.from(auth.user + ':' + auth.pass).toString('base64') };
+  if (t) h['X-CSRF-Token'] = t;
+  await raw(base, 'POST', '/api/users/login', h, JSON.stringify({ handle: auth.user, password: auth.pass }));
+  st.token = ''; // la sessione può essere cambiata: nuovo token alla prossima richiesta
+}
+
+// req: { base, method, path, headers, body (Buffer|Uint8Array|string|null), auth: { user, pass } | null }
 async function request(req) {
   const base = String(req.base || '').replace(/\/+$/, '');
   const method = (req.method || 'GET').toUpperCase();
   const headers = Object.assign({}, req.headers || {});
   const body = req.body == null ? null : (Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body));
-  if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await token(base, false);
-  let r = await raw(base, method, req.path, headers, body);
-  if (r.status === 403 && method !== 'GET') { // sessione scaduta o token vecchio: riprova una volta
-    headers['X-CSRF-Token'] = await token(base, true);
-    r = await raw(base, method, req.path, headers, body);
+  const auth = req.auth && req.auth.user ? { user: String(req.auth.user), pass: String(req.auth.pass || '') } : null;
+  state(base).authHeader = auth ? 'Basic ' + Buffer.from(auth.user + ':' + auth.pass).toString('base64') : '';
+  if (auth) await login(base, auth, false);
+  const send = async () => {
+    if (method !== 'GET' && method !== 'HEAD') headers['X-CSRF-Token'] = await token(base, false);
+    return raw(base, method, req.path, headers, body);
+  };
+  const bad = r => r.status === 401 || r.status === 403;
+  const key = auth ? auth.user + '\n' + auth.pass : '';
+  let r = await send();
+  if (r.status === 403 && method !== 'GET') { state(base).token = ''; r = await send(); } // token CSRF vecchio
+  if (auth && bad(r) && state(base).ok === key) { // eravamo dentro: sessione scaduta, un solo nuovo accesso
+    state(base).ok = ''; await login(base, auth, true); state(base).token = ''; r = await send();
   }
+  if (auth && bad(r)) throw new Error('LOGIN_FAILED'); // niente altri tentativi: SillyTavern blocca dopo pochi errori
+  if (auth) state(base).ok = key;
   return { status: r.status, contentType: r.headers['content-type'] || '', body: r.body };
 }
 

@@ -620,6 +620,11 @@
         <span class="dfh"><b>SillyTavern address</b></span>
         <div class="mrow"><input type="text" id="sUrl" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:8000" aria-label="SillyTavern address"><button type="button" class="btn" id="sTest">Check connection</button></div>
       </div>
+      <div class="grid2">
+        <label class="df"><span class="dfh"><b>Username (only if SillyTavern asks for a login)</b></span><input type="text" id="sUser" autocomplete="off" spellcheck="false" aria-label="SillyTavern username"></label>
+        <label class="df"><span class="dfh"><b>Password</b></span><input type="password" id="sPass" autocomplete="off" spellcheck="false" aria-label="SillyTavern password"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="sRem"> Remember the password on this device</label>
       <p class="sm" id="sNote"></p>
     </section>
     <section class="apibox" id="sParams">
@@ -3108,10 +3113,19 @@
     u = (u || ST_DEF).trim().replace(/\/+$/, '');
     return /^https?:\/\//i.test(u) ? u : ST_DEF;
   }
+  const SUKEY = 'st-card-creator-st-user', SPKEY = 'st-card-creator-st-pass';
+  let STPASS = '';
+  try { STPASS = localStorage.getItem(SPKEY) || ''; } catch (e) { STPASS = ''; }
+  function stAuth() {
+    let u = '';
+    try { u = (localStorage.getItem(SUKEY) || '').trim(); } catch (e) { u = ''; }
+    return u ? { user: u, pass: STPASS } : null;
+  }
   async function stReq(method, path, o) {
     o = o || {};
     if (!window.stBridge) throw { code: 'nobridge' };
-    const r = await window.stBridge.request({ base: stUrl(), method, path, headers: o.headers || {}, body: o.body == null ? null : o.body });
+    const r = await window.stBridge.request({ base: stUrl(), method, path, headers: o.headers || {}, body: o.body == null ? null : o.body, auth: stAuth() });
+    if (r && !r.ok && r.error === 'LOGIN_FAILED') throw { code: 'badlogin' };
     if (!r || !r.ok) throw { code: 'net', message: r && r.error };
     const body = r.body instanceof Uint8Array ? r.body : new Uint8Array(r.body || []);
     const txt = () => new TextDecoder().decode(body);
@@ -3128,7 +3142,8 @@
   function stMsg(e) {
     if (e && e.code === 'nobridge') return 'SillyTavern can only be reached from the desktop app (the .exe).';
     if (e && e.code === 'net') return 'SillyTavern is not reachable at ' + stUrl() + '.';
-    if (e && e.code === 'login') return 'SillyTavern is asking for a login. Turn off user accounts / basic authentication in SillyTavern to use it from here.';
+    if (e && e.code === 'login') return 'SillyTavern asks for a login. Enter your SillyTavern username and password in the API page, section SillyTavern.';
+    if (e && e.code === 'badlogin') return 'SillyTavern refused the username or password. Use the login name (handle) of your SillyTavern account.';
     return (e && e.message) || 'Something went wrong while talking to SillyTavern.';
   }
   function updStUi() {
@@ -3138,7 +3153,7 @@
     const add = $('stadd'); add.disabled = !on || ST.busy; add.title = tip;
     add.textContent = STSRC ? 'Update the card on SillyTavern' : 'Add to SillyTavern';
     const n = $('sNote');
-    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + ' Start SillyTavern and the buttons turn on by themselves.');
+    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (/not reachable/.test(ST.why) ? ' Start SillyTavern and the buttons turn on by themselves.' : ''));
   }
   setStSrc = v => { STSRC = v; updStUi(); };
   async function stCheck() {
@@ -3147,6 +3162,7 @@
       if (!window.stBridge) throw { code: 'nobridge' };
       const r = await stReq('GET', '/version');
       let v = null; try { v = r.json(); } catch (e) { v = null; }
+      if ((r.status === 401 || r.status === 403 || r.status === 302) && !stAuth()) throw { code: 'login' };
       if (r.status !== 200 || !v || typeof v !== 'object') throw { code: 'net' };
       ST.online = true; ST.why = ''; ST.ver = v.pkgVersion || '';
     } catch (e) {
@@ -3326,8 +3342,17 @@
   (() => {
     const u = $('sUrl');
     u.value = stUrl();
-    const save = () => { try { localStorage.setItem(STKEY, u.value.trim()); } catch (e) { /* ignora */ } };
-    u.addEventListener('change', () => { save(); stCheck(); });
+    const us = $('sUser'), pw = $('sPass'), rem = $('sRem');
+    try { us.value = localStorage.getItem(SUKEY) || ''; } catch (e) { /* ignora */ }
+    pw.value = STPASS; rem.checked = !!STPASS;
+    const save = () => {
+      STPASS = pw.value;
+      try {
+        localStorage.setItem(STKEY, u.value.trim()); localStorage.setItem(SUKEY, us.value.trim());
+        if (rem.checked) localStorage.setItem(SPKEY, STPASS); else localStorage.removeItem(SPKEY);
+      } catch (e) { /* ignora */ }
+    };
+    [u, us, pw, rem].forEach(el => el.addEventListener('change', () => { save(); stCheck(); }));
     $('sTest').addEventListener('click', () => { save(); $('sNote').textContent = 'Checking…'; stCheck(); });
   })();
   stStart();
