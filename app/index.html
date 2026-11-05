@@ -160,7 +160,9 @@
 
   .minis { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
   .minis figure { margin: 0; display: grid; gap: 6px; justify-items: start; }
-  .minis canvas { display: block; outline: 1px solid var(--line); }
+  .minis canvas { display: block; outline: 1px solid var(--line); border-radius: 5px; }
+  .minis canvas[data-w="140"] { border-radius: 7px; }
+  .minis canvas[data-w="64"] { border-radius: 4px; }
   .minis figcaption { font: 400 11px var(--font-mono); color: var(--muted); }
 
   /* Barra superiore e cambio vista */
