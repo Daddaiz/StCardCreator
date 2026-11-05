@@ -3241,8 +3241,8 @@
   }
   function updStUi() {
     const on = ST.online;
-    const tip = on ? '' : ST.why;
-    const dst = $('dst'); dst.disabled = !on; dst.title = tip;
+    const tip = on ? 'After adding or updating, reload the SillyTavern page (F5) to see the change.' : ST.why;
+    const dst = $('dst'); dst.disabled = !on; dst.title = on ? '' : tip;
     const add = $('stadd'); add.disabled = !on || ST.busy; add.title = tip;
     add.textContent = STSRC ? 'Update the card on SillyTavern' : 'Add to SillyTavern';
     const n = $('sNote');
@@ -3311,7 +3311,7 @@
       let j = null; try { j = r.json(); } catch (e) { j = null; }
       if (r.status !== 200 || !j || j.error || !j.file_name) throw { message: 'SillyTavern did not accept the card.' };
       setStSrc({ avatar: j.file_name + '.png' }); saveDraft();
-      say('status', 'Added to SillyTavern as "{n}". From now on this button updates that card.', { n: K.name.trim() }, false);
+      say('status', 'Added to SillyTavern as "{n}". Reload the SillyTavern page (F5) to see it. From now on this button updates that card.', { n: K.name.trim() }, false);
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
@@ -3357,7 +3357,7 @@
       const f = await stForm(fields, new File([blob], av, { type: 'image/png' }));
       const r = await stReq('POST', '/api/characters/edit', f);
       if (r.status !== 200) throw { message: 'SillyTavern did not accept the update (' + r.status + '). Nothing was changed on the card.' };
-      say('status', 'Updated "{n}" on SillyTavern. If SillyTavern is open in a browser, reload its page to see the change.', { n: K.name.trim() }, false);
+      say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.', { n: K.name.trim() }, false);
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
