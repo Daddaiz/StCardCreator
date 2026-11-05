@@ -140,7 +140,7 @@
   @media (max-width: 899px) { .stage { order: -1; } }
   .cardwrap { background: var(--stage); border-radius: 12px; padding: 18px; display: grid; place-items: center; }
   .cardwrap.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
-  #card { display: block; width: min(100%, 340px); height: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
+  #card { display: block; width: min(100%, 340px); height: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.14), 0 8px 18px rgba(0,0,0,0.2); }
   .export { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .export select { width: auto; flex: none; }
   .export .btn.primary { flex: 1 1 auto; min-width: 150px; }
@@ -183,7 +183,21 @@
   #magic { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
   .app { position: relative; z-index: 1; }
   .bar { background: var(--bgfx), var(--bg); background-attachment: fixed; }
-  .navcol { display: grid; gap: 6px; }
+  .navcol { display: grid; grid-template-columns: auto auto; gap: 6px; }
+  .navcol > button { white-space: nowrap; text-align: center; }
+  .navcol .apibtn { padding: 9px 14px; }
+  .dlwrap { position: relative; flex: 1 1 150px; min-width: 150px; }
+  .dlwrap > .btn { width: 100%; }
+  .dlmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; display: grid; background: var(--raised); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.35); overflow: hidden; }
+  .dlmenu[hidden] { display: none; }
+  .dlmenu button { font: 500 14px var(--font-ui); padding: 10px 14px; text-align: left; border: 0; border-top: 1px solid var(--line); background: none; color: var(--fg); cursor: pointer; }
+  .dlmenu button:first-child { border-top: 0; }
+  .dlmenu button:hover, .dlmenu button:focus-visible { background: var(--accent); color: var(--accent-fg); outline: none; }
+  .export .stbtn { flex: 1 1 100%; }
+  dialog.kdlg { width: min(460px, calc(100vw - 32px)); }
+  .kbody { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
+  .kbody p { margin: 0; }
+  .krow { display: flex; justify-content: flex-end; gap: 8px; }
   .navgrp { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .apibtn:hover { border-color: var(--muted); }
@@ -380,8 +394,7 @@
   <header class="bar">
     <h1 class="brand"><img class="logo" id="hlogo" width="145" height="124" alt="ST Card Creator"></h1>
     <div class="navgrp">
-      <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="btn" id="dcards">Cards</button></div>
-      <button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button>
+      <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button><button type="button" class="btn" id="dcards">Cards</button><button type="button" class="btn" id="dst" disabled>SillyTavern cards</button></div>
       <nav class="views" aria-label="Vista">
         <button type="button" data-view="dati" aria-pressed="true">Dati</button>
         <button type="button" data-view="cover" aria-pressed="false">Cover</button>
@@ -557,8 +570,11 @@
           <option value="1000">1000 × 1500</option>
           <option value="1200">1200 × 1800</option>
         </select>
-        <button type="button" class="btn primary" id="export">Scarica PNG</button>
-        <button type="button" class="btn" id="djson">Scarica JSON</button>
+        <div class="dlwrap">
+          <button type="button" class="btn primary" id="export" aria-haspopup="true" aria-expanded="false">Download</button>
+          <div class="dlmenu" id="dlmenu" hidden role="menu"><button type="button" role="menuitem" id="dlpng">PNG image</button><button type="button" role="menuitem" id="djson">JSON file</button></div>
+        </div>
+        <button type="button" class="btn stbtn" id="stadd" disabled>Add to SillyTavern</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
       <p class="hint" id="embedinfo"></p>
@@ -597,6 +613,14 @@
         <span class="dfh"><b>Modello</b></span>
         <div class="mrow"><input type="text" id="aModel" list="mlist" autocomplete="off" spellcheck="false" placeholder="Nome del modello" aria-label="Modello"><datalist id="mlist"></datalist><button type="button" class="btn" id="aModels">Carica i modelli</button></div>
       </div>
+    </section>
+    <section class="apibox" id="sSt">
+      <h2 class="atitle">SillyTavern</h2>
+      <div class="df">
+        <span class="dfh"><b>SillyTavern address</b></span>
+        <div class="mrow"><input type="text" id="sUrl" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:8000" aria-label="SillyTavern address"><button type="button" class="btn" id="sTest">Check connection</button></div>
+      </div>
+      <p class="sm" id="sNote"></p>
     </section>
     <section class="apibox" id="sParams">
       <h2 class="atitle">Parametri</h2>
@@ -728,6 +752,8 @@
   <button type="button" class="undo" id="undoBtn" hidden></button>
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
   <dialog class="wdlg cdlg" id="cdlg" aria-label="Cards"><div class="cin"><div class="chead"><b>Cards</b><span class="tk" id="ccount"></span><button type="button" class="btn quiet" id="cclose">Close</button></div><div class="cgrid" id="cgrid"></div></div></dialog>
+  <dialog class="wdlg cdlg" id="sdlg" aria-label="SillyTavern cards"><div class="cin"><div class="chead"><b>SillyTavern cards</b><span class="tk" id="scount"></span><button type="button" class="btn quiet" id="sclose">Close</button></div><div class="cgrid" id="sgrid"></div></div></dialog>
+  <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
@@ -1811,22 +1837,26 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
-  $('export').addEventListener('click', async () => {
+  /* Costruisce il PNG finale con i dati della carta incorporati (usato da Download e da SillyTavern) */
+  async function buildPngBlob() {
+    await Promise.all([ensureFont(S.nameFont), ensureFont(S.descFont)]).catch(() => {});
+    const cv = document.createElement('canvas');
+    draw(cv, S.exportW);
+    if (!K.name.trim()) throw { code: 'noname' };
+    const raw = await new Promise(r => cv.toBlob(r, 'image/png'));
+    if (!raw) throw { code: 'empty', message: 'Il file è vuoto.' };
+    const png = new Uint8Array(await raw.arrayBuffer());
+    const withData = embedChunks(png, [
+      ['chara', b64utf8(JSON.stringify(buildCard('v2')))],
+      ['ccv3', b64utf8(JSON.stringify(buildCard('v3')))]
+    ]);
+    return new Blob([withData], { type: 'image/png' });
+  }
+  async function downloadPng() {
     const btn = $('export');
     btn.disabled = true; say('status', 'Preparo il file…', null, false);
     try {
-      await Promise.all([ensureFont(S.nameFont), ensureFont(S.descFont)]).catch(() => {});
-      const cv = document.createElement('canvas');
-      draw(cv, S.exportW);
-      if (!K.name.trim()) throw { code: 'noname' };
-      const raw = await new Promise(r => cv.toBlob(r, 'image/png'));
-      if (!raw) throw { code: 'empty', message: 'Il file è vuoto.' };
-      const png = new Uint8Array(await raw.arrayBuffer());
-      const withData = embedChunks(png, [
-        ['chara', b64utf8(JSON.stringify(buildCard('v2')))],
-        ['ccv3', b64utf8(JSON.stringify(buildCard('v3')))]
-      ]);
-      const blob = new Blob([withData], { type: 'image/png' });
+      const blob = await buildPngBlob();
       const fn = slug(K.name) + '.png';
       await saveBlob(blob, fn);
       say('status', 'Salvato come {fn} ({w}×{h}) con i dati della carta incorporati.', { fn, w: S.exportW, h: Math.round(S.exportW * 1.5) }, false);
@@ -1838,7 +1868,17 @@
       btn.disabled = false;
       render();
     }
-  });
+  }
+  /* Menu del pulsante Download: PNG o JSON */
+  function dlMenu(open) {
+    const m = $('dlmenu'), b = $('export');
+    m.hidden = !open; b.setAttribute('aria-expanded', String(open));
+    if (open) $('dlpng').focus();
+  }
+  $('export').addEventListener('click', () => dlMenu($('dlmenu').hidden));
+  $('dlpng').addEventListener('click', () => { dlMenu(false); downloadPng(); });
+  document.addEventListener('click', e => { if (!$('dlmenu').hidden && !e.target.closest('.dlwrap')) dlMenu(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('dlmenu').hidden) { dlMenu(false); $('export').focus(); } });
 
   /* ---------- PNG: scrittura e lettura dei metadati ---------- */
   const CRCT = (() => {
@@ -2024,6 +2064,8 @@
   }
 
   let K = defaultData();
+  let STSRC = null; /* carta aperta da SillyTavern: { avatar } */
+  let setStSrc = v => { STSRC = v; };
 
   /* Token e totali */
   function textFor(key) {
@@ -2196,7 +2238,7 @@
         obj = JSON.parse(decodeB64(raw));
       }
       const isPng = !/\.json$/i.test(f.name);
-      K = fromCard(obj); DID = null; clearUndo(); S.nameLink = false;
+      K = fromCard(obj); DID = null; clearUndo(); S.nameLink = false; setStSrc(null);
       syncData(); syncUI(); schedule(); saveDataSoon();
       if (isPng) setImage(f.type === 'image/png' ? f : new File([f], f.name, { type: 'image/png' }));
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
@@ -2205,6 +2247,7 @@
     }
   });
   $('djson').addEventListener('click', async () => {
+    dlMenu(false);
     if (!K.name.trim()) { say('status', 'Scrivi prima il nome della carta.', null, true); return; }
     try {
       const fn = slug(K.name) + '.json';
@@ -2220,7 +2263,7 @@
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
     IMGBLOB = null; MASKBLOB = null; IMGNAME = ''; MASKNAME = ''; IMGDIRTY = false;
-    S.name = ''; S.desc = ''; S.nameLink = false; IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
+    S.name = ''; S.desc = ''; S.nameLink = false; setStSrc(null); IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
     initLive();
     syncData(); syncUI(); schedule();
     say('dstatus', 'Nuova carta pronta.', null, false);
@@ -2979,7 +3022,7 @@
       DID = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
     const d = loadDrafts();
-    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink, zoom: S.zoom, ox: S.ox, oy: S.oy }, img: IMGP };
+    const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink, zoom: S.zoom, ox: S.ox, oy: S.oy }, img: IMGP, st: STSRC };
     d.list = d.list.filter(x => x.id !== DID);
     d.list.unshift(rec);
     const dropped = d.list.slice(40).map(x => x.id);
@@ -2993,7 +3036,7 @@
     renderRecent();
   }
   function applyDraft(r) {
-    K = sanitize(r.K); DID = r.id;
+    K = sanitize(r.K); DID = r.id; setStSrc(r.st && r.st.avatar ? { avatar: String(r.st.avatar) } : null);
     if (r.cover) {
       if (typeof r.cover.name === 'string') S.name = r.cover.name;
       if (typeof r.cover.desc === 'string') S.desc = r.cover.desc;
@@ -3054,6 +3097,240 @@
   $('cclose').addEventListener('click', closeCards);
   $('cdlg').addEventListener('click', e => { if (e.target === $('cdlg')) closeCards(); });
   $('cdlg').addEventListener('cancel', () => { CSEQ++; CURLS.forEach(u => URL.revokeObjectURL(u)); CURLS = []; });
+
+
+  /* ---------- SillyTavern: elenco, aggiunta e aggiornamento delle carte ---------- */
+  const STKEY = 'st-card-creator-st-url', ST_DEF = 'http://127.0.0.1:8000';
+  const ST = { online: false, why: '', ver: '', busy: false, timer: 0 };
+  function stUrl() {
+    let u = '';
+    try { u = localStorage.getItem(STKEY) || ''; } catch (e) { u = ''; }
+    u = (u || ST_DEF).trim().replace(/\/+$/, '');
+    return /^https?:\/\//i.test(u) ? u : ST_DEF;
+  }
+  async function stReq(method, path, o) {
+    o = o || {};
+    if (!window.stBridge) throw { code: 'nobridge' };
+    const r = await window.stBridge.request({ base: stUrl(), method, path, headers: o.headers || {}, body: o.body == null ? null : o.body });
+    if (!r || !r.ok) throw { code: 'net', message: r && r.error };
+    const body = r.body instanceof Uint8Array ? r.body : new Uint8Array(r.body || []);
+    const txt = () => new TextDecoder().decode(body);
+    return { status: r.status, type: r.contentType || '', body, text: txt, json: () => JSON.parse(txt()) };
+  }
+  const stJson = (path, obj) => stReq('POST', path, { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj || {}) });
+  async function stForm(fields, file) {
+    const fd = new FormData();
+    fields.forEach(([k, v]) => fd.append(k, v));
+    if (file) fd.append('avatar', file, file.name);
+    const rq = new Request('http://localhost/', { method: 'POST', body: fd });
+    return { headers: { 'Content-Type': rq.headers.get('content-type') }, body: new Uint8Array(await rq.arrayBuffer()) };
+  }
+  function stMsg(e) {
+    if (e && e.code === 'nobridge') return 'SillyTavern can only be reached from the desktop app (the .exe).';
+    if (e && e.code === 'net') return 'SillyTavern is not reachable at ' + stUrl() + '.';
+    if (e && e.code === 'login') return 'SillyTavern is asking for a login. Turn off user accounts / basic authentication in SillyTavern to use it from here.';
+    return (e && e.message) || 'Something went wrong while talking to SillyTavern.';
+  }
+  function updStUi() {
+    const on = ST.online;
+    const tip = on ? '' : ST.why;
+    const dst = $('dst'); dst.disabled = !on; dst.title = tip;
+    const add = $('stadd'); add.disabled = !on || ST.busy; add.title = tip;
+    add.textContent = STSRC ? 'Update the card on SillyTavern' : 'Add to SillyTavern';
+    const n = $('sNote');
+    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + ' Start SillyTavern and the buttons turn on by themselves.');
+  }
+  setStSrc = v => { STSRC = v; updStUi(); };
+  async function stCheck() {
+    if (ST.busy) return;
+    try {
+      if (!window.stBridge) throw { code: 'nobridge' };
+      const r = await stReq('GET', '/version');
+      let v = null; try { v = r.json(); } catch (e) { v = null; }
+      if (r.status !== 200 || !v || typeof v !== 'object') throw { code: 'net' };
+      ST.online = true; ST.why = ''; ST.ver = v.pkgVersion || '';
+    } catch (e) {
+      ST.online = false; ST.why = stMsg(e); ST.ver = '';
+    }
+    updStUi();
+  }
+  function stStart() {
+    stCheck();
+    if (!window.stBridge) return;
+    clearInterval(ST.timer);
+    ST.timer = setInterval(() => { if (!document.hidden && $('start').hidden) stCheck(); }, 8000);
+    window.addEventListener('focus', stCheck);
+  }
+  async function stList() {
+    const r = await stJson('/api/characters/all', {});
+    if (r.status === 401 || r.status === 403) throw { code: 'login' };
+    if (r.status !== 200) throw { message: 'SillyTavern answered with an error (' + r.status + ').' };
+    const a = r.json();
+    if (!Array.isArray(a)) throw { message: 'SillyTavern sent a list I could not read.' };
+    return a.filter(c => c && c.avatar && c.name);
+  }
+  const normName = n => String(n || '').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  function askConfirm(title, paras, okText) {
+    return new Promise(res => {
+      const d = $('kdlg'), body = $('kbody');
+      $('ktitle').textContent = title; $('kok').textContent = okText;
+      body.textContent = '';
+      paras.forEach(t => { const p = mk('p'); p.textContent = t; body.appendChild(p); });
+      let done = false;
+      const fin = v => { if (done) return; done = true; $('kok').onclick = $('kno').onclick = d.onclick = d.oncancel = null; if (d.open) d.close(); res(v); };
+      $('kok').onclick = () => fin(true);
+      $('kno').onclick = () => fin(false);
+      d.oncancel = e => { e.preventDefault(); fin(false); };
+      d.onclick = e => { if (e.target === d) fin(false); };
+      d.showModal(); $('kno').focus();
+    });
+  }
+  function setBusy(b) { ST.busy = b; updStUi(); }
+  async function stAdd() {
+    if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
+    setBusy(true); say('status', 'Sending the card to SillyTavern…', null, false);
+    try {
+      const list = await stList();
+      const dup = list.find(c => normName(c.name) === normName(K.name));
+      if (dup) {
+        say('status', 'This card is already in SillyTavern ("{n}"). Nothing was added. To change it, open it from SillyTavern cards and use Update.', { n: dup.name }, true);
+        return;
+      }
+      const blob = await buildPngBlob();
+      const f = await stForm([['file_type', 'png']], new File([blob], slug(K.name) + '.png', { type: 'image/png' }));
+      const r = await stReq('POST', '/api/characters/import', f);
+      let j = null; try { j = r.json(); } catch (e) { j = null; }
+      if (r.status !== 200 || !j || j.error || !j.file_name) throw { message: 'SillyTavern did not accept the card.' };
+      setStSrc({ avatar: j.file_name + '.png' }); saveDraft();
+      say('status', 'Added to SillyTavern as "{n}". From now on this button updates that card.', { n: K.name.trim() }, false);
+    } catch (e) {
+      say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
+    } finally { setBusy(false); render(); }
+  }
+  async function stUpdate() {
+    if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
+    const av = STSRC.avatar;
+    setBusy(true); say('status', 'Checking the card on SillyTavern…', null, false);
+    try {
+      const g = await stJson('/api/characters/get', { avatar_url: av });
+      if (g.status === 404) {
+        setStSrc(null); saveDraft();
+        say('status', 'That card is no longer in SillyTavern, so there is nothing to update. The button is back to "Add to SillyTavern".', null, true);
+        return;
+      }
+      if (g.status === 401 || g.status === 403) throw { code: 'login' };
+      if (g.status !== 200) throw { message: 'SillyTavern answered with an error (' + g.status + ').' };
+      const cur = g.json();
+      const curName = String(cur.name || (cur.data && cur.data.name) || av);
+      const paras = ['This replaces the card "' + curName + '" in SillyTavern with what you have here: all the data fields and the card image.', 'Chats are not touched.'];
+      if (normName(curName) !== normName(K.name)) paras.push('The name changes from "' + curName + '" to "' + K.name.trim() + '". The file in SillyTavern keeps its name.');
+      const ex = (cur.data && cur.data.extensions) || {};
+      if (ex.world && K.entries.length) paras.push('This card is linked to the SillyTavern lorebook "' + ex.world + '": SillyTavern rebuilds the card\'s embedded lorebook from that file, so lorebook edits made here may be overwritten.');
+      if (!(await askConfirm('Update the card on SillyTavern?', paras, 'Update'))) { say('status', 'Update cancelled.', null, false); return; }
+      say('status', 'Updating the card on SillyTavern…', null, false);
+      /* json_data conserva i campi che questa app non conosce (script regex, ecc.); il lorebook e i saluti di gruppo vengono dalla card di qui */
+      let base = {}; try { base = JSON.parse(cur.json_data || '{}') || {}; } catch (e) { base = {}; }
+      if (!base.data || typeof base.data !== 'object') base.data = {};
+      const mine = buildCard('v3').data;
+      if (mine.character_book) base.data.character_book = mine.character_book; else delete base.data.character_book;
+      base.data.group_only_greetings = mine.group_only_greetings || [];
+      const fav = (cur.fav === true || cur.fav === 'true') ? 'true' : 'false';
+      const fields = [
+        ['avatar_url', av], ['ch_name', K.name.trim()], ['description', K.description], ['personality', K.personality],
+        ['scenario', K.scenario], ['first_mes', K.first_mes], ['mes_example', K.mes_example], ['creator_notes', K.notes],
+        ['system_prompt', K.system_prompt], ['post_history_instructions', K.post_history], ['creator', K.creator.trim()],
+        ['character_version', K.version], ['tags', split(K.tags).join(',')], ['talkativeness', String(K.talk)], ['fav', fav],
+        ['world', ex.world || ''], ['depth_prompt_prompt', K.dp_prompt], ['depth_prompt_depth', String(K.dp_depth)], ['depth_prompt_role', K.dp_role],
+        ['chat', cur.chat || ''], ['create_date', cur.create_date || ''], ['json_data', JSON.stringify(base)]
+      ];
+      K.alt.filter(x => x.trim()).forEach(x => fields.push(['alternate_greetings', x]));
+      const blob = await buildPngBlob();
+      const f = await stForm(fields, new File([blob], av, { type: 'image/png' }));
+      const r = await stReq('POST', '/api/characters/edit', f);
+      if (r.status !== 200) throw { message: 'SillyTavern did not accept the update (' + r.status + '). Nothing was changed on the card.' };
+      say('status', 'Updated "{n}" on SillyTavern. If SillyTavern is open in a browser, reload its page to see the change.', { n: K.name.trim() }, false);
+    } catch (e) {
+      say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
+    } finally { setBusy(false); render(); }
+  }
+  $('stadd').addEventListener('click', () => { if (STSRC) stUpdate(); else stAdd(); });
+
+  /* Finestra "SillyTavern cards": come Cards, ma solo Edit */
+  let SURLS = [], SSEQ = 0;
+  function closeSt() { const d = $('sdlg'); if (d.open) d.close(); SSEQ++; SURLS.forEach(u => URL.revokeObjectURL(u)); SURLS = []; }
+  const stTok = c => {
+    if (c.shallow || !c.data) return null;
+    const d = c.data, dp = (d.extensions && d.extensions.depth_prompt) || {};
+    return ['description', 'personality', 'scenario', 'mes_example', 'system_prompt', 'post_history_instructions'].reduce((a, f) => a + tok(str(d[f])), 0) + tok(str(dp.prompt));
+  };
+  async function drawSt() {
+    const box = $('sgrid'), seq = ++SSEQ;
+    SURLS.forEach(u => URL.revokeObjectURL(u)); SURLS = [];
+    box.textContent = ''; $('scount').textContent = '';
+    const msg = t => { const p = mk('p', 'sm'); p.textContent = t; box.textContent = ''; box.appendChild(p); };
+    msg('Loading cards from SillyTavern…');
+    let list;
+    try { list = await stList(); } catch (e) { if (seq === SSEQ) msg(stMsg(e)); return; }
+    if (seq !== SSEQ) return;
+    list.sort((x, y) => (y.date_added || 0) - (x.date_added || 0));
+    $('scount').textContent = list.length + (list.length === 1 ? ' card' : ' cards') + ' · in SillyTavern';
+    if (!list.length) { msg('SillyTavern has no cards yet.'); return; }
+    box.textContent = '';
+    const queue = [];
+    list.forEach(c => {
+      const el = mk('div', 'ccard' + (STSRC && STSRC.avatar === c.avatar ? ' cur' : '')), im = mk('div', 'cimg'), b = mk('b'), meta = mk('span', 'tk'), row = mk('div', 'cbtn');
+      row.style.gridTemplateColumns = '1fr';
+      im.textContent = 'No image';
+      b.textContent = c.name;
+      const t = stTok(c);
+      meta.textContent = (STSRC && STSRC.avatar === c.avatar ? 'open now · ' : '') + (t === null ? '' : '≈ ' + nf(t) + ' tokens');
+      const edit = mk('button', 'btn primary'); edit.type = 'button'; edit.textContent = 'Edit';
+      edit.addEventListener('click', () => stOpen(c, edit));
+      row.append(edit); el.append(im, b, meta, row); box.appendChild(el);
+      queue.push(async () => {
+        try {
+          const r = await stReq('GET', '/thumbnail?type=avatar&file=' + encodeURIComponent(c.avatar));
+          if (seq !== SSEQ || r.status !== 200) return;
+          const u = URL.createObjectURL(new Blob([r.body], { type: r.type || 'image/png' })); SURLS.push(u);
+          const i = new Image(); i.alt = ''; i.onload = () => { if (seq === SSEQ) { im.textContent = ''; im.appendChild(i); } }; i.src = u;
+        } catch (e) { /* senza miniatura */ }
+      });
+    });
+    const worker = async () => { while (queue.length && seq === SSEQ) await queue.shift()(); };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+  }
+  async function stOpen(c, btn) {
+    btn.disabled = true;
+    try {
+      const g = await stJson('/api/characters/get', { avatar_url: c.avatar });
+      if (g.status !== 200) throw { message: 'SillyTavern could not give me that card (' + g.status + ').' };
+      const obj = g.json();
+      const im = await stReq('GET', '/characters/' + encodeURIComponent(c.avatar));
+      closeSt(); say('status', '', null, false);
+      if (!$('start').hidden) hideStart();
+      K = fromCard(obj); DID = null; clearUndo(); S.nameLink = false; setStSrc({ avatar: c.avatar });
+      syncData(); syncUI(); schedule(); saveDataSoon();
+      if (im.status === 200) setImage(new File([im.body], c.avatar, { type: 'image/png' }));
+      showView('dati');
+      say('dstatus', 'Opened from SillyTavern: {n}. The button under the preview now updates this card.', { n: K.name || c.name }, false);
+    } catch (e) {
+      btn.disabled = false;
+      const p = mk('p', 'sm'); p.textContent = stMsg(e); p.style.color = 'var(--warn)'; $('sgrid').prepend(p);
+    }
+  }
+  $('dst').addEventListener('click', () => { const d = $('sdlg'); if (!d.open) d.showModal(); drawSt(); });
+  $('sclose').addEventListener('click', closeSt);
+  $('sdlg').addEventListener('click', e => { if (e.target === $('sdlg')) closeSt(); });
+  $('sdlg').addEventListener('cancel', () => { SSEQ++; SURLS.forEach(u => URL.revokeObjectURL(u)); SURLS = []; });
+  /* Indirizzo di SillyTavern (vista API) */
+  (() => {
+    const u = $('sUrl');
+    u.value = stUrl();
+    const save = () => { try { localStorage.setItem(STKEY, u.value.trim()); } catch (e) { /* ignora */ } };
+    u.addEventListener('change', () => { save(); stCheck(); });
+    $('sTest').addEventListener('click', () => { save(); $('sNote').textContent = 'Checking…'; stCheck(); });
+  })();
+  stStart();
 
   /* Generazione dell'intera carta da un'idea */
   const GEN = [['name', 'Name'], ['description', 'Description'], ['personality', 'Personality summary'], ['scenario', 'Scenario'], ['first_mes', 'First message'], ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['tagline', 'Cover tagline'], ['lore', 'Lorebook entries']];

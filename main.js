@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Menu, shell, screen } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, ipcMain } = require('electron');
+const stClient = require('./st-client.js');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -40,6 +41,19 @@ if (!app.requestSingleInstanceLock()) {
   start();
 }
 
+// Richieste verso SillyTavern (solo http/https, solo dalla nostra pagina).
+ipcMain.handle('st-request', async (e, req) => {
+  try {
+    const u = new URL(String(req && req.base));
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('bad protocol');
+    if (!e.senderFrame || !String(e.senderFrame.url).startsWith('http://127.0.0.1:')) throw new Error('bad sender');
+    const r = await stClient.request(req);
+    return { ok: true, status: r.status, contentType: r.contentType, body: r.body };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err) };
+  }
+});
+
 function start() { app.whenReady().then(async () => {
   const port = await startServer();
   Menu.setApplicationMenu(null);
@@ -48,7 +62,7 @@ function start() { app.whenReady().then(async () => {
     backgroundColor: '#0f1217', title: 'ST Card Creator',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     // L'app carica solo i suoi file locali. webSecurity disattivata: serve per chiamare le API (OpenRouter, server locali, ecc.) senza blocchi CORS.
-    webPreferences: { webSecurity: false }
+    webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.loadURL('http://127.0.0.1:' + port + '/');
