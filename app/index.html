@@ -147,7 +147,8 @@
   .bk-name, .bk-desc { position: absolute; left: 15.06%; width: 70.1%; color: #3a3a3a; }
   .bk-name { top: 39.72%; height: 5.4%; display: flex; align-items: center; justify-content: center; text-align: center; font: 700 17px/1.2 var(--font-title); letter-spacing: 0.02em; }
   .bk-name span { display: block; max-width: 100%; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bk-desc { top: 52.96%; height: 36.9%; box-sizing: border-box; padding: 10px 12px; overflow: hidden; text-align: left; font: 500 17px/1.3 'Sofia Sans Extra Condensed', var(--font-ui); overflow-wrap: anywhere; white-space: pre-line; -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); }
+  .bk-desc { top: 52.96%; height: 36.9%; box-sizing: border-box; padding: 10px 12px; overflow: hidden; text-align: left; font: 500 17px/1.3 'Sofia Sans Extra Condensed', var(--font-ui); overflow-wrap: anywhere; white-space: pre-line; }
+  .bk-more { position: absolute; right: 12px; bottom: 8px; font: 700 17px/1 'Sofia Sans Extra Condensed', var(--font-ui); color: #3a3a3a; }
   @media (prefers-reduced-motion: reduce) { .flip-in { transition: none; } }
   .export { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .export select { width: auto; flex: none; }
@@ -582,7 +583,7 @@
       <div class="cardwrap" id="cardwrap">
         <div class="flip" id="flip"><div class="flip-in">
           <canvas id="card" width="800" height="1200" role="img" aria-label="Anteprima della carta"></canvas>
-          <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"></div></div>
+          <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"><span id="bkTxt"></span><span class="bk-more" id="bkMore" hidden>[...]</span></div></div>
         </div></div>
       </div>
       <p class="hint" id="hint">Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.</p>
@@ -2107,7 +2108,24 @@
     if (a === 'ent') return K.entries[+b] ? K.entries[+b].content : '';
     return K[a];
   }
-  function updBack() { const n = $('bkName'), d = $('bkDesc'); if (!n || !d) return; n.textContent = K.name.trim(); d.textContent = K.description || ''; }
+  function bkSub(t) { const nm = (K.name || '').trim() || 'Character'; return String(t || '').replace(/\{\{\s*char\s*\}\}|<BOT>/gi, nm).replace(/\{\{\s*user\s*\}\}|<USER>/gi, 'User'); }
+  function updBack() {
+    const n = $('bkName'), d = $('bkDesc'), t = $('bkTxt'), m = $('bkMore'); if (!n || !d || !t || !m) return;
+    n.textContent = bkSub(K.name).trim();
+    const full = bkSub(K.description).trim();
+    t.textContent = full; m.hidden = true;
+    const H = d.clientHeight; if (!H) return;
+    const cs = getComputedStyle(d), lim = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    if (t.offsetHeight <= lim) return;
+    m.hidden = false;
+    const room = lim - 20;
+    let lo = 0, hi = full.length;
+    while (lo < hi) { const mid = (lo + hi + 1) >> 1; t.textContent = full.slice(0, mid).trimEnd(); if (t.offsetHeight <= room) lo = mid; else hi = mid - 1; }
+    let cut = full.slice(0, lo); const ws = cut.search(/\s\S*$/); if (ws > 0 && lo < full.length) cut = cut.slice(0, ws);
+    t.textContent = cut.trimEnd();
+  }
+  window.addEventListener('resize', () => { try { updBack(); } catch (e) {} });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { updBack(); } catch (e) {} });
   function refreshTokens() {
     updBack();
     document.querySelectorAll('[data-tk]').forEach(s => { s.textContent = nf(tok(textFor(s.dataset.tk) || '')) + ' ' + tr('token'); });
@@ -2922,7 +2940,7 @@
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
-    if (v === 'cover') { buildList(); render(); }
+    if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} }
     if (v === 'api') { apiRender(); }
     if (v === 'gen') { genReady(); barSync(); }
     if (location.hash !== '#' + v) {
