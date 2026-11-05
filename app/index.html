@@ -778,7 +778,7 @@
     maskBevel: 0, maskAlpha: 100, maskFill: 'solid', maskColor: '#141a22',
     gradType: 'linear', gradAngle: 90,
     stops: [{ p: 0, c: '#1b2c3d' }, { p: 55, c: '#3a2b4d' }, { p: 100, c: '#0b0f15' }],
-    nameLink: true,
+    nameLink: false,
     exportW: 800
   };
   const PRESET = {
@@ -2196,8 +2196,8 @@
         obj = JSON.parse(decodeB64(raw));
       }
       const isPng = !/\.json$/i.test(f.name);
-      K = fromCard(obj); DID = null; clearUndo();
-      syncData(); schedule(); saveDataSoon();
+      K = fromCard(obj); DID = null; clearUndo(); S.nameLink = false;
+      syncData(); syncUI(); schedule(); saveDataSoon();
       if (isPng) setImage(f.type === 'image/png' ? f : new File([f], f.name, { type: 'image/png' }));
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
     } catch (err) {
@@ -2220,7 +2220,7 @@
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
     IMGBLOB = null; MASKBLOB = null; IMGNAME = ''; MASKNAME = ''; IMGDIRTY = false;
-    S.name = ''; S.desc = ''; IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
+    S.name = ''; S.desc = ''; S.nameLink = false; IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
     initLive();
     syncData(); syncUI(); schedule();
     say('dstatus', 'Nuova carta pronta.', null, false);
@@ -2997,7 +2997,7 @@
     if (r.cover) {
       if (typeof r.cover.name === 'string') S.name = r.cover.name;
       if (typeof r.cover.desc === 'string') S.desc = r.cover.desc;
-      S.nameLink = r.cover.link !== false;
+      S.nameLink = r.cover.link === true;
       ['zoom', 'ox', 'oy'].forEach(k => { if (typeof r.cover[k] === 'number') S[k] = r.cover[k]; });
     }
     loadDraftImages(r.id);
