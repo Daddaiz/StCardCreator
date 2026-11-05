@@ -66,13 +66,10 @@
     border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px;
   }
   textarea { resize: vertical; min-height: 72px; line-height: 1.4; }
-  /* Maniglia per ingrandire i campi di testo, più grande e visibile */
+  /* Barra di scorrimento dei campi di testo */
   textarea::-webkit-scrollbar { width: 16px; height: 16px; }
   textarea::-webkit-scrollbar-track { background: transparent; }
   textarea::-webkit-scrollbar-thumb { background: var(--line); border: 4px solid transparent; border-radius: 8px; background-clip: content-box; }
-  textarea::-webkit-resizer { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M14 5 5 14M14 9.5 9.5 14M14 2 2 14' stroke='%23c9cfdb' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E") center / 16px 16px no-repeat; border-radius: 4px; }
-  textarea:hover::-webkit-resizer, textarea:focus::-webkit-resizer { background-color: rgba(138,164,255,0.18); }
-  :root[data-theme="light"] textarea::-webkit-resizer { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M14 5 5 14M14 9.5 9.5 14M14 2 2 14' stroke='%234a5160' stroke-width='1.6' stroke-linecap='round' fill='none'/%3E%3C/svg%3E"); }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
   .rng { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: baseline; }
@@ -233,6 +230,11 @@
   .df { display: grid; gap: 6px; min-width: 0; }
   .dfh { display: flex; justify-content: flex-start; align-items: center; gap: 8px; flex-wrap: wrap; }
   .dfh .tk { order: 1; margin-left: auto; }
+  /* Titolo, token e icone formano una barra unita al campo sotto (solo dove sotto c'è un campo) */
+  .df:has(> .dfh + :is(textarea, input, select)), .fld:has(> .dfh + :is(textarea, input, select)), .fld:has(> span:first-child + :is(input, textarea, select)) { gap: 0; }
+  .df > .dfh:has(+ :is(textarea, input, select)), .fld > .dfh:has(+ :is(textarea, input, select)), .fld > span:first-child:has(+ :is(input, textarea, select)) { padding: 6px 12px; background: color-mix(in srgb, var(--fg) 7%, var(--raised)); border: 1px solid var(--line); border-bottom: 0; border-radius: 7px 7px 0 0; min-height: 40px; box-sizing: border-box; }
+  .fld > span:first-child:has(+ :is(input, textarea, select)) { display: flex; align-items: center; font-size: 17px; font-weight: 500; }
+  .dfh + :is(textarea, input, select), .fld > span:first-child + :is(input, textarea, select) { border-top-left-radius: 0; border-top-right-radius: 0; }
   .dfh .wand { order: 2; }
   .dfh b { font-size: 17px; font-weight: 500; }
   .tk { font: 400 12px var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
