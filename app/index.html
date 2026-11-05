@@ -183,6 +183,7 @@
   #magic { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
   .app { position: relative; z-index: 1; }
   .bar { background: var(--bgfx), var(--bg); background-attachment: fixed; }
+  .navcol { display: grid; gap: 6px; }
   .navgrp { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
   .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .apibtn:hover { border-color: var(--muted); }
@@ -281,6 +282,19 @@
   .wand:hover:not(:disabled) { border-color: var(--accent); background: var(--sel); }
   .wand:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(1); }
   dialog.wdlg { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); box-shadow: 0 24px 60px rgba(0,0,0,0.45); overflow: auto; }
+  dialog.cdlg { width: min(960px, calc(100vw - 32px)); }
+  .cin { padding: 16px; display: grid; gap: 14px; }
+  .chead { display: flex; align-items: center; gap: 12px; }
+  .chead b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .chead .btn { margin-left: auto; }
+  .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+  .ccard { min-width: 0; display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); align-content: start; }
+  .ccard.cur { border-color: var(--accent); }
+  .cimg { aspect-ratio: 2 / 3; border-radius: 6px; background: var(--surface); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+  .cimg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ccard b { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
+  .ccard .tk { display: block; white-space: normal; overflow-wrap: anywhere; }
+  .cbtn { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   dialog.wdlg::backdrop { background: rgba(0,0,0,0.55); }
   .wd { display: grid; gap: 14px; padding: 18px; }
   .wdh { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -296,7 +310,7 @@
   .stin { display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
   .stlogo { width: 116px; height: auto; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
   .stword { width: 197px; height: auto; margin-bottom: 14px; }
-  .sbtns { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; width: 100%; }
+  .sbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
   .sbtn { display: grid; gap: 8px; align-content: start; text-align: left; padding: 16px 14px; min-height: 118px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--fg); cursor: pointer; font: inherit; }
   .sbtn b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
   .sbtn small { font-size: 12px; line-height: 1.4; color: var(--muted); }
@@ -331,6 +345,7 @@
       <button type="button" class="sbtn" id="stResume" data-start="resume"><b>Resume</b><small>Nothing saved yet.</small></button>
       <button type="button" class="sbtn" data-start="import"><b>Import</b><small>Load a card PNG or JSON to edit its text.</small></button>
       <button type="button" class="sbtn" id="stNew" data-start="new"><b>New Card</b><small>Start from zero, nothing written.</small></button>
+      <button type="button" class="sbtn" data-start="cards"><b>Cards</b><small>Browse, edit or delete every card saved in this browser.</small></button>
       <button type="button" class="sbtn" data-start="gen"><b>IA Generation</b><small>Let the AI draft a card from your idea. Needs an API.</small></button>
       <button type="button" class="sbtn" data-start="png"><b>Edit your PNG</b><small>Add text and frames to a finished image.</small></button>
     </div>
@@ -341,7 +356,7 @@
   <header class="bar">
     <h1 class="brand"><img class="logo" src="logo.png" width="116" height="124" alt="ST Card Creator"></h1>
     <div class="navgrp">
-      <button type="button" class="btn" id="dnew">Nuova carta</button>
+      <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="btn" id="dcards">Cards</button></div>
       <button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button>
       <nav class="views" aria-label="Vista">
         <button type="button" data-view="dati" aria-pressed="true">Dati</button>
@@ -676,10 +691,6 @@
       </div>
       <p class="hint" id="dstatus" role="status" aria-live="polite">Il PNG si esporta dalla vista Cover e contiene tutto ciò che scrivi in questa pagina. I dati non vengono salvati: scarica il JSON dalla vista Cover se vuoi conservarli.</p>
       <p class="sm">I token sono una stima approssimativa e non il conteggio esatto del tokenizer del tuo modello. "Fissi" sono i campi che SillyTavern invia sempre: descrizione, personalità, scenario, esempi di dialogo, prompt, nota del personaggio e voci del lorebook sempre attive. "Totale" conta anche il primo messaggio, i saluti alternativi e le altre voci attive del lorebook, anche se in chat ne viene usato uno solo.</p>
-      <div class="stack">
-        <div class="dfh"><b>Recent cards</b><span class="tk">saved in this browser</span></div>
-        <div class="stack" id="recent"></div>
-      </div>
     </div></details>
 
   </div>
@@ -690,6 +701,7 @@
   </div>
   <button type="button" class="undo" id="undoBtn" hidden></button>
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
+  <dialog class="wdlg cdlg" id="cdlg" aria-label="Cards"><div class="cin"><div class="chead"><b>Cards</b><span class="tk" id="ccount"></span><button type="button" class="btn quiet" id="cclose">Close</button></div><div class="cgrid" id="cgrid"></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
@@ -2917,8 +2929,8 @@
     const rec = { id: DID, ts: Date.now(), name: K.name, K: JSON.parse(JSON.stringify(K)), cover: { name: S.name, desc: S.desc, link: !!S.nameLink, zoom: S.zoom, ox: S.ox, oy: S.oy }, img: IMGP };
     d.list = d.list.filter(x => x.id !== DID);
     d.list.unshift(rec);
-    const dropped = d.list.slice(12).map(x => x.id);
-    d.list = d.list.slice(0, 12);
+    const dropped = d.list.slice(40).map(x => x.id);
+    d.list = d.list.slice(0, 40);
     dropped.forEach(idbDel);
     if (IMGDIRTY) { IMGDIRTY = false; idbPut(DID, { img: IMGBLOB, imgName: IMGNAME, mask: MASKBLOB, maskName: MASKNAME }); }
     d.cur = DID;
@@ -2942,38 +2954,53 @@
     /* La bozza non si riapre da sola: si sceglie dalla schermata di avvio */
   }
   const draftTok = k => ['description', 'personality', 'scenario', 'first_mes', 'mes_example', 'system_prompt', 'post_history', 'dp_prompt'].reduce((a, f) => a + tok(str(k[f])), 0);
-  function renderRecent() {
-    const box = $('recent');
-    if (!box) return;
-    const d = loadDrafts();
+  let CURLS = [], CSEQ = 0;
+  const fmtWhen = ts => new Date(ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  function renderRecent() { if ($('cdlg') && $('cdlg').open) drawCards(); }
+  function openCards() { saveDraft(); const d = $('cdlg'); if (!d.open) d.showModal(); drawCards(); }
+  function closeCards() { const d = $('cdlg'); if (d.open) d.close(); CSEQ++; CURLS.forEach(u => URL.revokeObjectURL(u)); CURLS = []; }
+  function drawCards() {
+    const box = $('cgrid'), seq = ++CSEQ;
+    CURLS.forEach(u => URL.revokeObjectURL(u)); CURLS = [];
     box.textContent = '';
-    if (!d.list.length) {
-      const p = mk('p', 'sm'); p.textContent = 'Nothing saved yet. Your work is saved in this browser automatically after your first edit.'; box.appendChild(p); return;
-    }
-    d.list.forEach(r => {
-      const item = mk('div', 'item rec');
-      const head = mk('div', 'ihead'), b = mk('b'), meta = mk('span', 'tk');
+    const list = loadDrafts().list.slice().sort((x, y) => y.ts - x.ts);
+    $('ccount').textContent = list.length + (list.length === 1 ? ' card' : ' cards') + ' · saved in this browser';
+    if (!list.length) { const p = mk('p', 'sm'); p.textContent = 'Nothing saved yet. Your work is saved in this browser automatically after your first edit.'; box.appendChild(p); return; }
+    list.forEach(r => {
+      const c = mk('div', 'ccard' + (r.id === DID ? ' cur' : '')), im = mk('div', 'cimg'), b = mk('b'), meta = mk('span', 'tk'), row = mk('div', 'cbtn');
+      im.textContent = 'No image';
+      idbGet(r.id).then(rec => {
+        if (seq !== CSEQ || !rec || !rec.img) return;
+        const u = URL.createObjectURL(rec.img); CURLS.push(u);
+        const i = new Image(); i.alt = ''; i.onload = () => { if (seq === CSEQ) { im.textContent = ''; im.appendChild(i); } }; i.src = u;
+      });
       b.textContent = (r.name || '').trim() || 'Untitled card';
-      const when = new Date(r.ts);
-      meta.textContent = (r.id === DID ? 'current · ' : '') + when.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' · ≈ ' + nf(draftTok(r.K || {})) + ' tokens';
-      const ctl = mk('span', 'ctl');
-      const open = mk('button', 'btn'); open.type = 'button'; open.textContent = 'Open'; open.disabled = r.id === DID;
+      meta.textContent = (r.id === DID ? 'current · ' : '') + fmtWhen(r.ts) + ' · ≈ ' + nf(draftTok(r.K || {})) + ' tokens';
+      const edit = mk('button', 'btn primary'); edit.type = 'button'; edit.textContent = 'Edit';
       const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = 'Delete';
-      let armed = 0;
-      open.addEventListener('click', () => {
-        saveDraft();
-        applyDraft(r); clearUndo(); syncData(); syncUI(); schedule();  renderRecent();
+      let armed = 0, tm = 0;
+      edit.addEventListener('click', () => {
+        saveDraft(); closeCards();
+        if (!$('start').hidden) hideStart();
+        if (r.id !== DID) { applyDraft(r); clearUndo(); syncData(); syncUI(); schedule(); }
+        showView('dati');
         say('dstatus', 'Opened: ' + ((r.name || '').trim() || 'Untitled card'), null, false);
       });
       del.addEventListener('click', () => {
-        if (!armed) { armed = 1; del.textContent = 'Sure?'; setTimeout(() => { armed = 0; del.textContent = 'Delete'; }, 3000); return; }
+        if (!armed) { armed = 1; del.textContent = 'Sure?'; del.classList.add('armed'); tm = setTimeout(() => { armed = 0; del.textContent = 'Delete'; del.classList.remove('armed'); }, 3000); return; }
+        clearTimeout(tm);
         const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== r.id); if (dd.cur === r.id) dd.cur = null; putDrafts(dd); idbDel(r.id);
         if (DID === r.id) DID = null;
-        renderRecent();
+        drawCards();
+        if (!$('start').hidden) showStartInfo();
       });
-      ctl.append(open, del); head.append(b, ctl); item.append(head, meta); box.appendChild(item);
+      row.append(edit, del); c.append(im, b, meta, row); box.appendChild(c);
     });
   }
+  $('dcards').addEventListener('click', openCards);
+  $('cclose').addEventListener('click', closeCards);
+  $('cdlg').addEventListener('click', e => { if (e.target === $('cdlg')) closeCards(); });
+  $('cdlg').addEventListener('cancel', () => { CSEQ++; CURLS.forEach(u => URL.revokeObjectURL(u)); CURLS = []; });
 
   /* Generazione dell'intera carta da un'idea */
   const GEN = [['name', 'Name'], ['description', 'Description'], ['personality', 'Personality summary'], ['scenario', 'Scenario'], ['first_mes', 'First message'], ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['tagline', 'Cover tagline'], ['lore', 'Lorebook entries']];
@@ -3488,14 +3515,18 @@
     setTimeout(() => window.scrollTo({ top: Math.max(0, h.getBoundingClientRect().top + window.scrollY - 190), behavior: 'smooth' }), 80);
   }
   function resumeTarget() { const d = loadDrafts(); return d.list.find(x => x.id === d.cur) || d.list[0] || null; }
-  function showStart() {
-    saveDraft();
+  function showStartInfo() {
     const r = resumeTarget(), b = $('stResume'), sub = b.querySelector('small');
     b.disabled = !r;
     sub.textContent = r ? ((r.name || '').trim() || 'Untitled card') + ' · ' + new Date(r.ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Nothing saved yet.';
+  }
+  function showStart() {
+    saveDraft();
+    showStartInfo();
+    const r = resumeTarget();
     document.body.classList.add('starting');
     $('start').hidden = false;
-    const f = r ? b : $('stNew'); f.focus({ preventScroll: true });
+    const f = r ? $('stResume') : $('stNew'); f.focus({ preventScroll: true });
   }
   function hideStart() { $('start').hidden = true; document.body.classList.remove('starting'); window.scrollTo(0, 0); }
   function startAct(a) {
@@ -3508,6 +3539,7 @@
     if (a === 'new') {
       hideStart(); saveDraft(); newCard(); showView('dati'); return;
     }
+    if (a === 'cards') { openCards(); return; }
     hideStart();
     if (a === 'import') { showView('dati'); openDrawer('d-act'); return; }
     if (a === 'gen') {
@@ -3519,7 +3551,7 @@
   function initStart() {
     document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => startAct(b.dataset.start)));
     document.querySelector('.brand').addEventListener('click', showStart);
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('start').hidden) hideStart(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('start').hidden && !$('cdlg').open) hideStart(); });
   }
 
   /* ---------- Avvio ---------- */
