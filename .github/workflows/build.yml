@@ -16,6 +16,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Stamp version from tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          sed -i "s/const APP_VERSION = 'dev'/const APP_VERSION = '$V'/" app/index.html
+          npm version "$V" --no-git-tag-version --allow-same-version
       - run: npm install
       - run: npm run dist
       - run: node scripts/make-html.js

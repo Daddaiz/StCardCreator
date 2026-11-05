@@ -310,6 +310,10 @@
   .stin { display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
   .stlogo { width: 116px; height: auto; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
   .stword { width: 197px; height: auto; margin-bottom: 14px; }
+  .upd { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; display: flex; align-items: center; gap: 12px; max-width: min(420px, calc(100vw - 32px)); padding: 12px 14px; border: 1px solid #B39A6F; border-radius: 10px; background: var(--surface); color: var(--fg); box-shadow: 0 12px 32px rgba(0,0,0,0.45); font-size: 13.5px; line-height: 1.4; }
+  .upd[hidden] { display: none; }
+  .upd a { color: #B39A6F; font-weight: 700; white-space: nowrap; }
+  .upd button { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 4px; }
   .sbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
   .sbtn { display: grid; grid-template-columns: 28px minmax(0, 1fr); column-gap: 14px; row-gap: 8px; align-content: start; text-align: left; padding: 16px 14px; min-height: 118px; border: 1px solid var(--line); border-radius: 12px; background: var(--raised); color: var(--fg); cursor: pointer; font: inherit; }
   .sbtn .sic { grid-column: 1; grid-row: 1 / span 2; align-self: start; }
@@ -355,6 +359,7 @@
     </div>
   </div>
 </div>
+<div id="upd" class="upd" role="status" hidden><span id="updTxt"></span><a id="updLink" href="https://github.com/Daddaiz/stcardcreator/releases/latest" target="_blank" rel="noopener">Download</a><button type="button" id="updX" aria-label="Dismiss">×</button></div>
 <canvas id="magic" aria-hidden="true"></canvas>
 <main class="app">
   <header class="bar">
@@ -3558,6 +3563,29 @@
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('start').hidden && !$('cdlg').open) hideStart(); });
   }
 
+  /* Avviso nuova versione: solo un messaggio con link alla pagina della release, non scarica né sostituisce nulla */
+  const APP_VERSION = 'dev';
+  async function checkUpdate() {
+    if (APP_VERSION === 'dev') return;
+    try {
+      const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 6000);
+      const r = await fetch('https://api.github.com/repos/Daddaiz/stcardcreator/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, signal: ctl.signal });
+      clearTimeout(t);
+      if (!r.ok) return;
+      const j = await r.json();
+      const nv = String(j.tag_name || '').replace(/^v/i, '');
+      const num = v => v.split('.').map(x => parseInt(x, 10) || 0);
+      const a = num(nv), b = num(APP_VERSION);
+      let newer = false;
+      for (let i = 0; i < Math.max(a.length, b.length); i++) { const x = a[i] || 0, y = b[i] || 0; if (x !== y) { newer = x > y; break; } }
+      if (!newer || !/^[\d.]+$/.test(nv)) return;
+      $('updTxt').textContent = 'Version ' + nv + ' is available (you have ' + APP_VERSION + ').';
+      if (/^https:\/\/github\.com\//.test(j.html_url || '')) $('updLink').href = j.html_url;
+      $('upd').hidden = false;
+    } catch (e) { /* offline o bloccato: nessun avviso */ }
+  }
+  $('updX').addEventListener('click', () => { $('upd').hidden = true; });
+
   /* ---------- Avvio ---------- */
   restore();
   initDrafts();
@@ -3570,6 +3598,7 @@
   syncUI();
   ensureFonts();
   showView('dati');
+  checkUpdate();
   render();
   DREADY = true;
   initStart();
