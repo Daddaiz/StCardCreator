@@ -1,11 +1,11 @@
-const { app, BrowserWindow, Menu, shell } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen } = require('electron');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, 'app');
 const PORT = 47831;
-const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.ico': 'image/x-icon', '.webp': 'image/webp' };
 
 // Piccolo server locale: serve i file su un'origine stabile, così il canvas non viene "tainted"
 // e le impostazioni (lingua, tema, stile) restano salvate tra un avvio e l'altro.
@@ -31,7 +31,7 @@ app.whenReady().then(async () => {
   const port = await startServer();
   Menu.setApplicationMenu(null);
   const win = new BrowserWindow({
-    width: 1280, height: 860, minWidth: 420, minHeight: 600,
+    width: 1280, height: Math.min(1075, screen.getPrimaryDisplay().workAreaSize.height), minWidth: 420, minHeight: 600,
     backgroundColor: '#0f1217', title: 'ST Card Creator',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     // L'app carica solo i suoi file locali. webSecurity disattivata: serve per chiamare le API (OpenRouter, server locali, ecc.) senza blocchi CORS.

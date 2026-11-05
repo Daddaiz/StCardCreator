@@ -305,12 +305,12 @@
 
   .brand { cursor: pointer; }
   body.starting .app { visibility: hidden; }
-  .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px; }
+  .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px calc(8vw + 16px); }
   .start[hidden] { display: none; }
-  .stin { display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
-  .stlogo { width: 116px; height: auto; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
-  .stword { width: 197px; height: auto; margin-bottom: 14px; }
-  .upd { position: fixed; right: 16px; bottom: 16px; z-index: 2147483647; display: flex; align-items: center; gap: 12px; max-width: min(420px, calc(100vw - 32px)); padding: 12px 14px; border: 1px solid #B39A6F; border-radius: 10px; background: var(--surface); color: var(--fg); box-shadow: 0 12px 32px rgba(0,0,0,0.45); font-size: 13.5px; line-height: 1.4; }
+  .stin { position: relative; z-index: 1; display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
+  .stfan { position: fixed; left: 0; bottom: 0; width: 100%; height: auto; z-index: 0; pointer-events: none; user-select: none; }
+  .stlogo { width: auto; height: min(372px, 30vh); filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
+  .upd { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 10px 14px; border: 1px solid #B39A6F; border-radius: 10px; background: var(--surface); color: var(--fg); font-size: 13.5px; line-height: 1.4; }
   .upd[hidden] { display: none; }
   .upd a { color: #B39A6F; font-weight: 700; white-space: nowrap; }
   .upd button { margin-left: auto; border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 4px; }
@@ -346,9 +346,9 @@
   .imgh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }</style>
 
 <div id="start" class="start" hidden role="dialog" aria-label="Start">
+  <img class="stfan" src="fan.webp" alt="" aria-hidden="true">
   <div class="stin">
     <img class="stlogo" src="logo.png" width="116" height="124" alt="">
-    <img class="stword" src="wordmark.png" width="197" height="57" alt="ST Card Creator">
     <div class="sbtns">
       <button type="button" class="sbtn" id="stResume" data-start="resume"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7.5V12l3 2"/></svg><b>Resume</b><small>Nothing saved yet.</small></button>
       <button type="button" class="sbtn" data-start="import"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg><b>Import</b><small>Load a card PNG or JSON to edit its text.</small></button>
@@ -357,9 +357,9 @@
       <button type="button" class="sbtn" data-start="gen"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M11 3l1.9 5.4L18.5 10l-5.6 1.7L11 17l-1.9-5.3L3.5 10l5.6-1.6z"/><path d="M19 15v5M16.5 17.5h5"/></svg><b>IA Generation</b><small>Let the AI draft a card from your idea. Needs an API.</small></button>
       <button type="button" class="sbtn" data-start="png"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg><b>Edit your PNG</b><small>Add text and frames to a finished image.</small></button>
     </div>
+    <div id="upd" class="upd" role="status" hidden><span id="updTxt"></span><a id="updLink" href="https://github.com/Daddaiz/stcardcreator/releases/latest" target="_blank" rel="noopener">Download</a><button type="button" id="updX" aria-label="Dismiss">×</button></div>
   </div>
 </div>
-<div id="upd" class="upd" role="status" hidden><span id="updTxt"></span><a id="updLink" href="https://github.com/Daddaiz/stcardcreator/releases/latest" target="_blank" rel="noopener">Download</a><button type="button" id="updX" aria-label="Dismiss">×</button></div>
 <canvas id="magic" aria-hidden="true"></canvas>
 <main class="app">
   <header class="bar">
