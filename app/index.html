@@ -1469,6 +1469,7 @@
       if (IMGURL) URL.revokeObjectURL(IMGURL);
       IMG = im; IMGURL = url;
       IMGBLOB = file; IMGNAME = file.name || ''; if (!silent) IMGDIRTY = true;
+      if (file !== STIMG) STBASE = null; /* immagine cambiata dall'utente: conta come modifica */
       say('fileinfo', '{name} · {w}×{h}', { name: file.name, w: im.naturalWidth, h: im.naturalHeight });
       const ratio = im.naturalWidth / im.naturalHeight;
       if (Math.abs(ratio - 2 / 3) > 0.02) {
@@ -2070,7 +2071,10 @@
 
   let K = defaultData();
   let STSRC = null; /* carta aperta da SillyTavern: { avatar } */
-  let setStSrc = v => { STSRC = v; };
+  let STBASE = null; /* firma della carta appena aperta da SillyTavern: finché non cambia, non si crea una copia tra le bozze */
+  let STIMG = null;
+  const stSig = () => JSON.stringify([K, S.name, S.desc, !!S.nameLink, S.zoom, S.ox, S.oy]);
+  let setStSrc = v => { STSRC = v; STBASE = null; };
 
   /* Token e totali */
   function textFor(key) {
@@ -3024,6 +3028,7 @@
     if (!DREADY) return;
     if (!DID) {
       if (isPristine()) return;
+      if (STBASE !== null && stSig() === STBASE) return; /* aperta da SillyTavern e non toccata */
       DID = 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     }
     const d = loadDrafts();
@@ -3155,7 +3160,7 @@
     const n = $('sNote');
     if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (/needs to be running/.test(ST.why) ? ' Looking for it at ' + stUrl() + '. The buttons turn on by themselves once it is up.' : ''));
   }
-  setStSrc = v => { STSRC = v; updStUi(); };
+  setStSrc = v => { STSRC = v; STBASE = null; updStUi(); };
   async function stCheck() {
     if (ST.busy) return;
     try {
@@ -3325,8 +3330,9 @@
       closeSt(); say('status', '', null, false);
       if (!$('start').hidden) hideStart();
       K = fromCard(obj); DID = null; clearUndo(); S.nameLink = false; setStSrc({ avatar: c.avatar });
-      syncData(); syncUI(); schedule(); saveDataSoon();
-      if (im.status === 200) setImage(new File([im.body], c.avatar, { type: 'image/png' }));
+      syncData(); syncUI(); schedule();
+      STBASE = stSig(); STIMG = im.status === 200 ? new File([im.body], c.avatar, { type: 'image/png' }) : null;
+      if (STIMG) setImage(STIMG);
       showView('dati');
       say('dstatus', 'Opened from SillyTavern: {n}. The button under the preview now updates this card.', { n: K.name || c.name }, false);
     } catch (e) {
