@@ -150,7 +150,13 @@
   .bk-name, .bk-desc { position: absolute; left: 15.06%; width: 70.1%; color: #3a3a3a; }
   .bk-name { top: 39.72%; height: 5.4%; display: flex; align-items: center; justify-content: center; text-align: center; font: 700 17px/1.2 var(--font-title); letter-spacing: 0.02em; }
   .bk-name span { display: block; max-width: 100%; padding: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bk-desc { top: 52.96%; height: 36.9%; box-sizing: border-box; padding: 10px 12px; overflow: hidden; text-align: left; font: 500 17px/1.15 'Sofia Sans Extra Condensed', var(--font-ui); overflow-wrap: anywhere; white-space: pre-line; }
+  .bk-desc { top: 52.96%; height: 36.9%; box-sizing: border-box; padding: 6px 12px 5px; overflow: hidden; font: 500 13px/1.05 'Sofia Sans Extra Condensed', var(--font-ui); display: flex; flex-direction: column; justify-content: space-between; }
+  .bk-row { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; }
+  .bk-row .bk-mark { width: 12px; flex: none; text-align: center; font-weight: 700; }
+  .bk-row .bk-lbl { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .bk-row .bk-n { flex: none; font-variant-numeric: tabular-nums; }
+  .bk-row.off { color: #9a9a9a; }
+  .bk-row.sum { border-top: 1px solid #b9b9b9; padding-top: 3px; font-weight: 700; }
   @media (prefers-reduced-motion: reduce) { .flip-in { transition: none; } }
   .export { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
   .export select { width: auto; flex: none; }
@@ -589,7 +595,7 @@
       <div class="cardwrap" id="cardwrap">
         <div class="flip" id="flip"><div class="flip-in">
           <canvas id="card" width="800" height="1200" role="img" aria-label="Anteprima della carta"></canvas>
-          <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"><span id="bkTxt"></span></div></div>
+          <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"></div></div>
         </div></div>
       </div>
       <p class="hint" id="hint">Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.</p>
@@ -2113,23 +2119,46 @@
   }
   function bkSub(t) { const nm = (K.name || '').trim() || 'Character'; return String(t || '').replace(/\{\{\s*char\s*\}\}|<BOT>/gi, nm).replace(/\{\{\s*user\s*\}\}|<USER>/gi, 'User'); }
   function updBack() {
-    const n = $('bkName'), d = $('bkDesc'), t = $('bkTxt'); if (!n || !d || !t) return;
+    const n = $('bkName'), d = $('bkDesc'); if (!n || !d) return;
     n.textContent = bkSub(K.name).trim();
-    const full = bkSub(K.description).trim();
-    t.textContent = full; d.style.fontSize = '';
-    const H = d.clientHeight; if (!H) return;
-    const cs = getComputedStyle(d), lim = H - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
-    d.style.fontSize = '';
-    if (t.offsetHeight <= lim) return;
-    for (let fs = 16.5; fs >= 13; fs -= 0.5) { d.style.fontSize = fs + 'px'; if (t.offsetHeight <= lim) return; }
-    const SUF = ' [...]';
-    let lo = 0, hi = full.length;
-    while (lo < hi) { const mid = (lo + hi + 1) >> 1; t.textContent = full.slice(0, mid).trimEnd() + SUF; if (t.offsetHeight <= lim) lo = mid; else hi = mid - 1; }
-    let cut = full.slice(0, lo); const ws = cut.search(/\s\S*$/); if (ws > 0) cut = cut.slice(0, ws);
-    t.textContent = cut.trimEnd() + SUF;
-    while (t.offsetHeight > lim && cut.length > 1) { cut = cut.slice(0, -1); t.textContent = cut.trimEnd() + SUF; }
+    const lore = K.entries.filter(e => e.enabled && String(e.content || '').trim());
+    const alts = K.alt.filter(x => String(x || '').trim());
+    const tags = String(K.tags || '').split(',').map(x => x.trim()).filter(Boolean);
+    const T = k => tok(K[k] || '');
+    const rows = [
+      ['Description', T('description'), T('description') > 0],
+      ['Personality', T('personality'), T('personality') > 0],
+      ['Scenario', T('scenario'), T('scenario') > 0],
+      ['First message', T('first_mes'), T('first_mes') > 0],
+      ['Alternate greetings' + (alts.length ? ' (' + alts.length + ')' : ''), alts.reduce((a, x) => a + tok(x), 0), alts.length > 0],
+      ['Dialogue examples', T('mes_example'), T('mes_example') > 0],
+      ["Creator's notes", T('notes'), T('notes') > 0],
+      ['System prompt', T('system_prompt'), T('system_prompt') > 0],
+      ['Post-history', T('post_history'), T('post_history') > 0],
+      ['Lorebook' + (lore.length ? ' (' + lore.length + ')' : ''), lore.reduce((a, e) => a + tok(e.content), 0), lore.length > 0],
+      ['Tags' + (tags.length ? ' (' + tags.length + ')' : ''), null, tags.length > 0]
+    ];
+    d.textContent = '';
+    const add = (cls, mark, lbl, num) => {
+      const r = document.createElement('div'); r.className = 'bk-row ' + cls;
+      const m = document.createElement('span'); m.className = 'bk-mark'; m.textContent = mark;
+      const l = document.createElement('span'); l.className = 'bk-lbl'; l.textContent = lbl;
+      const c = document.createElement('span'); c.className = 'bk-n'; c.textContent = num;
+      r.append(m, l, c); d.appendChild(r);
+    };
+    let done = 0, total = 0;
+    rows.forEach(([lbl, tk, ok]) => { if (ok) done++; total += tk || 0; add(ok ? 'on' : 'off', ok ? '\u2713' : '\u2013', lbl, tk === null ? '' : (ok ? nf(tk) : '\u2014')); });
+    add('sum', '', 'Filled ' + done + '/' + rows.length, '\u2248 ' + nf(total) + ' tokens');
   }
-  window.addEventListener('resize', () => { try { updBack(); } catch (e) {} });
+  (function wiggle() {
+    const fl = $('flip'), fi = fl && fl.querySelector('.flip-in'); if (!fi || !fi.animate) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const go = () => {
+      if (document.hidden || !fl.offsetParent || fl.matches(':hover')) return;
+      fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
+    };
+    setInterval(go, 9000); fl.addEventListener('wiggle', go); window.__wiggle = go;
+  })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { updBack(); } catch (e) {} });
   function refreshTokens() {
     updBack();
@@ -2945,7 +2974,7 @@
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
-    if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} }
+    if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} setTimeout(() => { try { window.__wiggle && window.__wiggle(); } catch (e) {} }, 900); }
     if (v === 'api') { apiRender(); }
     if (v === 'gen') { genReady(); barSync(); }
     if (location.hash !== '#' + v) {
