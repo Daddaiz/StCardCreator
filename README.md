@@ -2,8 +2,7 @@
 
 <p align="center">Make <a href="https://docs.sillytavern.app">SillyTavern</a> character cards in one place: the cover, the data, and the PNG with everything embedded.</p>
 
-<p align="center"><img width="1340" height="1131" alt="image" src="https://github.com/user-attachments/assets/7382a26f-666d-4f98-83bf-98c376a8df54" />
-</p>
+<p align="center"></p>
 
 ## Try it
 
