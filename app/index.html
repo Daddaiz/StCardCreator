@@ -3096,7 +3096,11 @@
         if (!armed) { armed = 1; del.textContent = 'Sure?'; del.classList.add('armed'); tm = setTimeout(() => { armed = 0; del.textContent = 'Delete'; del.classList.remove('armed'); }, 3000); return; }
         clearTimeout(tm);
         const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== r.id); if (dd.cur === r.id) dd.cur = null; putDrafts(dd); idbDel(r.id);
-        if (DID === r.id) DID = null;
+        if (DID === r.id) {
+          /* La carta cancellata è quella nei campi: si svuota l'editor (altrimenti si ricreerebbe da sola) e si torna alla schermata iniziale */
+          DID = null; newCard(); closeCards(); showStart();
+          return;
+        }
         drawCards();
         if (!$('start').hidden) showStartInfo();
       });
