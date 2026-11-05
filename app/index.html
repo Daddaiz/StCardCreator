@@ -197,6 +197,14 @@
   /* Vista Dati */
   input[type="number"] { width: 100%; font: inherit; color: inherit; background: var(--raised); border: 1px solid var(--line); border-radius: 7px; padding: 9px 11px; }
   .dview { max-width: 860px; margin-inline: auto; }
+  .tabbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--barh, 0px)); z-index: 15; display: flex; gap: 8px; margin-bottom: 18px; padding: 12px 0; overflow-x: auto; scrollbar-width: none; background: var(--bgfx), var(--bg); background-attachment: fixed; }
+  .tabbar::-webkit-scrollbar { display: none; }
+  .tab { flex: 1 1 auto; white-space: nowrap; font: 700 13px/1.2 var(--font-title); letter-spacing: 0.02em; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
+  .tab:hover { border-color: var(--muted); }
+  .tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+  .drawer > summary { display: none !important; }
+  .drawer.tab-off { display: none; }
+  .drawer { border-top: 0 !important; }
   .df { display: grid; gap: 6px; min-width: 0; }
   .dfh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .dfh b { font-size: 13px; font-weight: 500; }
@@ -242,7 +250,7 @@
   .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
   .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
   .dmain { min-width: 0; }
-  .dside { position: sticky; top: 172px; display: grid; gap: 12px; justify-items: center; }
+  .dside { position: sticky; top: calc(var(--barh, 110px) + 72px); display: grid; gap: 12px; justify-items: center; }
   .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
   @media (max-width: 899px) {
     .dview { grid-template-columns: minmax(0, 1fr); }
@@ -395,6 +403,7 @@
     </div>
   </header>
 
+  <nav class="tabbar" id="tabs-cover" aria-label="Cover sections" hidden></nav>
   <div id="view-cover" hidden>
   <div class="layout">
     <div class="controls">
@@ -625,6 +634,7 @@
       <div class="genrow"><p class="sm" id="genStatus" role="status"></p><div class="gbar" id="genBar" role="progressbar" aria-label="Generation progress" aria-valuemin="0"></div></div>
     </section>
   </div>
+  <nav class="tabbar" id="tabs-data" aria-label="Data sections"></nav>
   <div id="view-data" class="dview">
   <div class="dmain">
     <details class="drawer" data-group="data"><summary><h2 id="d-char">Personaggio</h2></summary><div class="dbody">
@@ -2234,12 +2244,38 @@
   });
   $('togo').addEventListener('click', () => showView('cover'));
 
-  /* Cassetti: se ne apre uno alla volta per pagina */
-  document.querySelectorAll('details.drawer').forEach(d => d.addEventListener('toggle', () => {
-    if (!d.open) return;
-    document.querySelectorAll('details.drawer[data-group="' + d.dataset.group + '"]').forEach(o => { if (o !== d) o.open = false; });
-    if (d.contains($('flist'))) buildList();
-  }));
+  /* Schede orizzontali: ogni cassetto è un pannello, si vede solo quello scelto */
+  const TABSEL = {};
+  const TABLBL = { 'Dialogue examples': 'Dialogue Ex.', 'Advanced definitions': 'Adv. Definitions', 'Import Card': 'Import' };
+  const TABNAV = { data: 'tabs-data', cover: 'tabs-cover' };
+  const panelsOf = g => [...document.querySelectorAll('details.drawer[data-group="' + g + '"]')];
+  const panelId = d => d.querySelector('summary h2').id;
+  function selectTab(g, id) {
+    const ps = panelsOf(g);
+    let on = ps.find(d => panelId(d) === id && !d.hidden) || ps.find(d => !d.hidden);
+    if (!on) return;
+    TABSEL[g] = panelId(on);
+    ps.forEach(d => { d.open = true; d.classList.toggle('tab-off', d !== on); if (d._tab) d._tab.setAttribute('aria-pressed', String(d === on)); });
+    if (on.contains($('flist'))) buildList();
+    if (panelId(on) === 'd-img') drawImg();
+  }
+  function initTabs() {
+    Object.keys(TABNAV).forEach(g => {
+      const nav = $(TABNAV[g]); nav.textContent = '';
+      panelsOf(g).forEach(d => {
+        const h = d.querySelector('summary h2'), b = mk('button', 'tab');
+        b.type = 'button'; b.textContent = TABLBL[h.textContent.trim()] || h.textContent.trim(); b.hidden = d.hidden;
+        b.addEventListener('click', () => { selectTab(g, h.id); });
+        d._tab = b; nav.appendChild(b);
+        new MutationObserver(() => { b.hidden = d.hidden; if (d.hidden && TABSEL[g] === h.id) selectTab(g, ''); else if (!d.hidden && !TABSEL[g]) selectTab(g, h.id); }).observe(d, { attributes: true, attributeFilter: ['hidden'] });
+      });
+      selectTab(g, panelsOf(g)[0] && panelId(panelsOf(g)[0]));
+    });
+    const bar = document.querySelector('.bar');
+    const setH = () => document.documentElement.style.setProperty('--barh', Math.round(bar.getBoundingClientRect().height) + 'px');
+    setH(); window.addEventListener('resize', setH);
+    if (window.ResizeObserver) new ResizeObserver(setH).observe(bar);
+  }
   $('dedit').addEventListener('click', () => showView('cover'));
 
   /* ---------- API e bacchetta 🪄 ---------- */
@@ -2808,6 +2844,7 @@
     if (!VIEWS[v]) v = 'dati';
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+    $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
     if (v === 'cover') { buildList(); render(); }
     if (v === 'api') { apiRender(); }
     if (v === 'gen') { genReady(); barSync(); }
@@ -3524,11 +3561,10 @@
   function refreshLoreBtn() { const ok = apiReady() && K.description.trim().length >= 30; $('entSuggest').disabled = !ok; $('entSuggest').title = ok ? '' : 'Needs an API and a description of at least a few lines'; }
 
   /* ---------- Schermata di avvio ---------- */
-  function openDrawer(id, top) {
+  function openDrawer(id) {
     const h = $(id); if (!h) return;
-    const d = h.closest('details'); if (d) d.open = true;
-    if (top) { window.scrollTo(0, 0); return; }
-    setTimeout(() => window.scrollTo({ top: Math.max(0, h.getBoundingClientRect().top + window.scrollY - 190), behavior: 'smooth' }), 80);
+    const d = h.closest('details'); if (d) selectTab(d.dataset.group, id);
+    window.scrollTo(0, 0);
   }
   function resumeTarget() { const d = loadDrafts(); return d.list.find(x => x.id === d.cur) || d.list[0] || null; }
   function showStartInfo() {
@@ -3614,6 +3650,7 @@
   applyLangUI();
   apiInit();
   initFeatures();
+  initTabs();
   syncData();
   syncUI();
   ensureFonts();
