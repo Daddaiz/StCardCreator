@@ -333,6 +333,16 @@
   .wand:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(1); }
   dialog.wdlg { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--fg); box-shadow: 0 24px 60px rgba(0,0,0,0.45); overflow: auto; }
   dialog.cdlg { width: min(960px, calc(100vw - 32px)); }
+  dialog.hdlg { width: min(640px, calc(100vw - 32px)); }
+  .hlist { display: grid; gap: 8px; max-height: min(60vh, 520px); overflow: auto; }
+  .hrow { display: flex; align-items: stretch; gap: 6px; }
+  .hpick { flex: 1 1 auto; min-width: 0; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--fg); font: inherit; cursor: pointer; }
+  .hpick:hover { border-color: var(--accent); }
+  .hpick span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .hpick small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+  .hdel { flex: none; width: 34px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--muted); cursor: pointer; font-size: 16px; }
+  .hdel:hover { border-color: var(--accent); color: var(--fg); }
+  .hempty { color: var(--muted); padding: 8px 2px; }
   .cin { padding: 16px; display: grid; gap: 14px; }
   .chead { display: flex; align-items: center; gap: 12px; }
   .chead b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
@@ -791,6 +801,7 @@
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
   <dialog class="wdlg cdlg" id="cdlg" aria-label="Cards"><div class="cin"><div class="chead"><b>Cards</b><span class="tk" id="ccount"></span><button type="button" class="btn quiet" id="cclose">Close</button></div><div class="cgrid" id="cgrid"></div></div></dialog>
   <dialog class="wdlg cdlg" id="sdlg" aria-label="SillyTavern cards"><div class="cin"><div class="chead"><b>SillyTavern cards</b><span class="tk" id="scount"></span><button type="button" class="btn quiet" id="sclose">Close</button></div><div class="cgrid" id="sgrid"></div></div></dialog>
+  <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
@@ -989,7 +1000,7 @@
  "Personaggio": "Character",
  "Descrizione del personaggio": "Character description",
  "Sommario della personalità": "Personality summary",
- "Messaggi iniziali": "Opening messages",
+ "Messaggi iniziali": "First Messages",
  "Primo messaggio": "First message",
  "Messaggi alternativi": "Alternate messages",
  "Messaggio alternativo": "Alternate message",
@@ -3602,10 +3613,42 @@
     $('genGo').disabled = !ok || !has || busy;
     $('genNote').textContent = ok ? 'Describe the character in a few lines, in any language. The selected fields are written one at a time in English, each with the rules for that field, and you can undo the whole generation.' : 'Set up an API in the API tab first (or use "Claude (built-in)" inside the artifact).';
   }
+
+  /* ---------- Idee precedenti (AI-assisted generation) ---------- */
+  const IKEY = 'st-card-creator-ideas-v1', IMAX = 30;
+  const ideasLoad = () => { try { const a = JSON.parse(localStorage.getItem(IKEY) || '[]'); return Array.isArray(a) ? a.filter(x => x && typeof x.t === 'string') : []; } catch (e) { return []; } };
+  const ideasSave = a => { try { localStorage.setItem(IKEY, JSON.stringify(a.slice(0, IMAX))); } catch (e) { /* ignora */ } };
+  function ideaRemember(t) {
+    t = String(t || '').trim(); if (t.length < 10) return;
+    ideasSave([{ t, d: Date.now() }].concat(ideasLoad().filter(x => x.t.trim() !== t)));
+  }
+  function drawIdeas() {
+    const box = $('hlist'), a = ideasLoad();
+    box.textContent = ''; $('hcount').textContent = a.length ? a.length + ' saved' : '';
+    if (!a.length) { const p = mk('p', 'hempty'); p.textContent = 'No previous ideas yet. An idea is saved when you press Generate.'; box.appendChild(p); return; }
+    a.forEach((x, i) => {
+      const r = mk('div', 'hrow');
+      const b = mk('button', 'hpick'); b.type = 'button';
+      const sp = mk('span'); sp.textContent = x.t;
+      const sm = mk('small'); try { sm.textContent = new Date(x.d).toLocaleString(LANG === 'en' ? 'en-GB' : 'it-IT', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { sm.textContent = ''; }
+      b.append(sp, sm);
+      b.addEventListener('click', () => { const g = $('genIdea'); g.value = x.t; g.dispatchEvent(new Event('input', { bubbles: true })); $('hdlg').close(); g.focus(); });
+      const d = mk('button', 'hdel'); d.type = 'button'; d.textContent = '\u00d7'; d.title = 'Remove from the list'; d.setAttribute('aria-label', 'Remove from the list');
+      d.addEventListener('click', () => { const l = ideasLoad(); l.splice(i, 1); ideasSave(l); drawIdeas(); });
+      r.append(b, d); box.appendChild(r);
+    });
+  }
+  function openIdeas() { const d = $('hdlg'); drawIdeas(); if (!d.open) d.showModal(); }
+  $('hclose').addEventListener('click', () => $('hdlg').close());
+  $('hdlg').addEventListener('click', e => { if (e.target === $('hdlg')) $('hdlg').close(); });
+  function addIdeasBtn() { const gi = $('genIdea'), hb = mk('button', 'wand xbtn'); hb.type = 'button'; hb.title = 'Previous ideas'; hb.setAttribute('aria-label', 'Previous ideas');
+    hb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" focusable="false" style="display:block"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>';
+    hb.addEventListener('click', openIdeas); gi.parentNode.querySelector('.dfh').appendChild(hb); }
   async function genRun() {
     if (GEN_CTL || !apiReady()) return;
     const idea = $('genIdea').value.trim();
     if (idea.length < 10) return;
+    ideaRemember(idea);
     const mode = document.querySelector('input[name="genMode"]:checked').value;
     const picks = GEN.filter(([k]) => $('gf-' + k).checked);
     if (!picks.length && !SD.on) { $('genStatus').textContent = 'Select at least one field.'; return; }
@@ -3948,7 +3991,7 @@
     sel.addEventListener('change', () => { SD.model = sel.value; SDSAVE(); drawImg(); });
     row.append(sl, sel); box.appendChild(row);
     $('d-img').closest('details').addEventListener('toggle', ev => { if (ev.target.open) drawImg(); });
-    { const gi = $('genIdea'); gi.parentNode.querySelector('.dfh').appendChild(makeExpand(gi, () => 'Your idea')); }
+    { const gi = $('genIdea'); gi.parentNode.querySelector('.dfh').appendChild(makeExpand(gi, () => 'Your idea')); addIdeasBtn(); }
     $('genIdea').addEventListener('input', genReady);
     $('genGo').addEventListener('click', genRun);
     $('genStop').addEventListener('click', () => { if (GEN_CTL) GEN_CTL.abort(); });
