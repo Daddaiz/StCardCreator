@@ -336,10 +336,10 @@
   dialog.hdlg { width: min(640px, calc(100vw - 32px)); }
   .hlist { display: grid; gap: 8px; max-height: min(60vh, 520px); overflow: auto; }
   .hrow { display: flex; align-items: stretch; gap: 6px; }
-  .hpick { flex: 1 1 auto; min-width: 0; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--fg); font: inherit; cursor: pointer; }
+  .hpick { flex: 1 1 auto; min-width: 0; display: grid; grid-template-columns: 128px 1fr; gap: 14px; align-items: baseline; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--fg); font: inherit; cursor: pointer; }
   .hpick:hover { border-color: var(--accent); }
-  .hpick span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-wrap; overflow-wrap: anywhere; }
-  .hpick small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; }
+  .hpick .hd { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .hpick .ht { overflow-wrap: anywhere; }
   .hdel { flex: none; width: 34px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--muted); cursor: pointer; font-size: 16px; }
   .hdel:hover { border-color: var(--accent); color: var(--fg); }
   .hempty { color: var(--muted); padding: 8px 2px; }
@@ -3629,9 +3629,9 @@
     a.forEach((x, i) => {
       const r = mk('div', 'hrow');
       const b = mk('button', 'hpick'); b.type = 'button';
-      const sp = mk('span'); sp.textContent = x.t;
-      const sm = mk('small'); try { sm.textContent = new Date(x.d).toLocaleString(LANG === 'en' ? 'en-GB' : 'it-IT', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { sm.textContent = ''; }
-      b.append(sp, sm);
+      const sm = mk('span', 'hd'); try { sm.textContent = new Date(x.d).toLocaleString(LANG === 'en' ? 'en-GB' : 'it-IT', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { sm.textContent = ''; }
+      const sp = mk('span', 'ht'); const one = x.t.replace(/\s+/g, ' ').trim(); sp.textContent = one.length > 100 ? one.slice(0, 100).trimEnd() + '\u2026' : one;
+      b.title = x.t; b.append(sm, sp);
       b.addEventListener('click', () => { const g = $('genIdea'); g.value = x.t; g.dispatchEvent(new Event('input', { bubbles: true })); $('hdlg').close(); g.focus(); });
       const d = mk('button', 'hdel'); d.type = 'button'; d.textContent = '\u00d7'; d.title = 'Remove from the list'; d.setAttribute('aria-label', 'Remove from the list');
       d.addEventListener('click', () => { const l = ideasLoad(); l.splice(i, 1); ideasSave(l); drawIdeas(); });
