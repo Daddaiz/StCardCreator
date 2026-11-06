@@ -232,6 +232,7 @@
   .dview { max-width: 860px; margin-inline: auto; }
   .tabbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--barh, 0px)); z-index: 15; display: flex; gap: 8px; margin-bottom: 18px; padding: 12px 0; overflow-x: auto; scrollbar-width: none; background: var(--bgfx), var(--bg); background-attachment: fixed; }
   .tabbar::-webkit-scrollbar { display: none; }
+  .tab.tab-gone { display: none !important; }
   .tab { flex: 1 1 auto; white-space: nowrap; font: 700 15px/1.2 var(--font-title); letter-spacing: 0.02em; padding: 11px 14px; border: 1px solid var(--gold); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .tab:hover { border-color: #d9c18f; }
   .tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
@@ -289,13 +290,16 @@
   #view-api .atitle { font-size: 28px; }
   .drawer > summary::after { width: 8px; height: 8px; }
   .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
-  .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 32px; align-items: start; }
+  .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; }
   .dmain { min-width: 0; }
+  .dview > .stage { position: sticky; top: calc(var(--barh, 110px) + 72px); max-height: calc(100vh - var(--barh, 110px) - 90px); }
+  .dview > .stage .minwrap { display: none; }
   .dside { position: sticky; top: calc(var(--barh, 110px) + 72px); display: grid; gap: 12px; justify-items: center; }
   .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; border-radius: 8px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
   @media (max-width: 899px) {
     .dview { grid-template-columns: minmax(0, 1fr); }
     .dside { position: static; order: -1; }
+    .dview > .stage { position: static; order: -1; max-height: none; }
     .dside canvas { height: 170px; }
   }
   @media (prefers-reduced-motion: reduce) { .drawer > summary::after { transition: none; } }
@@ -414,7 +418,29 @@
   .imgbody { display: grid; gap: 14px; }
   .imgp { display: grid; gap: 10px; }
   .imgf { display: grid; gap: 6px; }
-  .imgh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }</style>
+  .imgh { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  /* ---------- Effetto "slash" sui pulsanti (stessi colori di prima) ---------- */
+  .btn:not(.quiet), .tab, .views button, .chips button, .apibtn { --slash: var(--accent); --slash-fg: var(--accent-fg); position: relative; overflow: hidden; isolation: isolate; transition: color 0.3s, border-color 0.3s, background-color 0.3s; }
+  .btn.primary, .tab[aria-pressed="true"], .views button[aria-pressed="true"], .chips button[aria-pressed="true"], .apibtn[aria-pressed="true"] { --slash: #d9c18f; }
+  .btn:not(.quiet)::before, .tab::before, .views button::before, .chips button::before, .apibtn::before { content: ""; position: absolute; top: 50%; left: 50%; z-index: -1; width: 460px; height: 460px; background: var(--slash); transform: translate(-50%, -50%) rotate(-45deg) scaleX(0); transition: transform 0.3s; pointer-events: none; }
+  .btn:not(.quiet):hover:not(:disabled)::before, .tab:hover::before, .views button:hover::before, .chips button:hover::before, .apibtn:hover::before { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); }
+  .btn:not(.quiet):hover:not(:disabled), .tab:hover, .views button:hover, .chips button:hover, .apibtn:hover { color: var(--slash-fg); }
+  .btn.primary:hover { filter: none; }
+  @media (prefers-reduced-motion: reduce) { .btn::before, .tab::before, .views button::before, .chips button::before, .apibtn::before { transition: none; } }
+
+  /* ---------- Pulsanti in alto a destra del logo (stile "button-56") ---------- */
+  .navcol { gap: 14px 16px; padding: 0 6px 6px 0; }
+  .bar .navcol > button { --slash: transparent; align-items: center; background-color: var(--raised); border: 2px solid var(--gold); border-radius: 8px; box-sizing: border-box; color: var(--fg); cursor: pointer; display: flex; font: 500 15px/24px var(--font-ui); height: 44px; justify-content: center; max-width: 100%; padding: 0 22px; position: relative; overflow: visible; isolation: auto; text-align: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; transition: background-color 0.2s; }
+  .bar .navcol > button::before { display: none; }
+  .bar .navcol > button::after { background-color: var(--gold); border-radius: 8px; content: ""; display: block; height: 44px; left: -2px; width: calc(100% + 4px); position: absolute; top: -2px; transform: translate(6px, 6px); transition: transform 0.2s ease-out; z-index: -1; margin: 0; opacity: 1; }
+  .bar .navcol > button:hover:not(:disabled)::after { transform: translate(0, 0); }
+  .bar .navcol > button:hover:not(:disabled) { color: var(--fg); border-color: var(--gold); }
+  .bar .navcol > button:active:not(:disabled) { background-color: color-mix(in srgb, var(--gold) 22%, var(--raised)); outline: 0; }
+  .bar .navcol > button[aria-pressed="true"] { background-color: var(--accent); color: var(--accent-fg); }
+  .bar .navcol > button[aria-pressed="true"]:hover:not(:disabled) { color: var(--accent-fg); }
+  .bar .navcol > button:disabled { opacity: 0.55; cursor: not-allowed; }
+  .bar .navcol > button:disabled::after { transform: translate(3px, 3px); }
+</style>
 
 <div id="start" class="start" hidden role="dialog" aria-label="Start">
   <div class="stfanw" aria-hidden="true"><img class="stfan" src="fan.webp" alt=""><div class="stshine"><i></i></div></div>
@@ -625,7 +651,7 @@
       <p class="hint" id="status" role="status" aria-live="polite"></p>
       <p class="hint" id="embedinfo"></p>
 
-      <div style="display:grid;gap:12px">
+      <div style="display:grid;gap:12px" class="minwrap">
         <h2>In miniatura</h2>
         <div class="minis">
           <figure><canvas class="mini" data-w="140"></canvas><figcaption>140 px</figcaption></figure>
@@ -792,10 +818,6 @@
     </div></details>
 
   </div>
-  <aside class="dside" aria-label="Copertina">
-    <canvas id="dprev" width="560" height="840" role="img" aria-label="Anteprima della carta"></canvas>
-    <button type="button" class="btn" id="dedit">Modifica la copertina</button>
-  </aside>
   </div>
   <button type="button" class="undo" id="undoBtn" hidden></button>
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
@@ -2411,7 +2433,7 @@
       const nav = $(TABNAV[g]); nav.textContent = '';
       panelsOf(g).forEach(d => {
         const h = d.querySelector('summary h2'), b = mk('button', 'tab');
-        b.type = 'button'; b.textContent = TABLBL[h.textContent.trim()] || h.textContent.trim(); b.hidden = d.hidden;
+        b.type = 'button'; b.textContent = TABLBL[h.textContent.trim()] || h.textContent.trim(); b.hidden = d.hidden; if (h.id === 'd-act') b.classList.add('tab-gone');
         b.addEventListener('click', () => { selectTab(g, h.id); });
         d._tab = b; nav.appendChild(b);
         new MutationObserver(() => { b.hidden = d.hidden; if (d.hidden && TABSEL[g] === h.id) selectTab(g, ''); else if (!d.hidden && !TABSEL[g]) selectTab(g, h.id); }).observe(d, { attributes: true, attributeFilter: ['hidden'] });
@@ -2423,7 +2445,6 @@
     setH(); window.addEventListener('resize', setH);
     if (window.ResizeObserver) new ResizeObserver(setH).observe(bar);
   }
-  $('dedit').addEventListener('click', () => showView('cover'));
 
   /* ---------- API e bacchetta 🪄 ---------- */
   const AKEY = 'st-card-creator-api';
@@ -2987,12 +3008,19 @@
 
   /* Cambio vista */
   const VIEWS = { dati: $('view-data'), cover: $('view-cover'), api: $('view-api'), gen: $('view-gen') };
+  function placeStage(v) {
+    const st = document.querySelector('aside.stage'); if (!st) return;
+    if (v === 'dati') { if (st.parentNode !== VIEWS.dati) VIEWS.dati.appendChild(st); }
+    else if (st.parentNode !== document.querySelector('#view-cover .layout')) document.querySelector('#view-cover .layout').appendChild(st);
+  }
   function showView(v) {
     if (!VIEWS[v]) v = 'dati';
+    if (v === 'dati' || v === 'cover') placeStage(v);
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
     if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} setTimeout(() => { try { window.__wiggle && window.__wiggle(); } catch (e) {} }, 900); }
+    if (v === 'dati') { render(); try { updBack(); } catch (e) {} }
     if (v === 'api') { apiRender(); }
     if (v === 'gen') { genReady(); barSync(); }
     if (location.hash !== '#' + v) {
