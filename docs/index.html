@@ -427,19 +427,6 @@
   .btn:not(.quiet):hover:not(:disabled), .tab:hover, .views button:hover, .chips button:hover, .apibtn:hover { color: var(--slash-fg); }
   .btn.primary:hover { filter: none; }
   @media (prefers-reduced-motion: reduce) { .btn::before, .tab::before, .views button::before, .chips button::before, .apibtn::before { transition: none; } }
-
-  /* ---------- Pulsanti in alto a destra del logo (stile "button-56") ---------- */
-  .navcol { gap: 14px 16px; padding: 0 6px 6px 0; }
-  .bar .navcol > button { --slash: transparent; align-items: center; background-color: var(--raised); border: 2px solid var(--gold); border-radius: 8px; box-sizing: border-box; color: var(--fg); cursor: pointer; display: flex; font: 500 15px/24px var(--font-ui); height: 44px; justify-content: center; max-width: 100%; padding: 0 22px; position: relative; overflow: visible; isolation: auto; text-align: center; user-select: none; -webkit-user-select: none; touch-action: manipulation; transition: background-color 0.2s; }
-  .bar .navcol > button::before { display: none; }
-  .bar .navcol > button::after { background-color: var(--gold); border-radius: 8px; content: ""; display: block; height: 44px; left: -2px; width: calc(100% + 4px); position: absolute; top: -2px; transform: translate(6px, 6px); transition: transform 0.2s ease-out; z-index: -1; margin: 0; opacity: 1; }
-  .bar .navcol > button:hover:not(:disabled)::after { transform: translate(0, 0); }
-  .bar .navcol > button:hover:not(:disabled) { color: var(--fg); border-color: var(--gold); }
-  .bar .navcol > button:active:not(:disabled) { background-color: color-mix(in srgb, var(--gold) 22%, var(--raised)); outline: 0; }
-  .bar .navcol > button[aria-pressed="true"] { background-color: var(--accent); color: var(--accent-fg); }
-  .bar .navcol > button[aria-pressed="true"]:hover:not(:disabled) { color: var(--accent-fg); }
-  .bar .navcol > button:disabled { opacity: 0.55; cursor: not-allowed; }
-  .bar .navcol > button:disabled::after { transform: translate(3px, 3px); }
 </style>
 
 <div id="start" class="start" hidden role="dialog" aria-label="Start">
