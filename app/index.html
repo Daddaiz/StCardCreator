@@ -3027,25 +3027,52 @@
     let W = 0, H = 0, P = [], t = 0, last = 0;
     /* Fontana di carte: dieci carte lanciate dal basso a ventaglio, poi ricadono per gravità */
     const CW0 = 100, CH0 = 150, NC = 10;
-    let cardImg = null, cardSpr = null, cardScale = 1, cards = [], cardWait = 2.2, cardOn = false;
+    let cardImg = null, cardScale = 1, cards = [], cardWait = 2.2, cardOn = false;
     (function loadCard() {
       const src = document.querySelector('.flip-back img');
       if (!src) return;
       const im = new Image();
-      im.onload = () => { cardImg = im; cardSpr = null; };
+      im.onload = () => { cardImg = im; backSpr = null; };
       im.src = src.currentSrc || src.src;
     })();
-    function sprite() {
-      const d = Math.min(window.devicePixelRatio || 1, 2), k = W < 600 ? 0.7 : 1;
-      cardScale = k;
+    let backSpr = null, defSpr = null, fronts = [];
+    const dpr1 = () => Math.min(window.devicePixelRatio || 1, 2);
+    function mkSprite(draw) {
+      const d = dpr1(), k = W < 600 ? 0.7 : 1; cardScale = k;
       const w = Math.round(CW0 * k * d), h = Math.round(CH0 * k * d);
       const o = document.createElement('canvas'); o.width = w; o.height = h;
-      const x = o.getContext('2d'); x.imageSmoothingQuality = 'high';
-      let im = cardImg, cw = im.naturalWidth, ch = im.naturalHeight;
-      while (cw / 2 > w) { const t2 = document.createElement('canvas'); cw = Math.round(cw / 2); ch = Math.round(ch / 2); t2.width = cw; t2.height = ch; const x2 = t2.getContext('2d'); x2.imageSmoothingQuality = 'high'; x2.drawImage(im, 0, 0, cw, ch); im = t2; }
-      x.drawImage(im, 0, 0, w, h);
-      cardSpr = o;
+      const x = o.getContext('2d'); x.imageSmoothingQuality = 'high'; draw(x, w, h); return o;
     }
+    function half(im) { /* riduce a metà più volte: miglior qualità in miniatura */
+      let cw = im.naturalWidth || im.width, ch = im.naturalHeight || im.height;
+      const w = Math.round(CW0 * dpr1());
+      while (cw / 2 > w) { const t2 = document.createElement('canvas'); cw = Math.round(cw / 2); ch = Math.round(ch / 2); t2.width = cw; t2.height = ch; const x2 = t2.getContext('2d'); x2.imageSmoothingQuality = 'high'; x2.drawImage(im, 0, 0, cw, ch); im = t2; }
+      return im;
+    }
+    function rr(x, w, h, r) { x.beginPath(); if (x.roundRect) x.roundRect(0, 0, w, h, r); else x.rect(0, 0, w, h); x.clip(); }
+    function sprite() { backSpr = mkSprite((x, w, h) => x.drawImage(half(cardImg), 0, 0, w, h)); }
+    function frontSpr(src) { /* copertina riempita a 2:3 con angoli arrotondati */
+      return mkSprite((x, w, h) => {
+        rr(x, w, h, w * 0.06);
+        const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height, sc = Math.max(w / sw, h / sh);
+        const im = half(src), f = im.width / sw;
+        x.drawImage(im, 0, 0, im.width, im.height, (w - sw * sc) / 2, (h - sh * sc) / 2, sw * sc, sh * sc);
+      });
+    }
+    async function loadFronts() {
+      const out = [];
+      try {
+        if (!defSpr && typeof card !== 'undefined' && card.width) defSpr = frontSpr(card);
+        if (defSpr) out.push(defSpr);
+        const list = loadDrafts().list.slice().sort((x, y) => y.ts - x.ts).slice(0, 12);
+        for (const r of list) {
+          const rec = await idbGet(r.id);
+          if (rec && rec.img) { try { const bm = await createImageBitmap(rec.img); out.push(frontSpr(bm)); } catch (e) { /* ignora */ } }
+        }
+      } catch (e) { /* ignora */ }
+      fronts = out;
+    }
+    const startOn = () => { const st = $('start'); return !!st && !st.hidden; };
     function launch() {
       const G = Math.max(900, H * 1.25), cx = W * (0.4 + Math.random() * 0.2);
       cards = Array.from({ length: NC }, (_, i) => {
@@ -3053,13 +3080,20 @@
         const apex = H * (0.5 + Math.random() * 0.4);
         const vy = -Math.sqrt(2 * G * apex);
         return { delay: i * 0.07 + Math.random() * 0.08, x: cx + (Math.random() - 0.5) * 60, y: H + 90, vx: -vy * Math.tan(ang) * (0.8 + Math.random() * 0.4), vy: vy * (0.94 + Math.random() * 0.12), G,
+          front: fronts.length ? fronts[(Math.random() * fronts.length) | 0] : null,
           rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 5, ry: Math.random() * 6.28, vry: (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 3.5), live: true };
       });
       cardOn = true;
     }
+    let loading = false;
     function stepCards(dt) {
       if (!cardImg) return;
-      if (!cardOn) { cardWait -= dt; if (cardWait <= 0) launch(); return; }
+      if (!startOn()) { cardOn = false; cards = []; cardWait = 1.4; return; }
+      if (!cardOn) {
+        cardWait -= dt;
+        if (cardWait <= 0 && !loading) { loading = true; loadFronts().then(() => { loading = false; if (startOn()) { if (!backSpr) sprite(); launch(); } else cardWait = 1.4; }); }
+        return;
+      }
       let alive = 0;
       cards.forEach(k => {
         if (!k.live) return;
@@ -3072,7 +3106,7 @@
     }
     function drawCards() {
       if (!cardOn || !cardImg) return;
-      if (!cardSpr) sprite();
+      if (!backSpr) sprite();
       const w = CW0 * cardScale, h = CH0 * cardScale;
       cards.forEach(k => {
         if (!k.live || k.delay > 0) return;
@@ -3081,7 +3115,7 @@
         c.translate(k.x, k.y); c.rotate(k.rot); c.scale(a, 1);
         c.shadowColor = 'rgba(0,0,0,0.4)'; c.shadowBlur = 14; c.shadowOffsetY = 6;
         c.globalAlpha = 0.55 + 0.4 * Math.abs(sx);
-        c.drawImage(cardSpr, -w / 2, -h / 2, w, h);
+        c.drawImage(sx >= 0 && k.front ? k.front : backSpr, -w / 2, -h / 2, w, h);
         c.restore();
       });
     }
