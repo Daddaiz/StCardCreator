@@ -370,6 +370,8 @@
   body.starting .app { visibility: hidden; }
   .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px calc(4vw + 16px); }
   .start[hidden] { display: none; }
+  body.flying { overflow: hidden; }
+  body.flying .start, body.flying .app { transform-origin: 50% 50%; will-change: transform, opacity; }
   .stin { position: relative; z-index: 1; display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
   .stfanw { position: fixed; left: 50%; bottom: clamp(16px, 4vh, 48px); transform: translateX(-50%); width: min(400px, 60vw); z-index: 0; pointer-events: none; user-select: none; }
   @media (max-width: 720px), (max-height: 720px) { .stfanw { display: none; } }
@@ -3079,14 +3081,14 @@
     }
     const startOn = () => { const st = $('start'); return !!st && !st.hidden; };
     function launch() {
-      const G = Math.max(900, H * 1.25), cx = W * (0.4 + Math.random() * 0.2);
+      const G = Math.max(900, H * 1.25) * 0.62, cx = W * (0.4 + Math.random() * 0.2);
       cards = Array.from({ length: NC }, (_, i) => {
         const ang = (Math.random() * 2 - 1) * 0.42;
         const apex = H * (0.5 + Math.random() * 0.4);
         const vy = -Math.sqrt(2 * G * apex);
         return { delay: i * 0.07 + Math.random() * 0.08, x: cx + (Math.random() - 0.5) * 60, y: H + 90, vx: -vy * Math.tan(ang) * (0.8 + Math.random() * 0.4), vy: vy * (0.94 + Math.random() * 0.12), G,
           front: fronts.length ? fronts[(Math.random() * fronts.length) | 0] : null,
-          rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 5, ry: Math.random() * 6.28, vry: (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 3.5), live: true };
+          rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 4, ry: Math.random() * 6.28, vry: (Math.random() < 0.5 ? -1 : 1) * (1.2 + Math.random() * 2.8), live: true };
       });
       cardOn = true;
     }
@@ -4130,15 +4132,48 @@
     b.disabled = !r;
     sub.textContent = r ? ((r.name || '').trim() || 'Untitled card') + ' · ' + new Date(r.ts).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Nothing saved yet.';
   }
-  function showStart() {
+  /* Transizione "volo in avanti": la schermata uscente vola verso il centro e svanisce, quella entrante arriva da dietro */
+  let flyTok = 0;
+  const FLY_MS = 780;
+  function flyOk() { return !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) && typeof Element.prototype.animate === 'function'; }
+  function flyRun(outEl, inEl, done) {
+    const tok = ++flyTok, b = document.body;
+    b.classList.add('flying');
+    const ease = 'cubic-bezier(.45,.05,.55,.95)';
+    [outEl, inEl].forEach(e => e.getAnimations && e.getAnimations().forEach(a => a.cancel()));
+    const a1 = outEl.animate([{ transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' }, { transform: 'scale(0.4)', opacity: 0, filter: 'blur(3px)' }], { duration: FLY_MS, easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'forwards' });
+    const a2 = inEl.animate([{ transform: 'scale(2.1)', opacity: 0, filter: 'blur(3px)' }, { transform: 'scale(1.4)', opacity: 0, filter: 'blur(2px)', offset: 0.28 }, { transform: 'scale(1)', opacity: 1, filter: 'blur(0px)' }], { duration: FLY_MS, easing: ease, fill: 'forwards' });
+    Promise.all([a1.finished, a2.finished]).then(() => {
+      if (tok !== flyTok) return;
+      done();
+      a1.cancel(); a2.cancel();
+      b.classList.remove('flying');
+    }).catch(() => {});
+  }
+  function showStart(instant) {
     saveDraft();
     showStartInfo();
-    const r = resumeTarget();
-    document.body.classList.add('starting');
-    $('start').hidden = false;
-    const f = r ? $('stResume') : $('stNew'); f.focus({ preventScroll: true });
+    const r = resumeTarget(), st = $('start'), b = document.body;
+    const f = r ? $('stResume') : $('stNew');
+    const was = !st.hidden;
+    const app = document.querySelector('.app');
+    if (instant === true || was || !flyOk() || b.classList.contains('starting')) {
+      flyTok++; b.classList.remove('flying'); st.style.pointerEvents = '';
+      b.classList.add('starting'); st.hidden = false; f.focus({ preventScroll: true }); return;
+    }
+    window.scrollTo(0, 0);
+    st.hidden = false; st.style.pointerEvents = 'none';
+    f.focus({ preventScroll: true });
+    flyRun(app, st, () => { b.classList.add('starting'); st.style.pointerEvents = ''; });
   }
-  function hideStart() { $('start').hidden = true; document.body.classList.remove('starting'); window.scrollTo(0, 0); }
+  function hideStart() {
+    const st = $('start'), b = document.body;
+    window.scrollTo(0, 0);
+    if (st.hidden || !flyOk()) { flyTok++; b.classList.remove('flying'); st.hidden = true; st.style.pointerEvents = ''; b.classList.remove('starting'); return; }
+    st.style.pointerEvents = 'none';
+    b.classList.remove('starting');
+    flyRun(st, document.querySelector('.app'), () => { st.hidden = true; st.style.pointerEvents = ''; });
+  }
   function startAct(a) {
     if (a === 'resume') {
       const r = resumeTarget(); if (!r) return;
@@ -4247,6 +4282,6 @@
   initStart();
   initShine();
   initGem();
-  showStart();
+  showStart(true);
 })();
 </script>
