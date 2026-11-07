@@ -7,7 +7,6 @@ const swap = (a, b) => { if (!h.includes(a)) throw new Error('non trovato: ' + a
 swap('src="logo.png"', 'src="' + uri('logo.png', 'image/png') + '"');
 swap('src="wordmark.png"', 'src="' + uri('wordmark.png', 'image/png') + '"');
 swap('src="back.webp"', 'src="' + uri('back.webp', 'image/webp') + '"');
-swap('src="fan.webp"', 'src="' + uri('fan.webp', 'image/webp') + '"');
 swap("SAMPLE.src = 'kat.jpg'", "SAMPLE.src = '" + uri('kat.jpg', 'image/jpeg') + "'");
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'ST-Card-Creator.html'), h);
