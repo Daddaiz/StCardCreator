@@ -384,9 +384,9 @@
   .gemglow { left: 37.6%; width: 25%; top: 66%; height: 32%; border-radius: 50%; mix-blend-mode: screen; background: radial-gradient(closest-side, rgba(196,120,255,0.55) 0%, rgba(150,70,235,0.30) 38%, rgba(120,50,210,0.10) 70%, rgba(120,50,210,0) 100%); animation: gemPulse 3.6s ease-in-out infinite; }
   .gem { left: 47.6%; width: 4.81%; top: 78.4%; height: 8.75%; clip-path: polygon(50% 0, 100% 53%, 50% 100%, 0 53%); overflow: hidden; }
   .gem::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(215,160,255,0.55), rgba(215,160,255,0) 70%); mix-blend-mode: screen; animation: gemPulse 3.6s ease-in-out infinite; }
-  @keyframes gemPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+  @keyframes gemPulse { 0%, 100% { opacity: 0.28; } 50% { opacity: 0.58; } }
   .gspark { position: absolute; aspect-ratio: 1; pointer-events: none; mix-blend-mode: screen; opacity: 0; transform: translate(-50%, -50%); background: radial-gradient(circle, #fff 0 9%, rgba(235,200,255,0.55) 10%, rgba(235,200,255,0) 45%); clip-path: polygon(50% 0, 56% 44%, 100% 50%, 56% 56%, 50% 100%, 44% 56%, 0 50%, 44% 44%); }
-  @media (prefers-reduced-motion: reduce) { .gemglow, .gem::before { animation: none; opacity: .8; } }
+  @media (prefers-reduced-motion: reduce) { .gemglow, .gem::before { animation: none; opacity: .45; } }
   .upd { display: flex; align-items: center; gap: 12px; max-width: 100%; padding: 10px 14px; border: 1px solid #B39A6F; border-radius: 10px; background: var(--surface); color: var(--fg); font-size: 13.5px; line-height: 1.4; }
   .upd[hidden] { display: none; }
   .upd a { color: #B39A6F; font-weight: 700; white-space: nowrap; }
@@ -4207,7 +4207,7 @@
       if (!$('start').hidden && !document.hidden) {
         const n = 2 + Math.floor(Math.random() * 2);
         for (let i = 0; i < n; i++) setTimeout(() => {
-          let u, v; do { u = Math.random() * 2 - 1; v = Math.random() * 2 - 1; } while (Math.abs(u) + Math.abs(v) > 0.92);
+          const u = (Math.random() * 2 - 1) * 0.96 + (Math.random() - 0.5) * 0.12, v = (Math.random() < 0.5 ? -1 : 1) * (1 - Math.abs(u)) + (Math.random() - 0.5) * 0.12;
           const el = document.createElement('div'); el.className = 'gspark'; el.setAttribute('aria-hidden', 'true');
           const size = 1.8 + Math.random() * 2.6, dur = 1000 + Math.random() * 1000, rot = (Math.random() - 0.5) * 90;
           el.style.cssText = 'left:' + (49.9 + u * 2.3) + '%;top:' + (83 + v * 4.1) + '%;width:' + size + '%';
