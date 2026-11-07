@@ -562,6 +562,7 @@
         <div class="inline">
           <label class="chk"><input type="checkbox" id="boldT"> <span id="boldLbl">Grassetto</span></label>
         </div>
+        <div class="chips fit" id="fcats" role="group" aria-label="Font category"></div>
         <input type="text" id="fsearch" placeholder="Cerca un font" aria-label="Cerca un font" autocomplete="off" spellcheck="false">
         <div class="flist" id="flist"></div>
         <form id="customForm" class="inline" style="flex-wrap:nowrap">
@@ -1380,12 +1381,23 @@
 
   /* ---------- Lista dei font ---------- */
   const list = $('flist'), search = $('fsearch');
+  let FCAT = 'all';
   function buildList() {
     const q = search.value.trim().toLowerCase();
-    const groups = [];
+    let groups = [];
     const custom = S.custom.filter(f => !CATS.some(c => c.fonts.includes(f)));
     if (custom.length) groups.push({ label: tr('Aggiunti da te'), fonts: custom });
-    CATS.forEach(c => groups.push({ label: tr(c.label), fonts: c.fonts }));
+    CATS.forEach(c => groups.push({ id: c.id, label: tr(c.label), fonts: c.fonts }));
+    if (custom.length) groups[0].id = 'custom';
+    const cats = $('fcats');
+    if (!groups.some(g => g.id === FCAT)) FCAT = 'all';
+    cats.textContent = '';
+    [{ id: 'all', label: 'All' }].concat(groups.map(g => ({ id: g.id, label: g.label }))).forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = c.label; b.setAttribute('aria-pressed', String(c.id === FCAT));
+      b.addEventListener('click', () => { FCAT = c.id; buildList(); });
+      cats.appendChild(b);
+    });
+    if (FCAT !== 'all') groups = groups.filter(g => g.id === FCAT);
     const cur = S[target + 'Font'];
     list.textContent = '';
     let any = false;
@@ -1411,7 +1423,7 @@
       list.appendChild(p);
     }
     const sel = list.querySelector('[aria-pressed="true"]');
-    if (sel && !q) list.scrollTop = Math.max(0, sel.offsetTop - list.clientHeight / 2 + 18);
+    if (sel && !q && FCAT === 'all') list.scrollTop = Math.max(0, sel.offsetTop - list.clientHeight / 2 + 18);
   }
   function syncTabs() {
     $('tabName').setAttribute('aria-pressed', String(target === 'name'));
