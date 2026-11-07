@@ -313,6 +313,19 @@
   .apibox { display: grid; gap: 14px; border-top: 1px solid var(--line); padding-top: 18px; min-width: 0; }
   .apibox:first-child { border-top: 0; padding-top: 0; }
   .apibox a { color: var(--accent); word-break: break-all; }
+  details.acc { border-top: 1px solid var(--line); padding: 14px 0; }
+  details.acc:first-of-type { border-top: 0; padding-top: 0; }
+  details.acc > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 12px; user-select: none; }
+  details.acc > summary::-webkit-details-marker { display: none; }
+  details.acc > summary::after { content: ""; width: 9px; height: 9px; margin-left: auto; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); transition: transform .2s; }
+  details.acc[open] > summary::after { transform: rotate(-135deg); }
+  details.acc > summary:hover .atitle { color: var(--accent); }
+  details.acc > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
+  .accb { display: grid; gap: 18px; padding-top: 18px; }
+  .accb .atitle { font-size: 20px; }
+  #sGfx { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 8px; }
+  html.nogfx .flip-in { transition: none; }
+  html.nogfx dialog[open], html.nogfx dialog[open]::backdrop { animation: none; }
   .mrow { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
   .mrow input { flex: 1 1 240px; min-width: 0; }
   .sm.warn { color: var(--warn); }
@@ -660,11 +673,10 @@
   </div>
 
   <div id="view-api" class="apiview" hidden>
+    <details class="acc" name="apiacc" id="acc1" open><summary><h2 class="atitle">Scelta dell'API</h2></summary><div class="accb">
     <section class="apibox">
-      <h2 class="atitle">Scelta dell'API</h2>
       <div class="chips fit" id="provs" role="group" aria-label="Scelta dell'API"></div>
-      <p class="sm" id="provNote"></p>
-      <p class="sm"><a id="provDoc" target="_blank" rel="noopener noreferrer" hidden></a></p>
+      <p class="sm"><span id="provNote"></span> <a id="provDoc" target="_blank" rel="noopener noreferrer" hidden></a></p>
       <div class="df" id="rUrl">
         <span class="dfh"><b>Indirizzo del server (base URL)</b></span>
         <input type="text" id="aUrl" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:5001/v1" aria-label="Indirizzo del server (base URL)">
@@ -697,8 +709,9 @@
       <div class="ctl"><button type="button" class="btn primary" id="aTest">Rileva e prova la connessione</button><button type="button" class="btn quiet" id="aClear">Dimentica queste impostazioni</button></div>
       <p class="sm" id="astatus" role="status"></p>
     </section>
+    </div></details>
+    <details class="acc" name="apiacc" id="acc2"><summary><h2 class="atitle">SillyTavern</h2></summary><div class="accb">
     <section class="apibox" id="sSt">
-      <h2 class="atitle">SillyTavern</h2>
       <div class="df">
         <span class="dfh"><b>SillyTavern address</b></span>
         <div class="mrow"><input type="text" id="sUrl" autocomplete="off" spellcheck="false" placeholder="http://127.0.0.1:8000" aria-label="SillyTavern address"><button type="button" class="btn" id="sTest">Check connection</button></div>
@@ -709,6 +722,12 @@
       </div>
       <label class="chk"><input type="checkbox" id="sRem"> Remember the password on this device</label>
       <p class="sm" id="sNote"></p>
+    </section>
+    </div></details>
+    <section class="apibox" id="sGfx">
+      <h2 class="atitle">Graphic Enhancements</h2>
+      <label class="chk"><input type="checkbox" id="gfxOn" checked> Graphic Enhancements</label>
+      <p class="sm">Animations: page transitions, the cards on the start screen, fading windows, and the card flip and wiggle on the Cover. Turn off for instant changes. The big ST logo stays the same.</p>
     </section>
   </div>
   <div id="view-gen" class="apiview" hidden>
@@ -839,6 +858,9 @@
   let LANG = 'en';
   const TKEY = 'st-card-creator-theme';
   let THEME = 'dark';
+  let GFX = true;
+  try { GFX = localStorage.getItem('st-card-creator-gfx') !== '0'; } catch (e) { /* ignora */ }
+  document.documentElement.classList.toggle('nogfx', !GFX);
   try { const st0 = localStorage.getItem(TKEY); if (st0 === 'light' || st0 === 'dark') THEME = st0; } catch (e) { /* ignora */ }
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', THEME);
@@ -2188,7 +2210,7 @@
     const fl = $('flip'), fi = fl && fl.querySelector('.flip-in'); if (!fi || !fi.animate) return;
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const go = () => {
-      if (document.hidden || !fl.offsetParent || fl.matches(':hover')) return;
+      if (!GFX || document.hidden || !fl.offsetParent || fl.matches(':hover')) return;
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
     fl.addEventListener('pointerenter', () => {
@@ -3102,7 +3124,7 @@
     let loading = false;
     function stepCards(dt) {
       if (!cardImg) return;
-      if (!startOn()) { cardOn = false; cards = []; cardWait = 1.4; return; }
+      if (!startOn() || !GFX) { cardOn = false; cards = []; cardWait = 1.4; return; }
       if (!cardOn) {
         cardWait -= dt;
         if (cardWait <= 0 && !loading) { loading = true; loadFronts().then(() => { loading = false; if (startOn()) { if (!backSpr) sprite(); launch(); } else cardWait = 1.4; }); }
@@ -4177,7 +4199,7 @@
   /* Transizione "volo in avanti": la schermata uscente vola verso il centro e svanisce, quella entrante arriva da dietro */
   let flyTok = 0;
   const FLY_MS = 560;
-  function flyOk() { return !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) && typeof Element.prototype.animate === 'function'; }
+  function flyOk() { return GFX && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) && typeof Element.prototype.animate === 'function'; }
   function flyRun(outEl, inEl, done) {
     const tok = ++flyTok, b = document.body;
     b.classList.add('flying');
@@ -4235,7 +4257,20 @@
     }
     if (a === 'png') { showView('cover'); openDrawer('h-img', true); $('file').click(); }
   }
+  function initOptions() {
+    const g = $('gfxOn'); g.checked = GFX;
+    g.addEventListener('change', () => {
+      GFX = g.checked;
+      document.documentElement.classList.toggle('nogfx', !GFX);
+      try { localStorage.setItem('st-card-creator-gfx', GFX ? '1' : '0'); } catch (e) { /* ignora */ }
+      if (!GFX) { const fi = document.querySelector('.flip-in'); if (fi) fi.getAnimations().forEach(a => a.cancel()); }
+    });
+    document.querySelectorAll('details.acc').forEach(d => d.addEventListener('toggle', () => {
+      if (d.open) document.querySelectorAll('details.acc').forEach(o => { if (o !== d) o.open = false; });
+    }));
+  }
   function initStart() {
+    initOptions();
     document.querySelectorAll('[data-start]').forEach(b => b.addEventListener('click', () => startAct(b.dataset.start)));
     document.querySelector('.brand').addEventListener('click', showStart);
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('start').hidden && !$('cdlg').open) hideStart(); });
