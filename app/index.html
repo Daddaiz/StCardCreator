@@ -380,6 +380,14 @@
   .stshine i { position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%; transform: translateX(300%) skewX(-18deg); mix-blend-mode: screen; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,214,170,0.09) 30%, rgba(255,255,255,0.22) 50%, rgba(170,210,255,0.09) 70%, rgba(255,255,255,0) 100%); }
   .stlogow { position: relative; display: block; margin-bottom: clamp(12px, 5vh, 56px); height: min(428px, 34.5vh); aspect-ratio: 748 / 640; }
   .stlogo { display: block; width: 100%; height: 100%; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
+  .lsplit { position: absolute; inset: 0; visibility: hidden; filter: drop-shadow(0 0 10px rgba(224,166,58,0.28)); }
+  .stlogow.spin .stlogo { visibility: hidden; }
+  .stlogow.spin .lsplit { visibility: visible; }
+  .lnc { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .lcard { position: absolute; left: 2.808%; top: 34.16%; width: 23.92%; height: 42.41%; transform: rotate(-10.734deg); perspective: 620px; }
+  .cturn { position: absolute; inset: 0; transform-style: preserve-3d; will-change: transform; }
+  .cf, .cb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+  .cb { transform: rotateY(180deg); object-fit: cover; border-radius: 6% / 4%; }
   .gem, .gemglow { position: absolute; pointer-events: none; }
   .gemglow { left: 37.6%; width: 25%; top: 66%; height: 32%; border-radius: 50%; mix-blend-mode: screen; background: radial-gradient(closest-side, rgba(196,120,255,0.55) 0%, rgba(150,70,235,0.30) 38%, rgba(120,50,210,0.10) 70%, rgba(120,50,210,0) 100%); animation: gemPulse 3.6s ease-in-out infinite; }
   .gem { left: 47.6%; width: 4.81%; top: 78.4%; height: 8.75%; clip-path: polygon(50% 0, 100% 53%, 50% 100%, 0 53%); overflow: hidden; }
@@ -439,7 +447,7 @@
 <div id="start" class="start" hidden role="dialog" aria-label="Start">
   <div class="stfanw" aria-hidden="true"><img class="stfan" src="wordmark.png" alt=""><div class="stshine"><i></i></div></div>
   <div class="stin">
-    <div class="stlogow"><img class="stlogo" src="logo.png" width="748" height="640" alt=""><div class="gemglow" aria-hidden="true"></div><div class="gem" aria-hidden="true"></div></div>
+    <div class="stlogow"><img class="stlogo" src="logo.png" width="748" height="640" alt=""><div class="lsplit" aria-hidden="true"><div class="lcard"><div class="cturn" id="cturn"><img class="cf" src="card-face.png" alt=""><img class="cb" id="cback" alt=""></div></div><img class="lnc" src="logo-nocard.png" alt=""></div><div class="gemglow" aria-hidden="true"></div><div class="gem" aria-hidden="true"></div></div>
     <div class="sbtns">
       <button type="button" class="sbtn" id="stResume" data-start="resume"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7.5V12l3 2"/></svg><b>Resume</b><small>Nothing saved yet.</small></button>
       <button type="button" class="sbtn" data-start="import"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg><b>Import</b><small>Load a card PNG or JSON to edit its text.</small></button>
@@ -3105,7 +3113,8 @@
       cards.forEach(k => {
         if (!k.live) return;
         if (k.delay > 0) { k.delay -= dt; alive++; return; }
-        k.vy += k.G * dt; k.vx *= 1 - 0.12 * dt;
+        const pvy = k.vy; k.vy += k.G * dt; k.vx *= 1 - 0.12 * dt;
+        if (pvy < 0 && k.vy >= 0 && k.y < H * 0.4) window.dispatchEvent(new Event('cardapex'));
         k.x += k.vx * dt; k.y += k.vy * dt; k.rot += k.vr * dt; k.ry += k.vry * dt;
         if (k.vy > 0 && k.y > H + 110) k.live = false; else alive++;
       });
@@ -4225,6 +4234,30 @@
     setTimeout(burst, 1200);
   }
 
+  /* La carta nel logo gira quando le carte della fontana arrivano in alto: partenza veloce, poi rallenta fino a tornare com'era */
+  function initCardSpin() {
+    const w = document.querySelector('.stlogow'), t = $('cturn'), cb = $('cback'), cc = document.querySelector(".lcard"), bk = document.querySelector('.flip-back img');
+    if (!w || !t || !cb || !bk || !t.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    cb.src = bk.src;
+    let spinning = false, cool = 0;
+    const apply = (phi, u) => {
+      const c = Math.abs(Math.cos(phi * Math.PI / 180)), e = (1 - u) * (1 - u);
+      t.style.transform = 'scale(' + (1 + 0.07 * e) + ') rotateX(' + (7 * e * Math.sin(phi * Math.PI / 90)).toFixed(2) + 'deg) rotateY(' + phi.toFixed(2) + 'deg)';
+      cc.style.filter = 'brightness(' + (0.5 + 0.5 * c).toFixed(3) + ')';
+    };
+    const run = () => {
+      spinning = true; w.classList.add('spin');
+      const turns = 3 + Math.floor(Math.random() * 3), dir = Math.random() < 0.5 ? -1 : 1, T = 3200 + Math.random() * 1400, t0 = performance.now();
+      const tick = now => {
+        const u = Math.min(1, (now - t0) / T), phi = dir * 360 * turns * (1 - Math.pow(1 - u, 3));
+        if (u >= 1) { t.style.transform = ''; cc.style.filter = ''; w.classList.remove('spin'); spinning = false; cool = performance.now() + 1500; return; }
+        apply(phi, u); requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    window.addEventListener('cardapex', () => { if (spinning || performance.now() < cool || $('start').hidden || document.hidden) return; run(); });
+  }
+
   /* ---------- Avvio ---------- */
   restore();
   initDrafts();
@@ -4246,6 +4279,7 @@
   initStart();
   initShine();
   initGem();
+  initCardSpin();
   showStart();
 })();
 </script>
