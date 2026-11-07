@@ -2352,17 +2352,30 @@
   (function wiggle() {
     const fl = $('flip'), fi = fl && fl.querySelector('.flip-in'); if (!fi || !fi.animate) return;
     if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    /* Posizione del mouse tenuta da noi: :hover resta vecchio finché il mouse non si muove, e non basta a decidere */
+    let PX = -1, PY = -1, held = false;
+    const over = () => { if (!fl.offsetParent) return false; const r = fl.getBoundingClientRect(); return PX >= r.left && PX <= r.right && PY >= r.top && PY <= r.bottom; };
+    const angle = () => { const m = /matrix3d\(([^)]+)\)/.exec(getComputedStyle(fi).transform); if (m) { const v = m[1].split(',').map(Number); return Math.atan2(v[8], v[0]) * 180 / Math.PI; } const m2 = /matrix\(([^)]+)\)/.exec(getComputedStyle(fi).transform); return m2 ? 0 : 0; };
+    /* Il tremolio si interrompe subito dove si trova e la carta prosegue verso il retro, senza salti */
+    const takeOver = () => {
+      if (held) return;
+      held = true;
+      const running = fi.getAnimations().length > 0, a = running ? angle() : 0;
+      if (running) {
+        fi.getAnimations().forEach(x => x.cancel());
+        fi.style.transition = 'none'; fi.style.transform = 'rotateY(' + a.toFixed(3) + 'deg)'; void fi.offsetWidth;
+        fi.style.transition = '';
+      }
+      fi.style.transform = 'rotateY(180deg)';
+    };
+    const release = () => { if (!held) return; held = false; fi.style.transform = ''; };
+    document.addEventListener('pointermove', e => { PX = e.clientX; PY = e.clientY; if (over()) takeOver(); else release(); }, { passive: true });
+    fl.addEventListener('pointerenter', takeOver);
+    fl.addEventListener('pointerleave', () => { PX = -1; PY = -1; release(); });
     const go = () => {
-      if (!GFX || document.hidden || !fl.offsetParent || fl.matches(':hover')) return;
+      if (!GFX || document.hidden || !fl.offsetParent || held || over() || fl.matches(':hover')) return;
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
-    fl.addEventListener('pointerenter', () => {
-      if (!fi.getAnimations().length) return;
-      const tf = getComputedStyle(fi).transform;
-      fi.getAnimations().forEach(a => a.cancel());
-      fi.style.transition = 'none'; fi.style.transform = tf; void fi.offsetWidth;
-      fi.style.transition = ''; fi.style.transform = '';
-    });
     setInterval(go, 9000); fl.addEventListener('wiggle', go); window.__wiggle = go;
   })();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { try { updBack(); } catch (e) {} });
