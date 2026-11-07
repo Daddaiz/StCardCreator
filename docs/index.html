@@ -127,8 +127,7 @@
   .subt.sm2 { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 4px; }
   .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
   .presets.one { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
-  .pre { display: flex; height: 32px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; background: none; }
-  .pre i { flex: 1 1 0; display: block; }
+  .pre { display: block; height: 32px; min-width: 40px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; background-color: transparent; background-repeat: no-repeat; forced-color-adjust: none; }
   .pre:hover, .pre:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .colors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
   .color { display: flex; align-items: center; gap: 10px; font-size: 14px; }
@@ -1587,7 +1586,7 @@
   });
   /* ---------- Preimpostazioni di colore, ricavate dall'immagine ---------- */
   const hsl2hex = (h, s, l) => {
-    h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(1, s)); l = Math.max(0, Math.min(1, l));
+    h = Number.isFinite(h) ? ((h % 360) + 360) % 360 : 38; s = Number.isFinite(s) ? Math.max(0, Math.min(1, s)) : 0.4; l = Number.isFinite(l) ? Math.max(0, Math.min(1, l)) : 0.3;
     const a = s * Math.min(l, 1 - l), f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
     return '#' + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
   };
@@ -1638,7 +1637,9 @@
     sets.forEach((cols, i) => {
       const b = mk('button', 'pre'); b.type = 'button'; b.title = title ? title(i) : cols.join('  ');
       b.setAttribute('aria-label', (title ? title(i) : 'Preset ' + (i + 1)) + ': ' + cols.join(', '));
-      cols.forEach(c => { const sw = mk('i'); sw.style.background = c; b.appendChild(sw); });
+      /* i colori stanno sul pulsante stesso, come strisce affiancate di un unico sfondo */
+      const n = cols.length;
+      b.style.backgroundImage = 'linear-gradient(90deg,' + cols.map((c, k) => c + ' ' + (k * 100 / n) + '% ' + ((k + 1) * 100 / n) + '%').join(',') + ')';
       b.addEventListener('click', () => { apply(cols); syncUI(); schedule(); save(); });
       box.appendChild(b);
     });
