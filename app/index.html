@@ -156,8 +156,8 @@
   .bk-row.off { color: #9a9a9a; }
   .bk-row.sum { border-top: 1px solid #b9b9b9; padding-top: 3px; font-weight: 700; }
   @media (prefers-reduced-motion: reduce) { .flip-in { transition: none; } }
-  .export { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-  .export select { width: auto; flex: none; }
+  .export { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 10px; align-items: stretch; }
+  .export select { width: 100%; }
   .export .btn.primary { flex: 1 1 auto; min-width: 150px; }
   #status { min-height: 1.4em; }
 
@@ -210,7 +210,9 @@
   .dlmenu button { font: 500 14px var(--font-ui); padding: 10px 14px; text-align: left; border: 0; border-top: 1px solid var(--gold); background: none; color: var(--fg); cursor: pointer; }
   .dlmenu button:first-child { border-top: 0; }
   .dlmenu button:hover, .dlmenu button:focus-visible { background: var(--accent); color: var(--accent-fg); outline: none; }
-  .export .stbtn { flex: 1 1 100%; }
+  .export .stbtn { min-width: 0; }
+  dialog.cdlg.tdlg { width: min(460px, calc(100vw - 32px)); }
+  .tdlg .minis { padding: 8px 4px 4px; justify-content: center; gap: 36px; }
   dialog.kdlg { width: min(460px, calc(100vw - 32px)); }
   .kbody { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
   .kbody p { margin: 0; }
@@ -288,10 +290,9 @@
   #view-api .atitle { font-size: 28px; }
   .drawer > summary::after { width: 8px; height: 8px; }
   .dbody { display: grid; gap: 14px; padding-bottom: 22px; }
-  .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 32px; align-items: start; }
+  .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; align-items: start; }
   .dmain { min-width: 0; }
   .dview > .stage { position: sticky; top: calc(var(--barh, 110px) + 72px); max-height: calc(100vh - var(--barh, 110px) - 90px); }
-  .dview > .stage .minwrap { display: none; }
   .dside { position: sticky; top: calc(var(--barh, 110px) + 72px); display: grid; gap: 12px; justify-items: center; }
   .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; border-radius: 8px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
   @media (max-width: 899px) {
@@ -640,20 +641,11 @@
           <button type="button" class="btn primary" id="export" aria-haspopup="true" aria-expanded="false">Download</button>
           <div class="dlmenu" id="dlmenu" hidden role="menu"><button type="button" role="menuitem" id="dlpng">PNG image</button><button type="button" role="menuitem" id="djson">JSON file</button></div>
         </div>
+        <button type="button" class="btn" id="tbtn">Miniature</button>
         <button type="button" class="btn stbtn" id="stadd" disabled>Add to SillyTavern</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
-      <p class="hint" id="embedinfo"></p>
 
-      <div style="display:grid;gap:12px" class="minwrap">
-        <h2>In miniatura</h2>
-        <div class="minis">
-          <figure><canvas class="mini" data-w="140"></canvas><figcaption>140 px</figcaption></figure>
-          <figure><canvas class="mini" data-w="100"></canvas><figcaption>100 px</figcaption></figure>
-          <figure><canvas class="mini" data-w="64"></canvas><figcaption>64 px</figcaption></figure>
-        </div>
-        <p class="hint" id="smallcap"></p>
-      </div>
     </aside>
   </div>
   </div>
@@ -817,6 +809,11 @@
   <footer class="foot"><img src="wordmark.png" width="197" height="57" alt="ST Card Creator"></footer>
   <dialog class="wdlg cdlg" id="cdlg" aria-label="Cards"><div class="cin"><div class="chead"><b>Cards</b><span class="tk" id="ccount"></span><button type="button" class="btn quiet" id="cclose">Close</button></div><div class="cgrid" id="cgrid"></div></div></dialog>
   <dialog class="wdlg cdlg" id="sdlg" aria-label="SillyTavern cards"><div class="cin"><div class="chead"><b>SillyTavern cards</b><span class="tk" id="scount"></span><button type="button" class="btn quiet" id="sclose">Close</button></div><div class="cgrid" id="sgrid"></div></div></dialog>
+  <dialog class="wdlg cdlg tdlg" id="tdlg" aria-label="Thumbnails"><div class="cin"><div class="chead"><b>In miniatura</b><button type="button" class="btn quiet" id="tclose">Chiudi</button></div><div class="minis">
+<figure><canvas class="mini" data-w="140"></canvas><figcaption>140 px</figcaption></figure>
+<figure><canvas class="mini" data-w="100"></canvas><figcaption>100 px</figcaption></figure>
+<figure><canvas class="mini" data-w="64"></canvas><figcaption>64 px</figcaption></figure>
+</div><p class="hint" id="smallcap"></p></div></dialog>
   <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
@@ -1007,6 +1004,7 @@
  "Dimensione del file": "File size",
  "Scarica PNG": "Download PNG",
  "In miniatura": "Thumbnails",
+ "Miniature": "Thumbnails",
  "Carta": "Card",
  "Importa PNG o JSON": "Import PNG or JSON",
  "Scarica JSON": "Download JSON",
@@ -3757,6 +3755,9 @@
   }
   function openIdeas() { const d = $('hdlg'); drawIdeas(); if (!d.open) d.showModal(); }
   $('hclose').addEventListener('click', () => $('hdlg').close());
+  $('tbtn').addEventListener('click', () => { const d = $('tdlg'); try { drawMinis(); } catch (e) {} if (!d.open) d.showModal(); });
+  $('tclose').addEventListener('click', () => $('tdlg').close());
+  $('tdlg').addEventListener('click', e => { if (e.target === $('tdlg')) $('tdlg').close(); });
   $('hdlg').addEventListener('click', e => { if (e.target === $('hdlg')) $('hdlg').close(); });
   function addIdeasBtn() { const gi = $('genIdea'), hb = mk('button', 'wand xbtn'); hb.type = 'button'; hb.title = 'Previous ideas'; hb.setAttribute('aria-label', 'Previous ideas');
     hb.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" aria-hidden="true" focusable="false" style="display:block"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>';
