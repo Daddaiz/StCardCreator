@@ -128,6 +128,10 @@
   .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
   .presets.one { grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); }
   .pre { display: block; height: 32px; min-width: 40px; padding: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; background-color: transparent; background-repeat: no-repeat; forced-color-adjust: none; }
+  .presets.alt, .presets.one.alt { grid-template-columns: repeat(3, minmax(0, 1fr)) 34px; margin-top: -2px; }
+  .reroll { height: 32px; width: 34px; padding: 0; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+  .reroll svg { width: 16px; height: 16px; display: block; }
+  .reroll:hover, .reroll:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
   .pre:hover, .pre:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
   .colors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
   .color { display: flex; align-items: center; gap: 10px; font-size: 14px; }
@@ -592,6 +596,7 @@
         </div>
         <p class="subt sm2">Color presets</p>
         <div class="presets" id="pr-text"></div>
+        <div class="presets alt" id="pa-text"></div>
         <div><button type="button" class="btn quiet" id="reset">Ripristina lo stile</button></div>
       </div></details>
 
@@ -613,6 +618,7 @@
           </div>
           <p class="subt sm2">Color presets</p>
           <div class="presets" id="pr-frame"></div>
+          <div class="presets alt" id="pa-frame"></div>
         </div>
       </div></details>
 
@@ -645,7 +651,7 @@
           <div class="colors" data-show="maskFill=solid">
             <label class="color"><input type="color" data-k="maskColor"> Colore</label>
           </div>
-          <div data-show="maskFill=solid"><p class="subt sm2">Color presets</p><div class="presets one" id="pr-solid"></div></div>
+          <div data-show="maskFill=solid"><p class="subt sm2">Color presets</p><div class="presets one" id="pr-solid"></div><div class="presets alt one" id="pa-solid"></div></div>
 
           <div class="sub" data-show="maskFill=gradient">
             <div id="gbar" aria-hidden="true"></div>
@@ -658,6 +664,7 @@
             <div><button type="button" class="btn" id="addStop">Aggiungi un colore</button></div>
             <p class="subt sm2">Color presets</p>
             <div class="presets" id="pr-grad"></div>
+            <div class="presets alt" id="pa-grad"></div>
           </div>
 
           <div class="sub" data-show="maskFill=image">
@@ -1644,6 +1651,57 @@
       box.appendChild(b);
     });
   }
+  /* Alternative casuali: stesse regole di leggibilità, ma tinte e tonalità scelte a caso intorno ai colori dell'immagine */
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const hueSet = P => [P.h1, P.h2, P.h1 + 30, P.h1 - 30, P.h1 + 180, P.h2 + 180, P.h1 + 120, P.h1 + 240, rnd(0, 360)];
+  const GENALT = {
+    text(P) {
+      const hb = pick(hueSet(P)), dark = Math.random() < 0.72, hn = hb + rnd(-20, 20), ha = pick([hb + 180, hb + rnd(140, 220), P.h2, P.h1, hb + rnd(25, 60)]);
+      const bg = dark ? hsl2hex(hb, rnd(0.15, 0.5), rnd(0.06, 0.17)) : hsl2hex(hb, rnd(0.2, 0.5), rnd(0.87, 0.94));
+      return dark
+        ? [fitContrast(hn, rnd(0.1, 0.4), rnd(0.9, 0.97), bg, 9), fitContrast(hn, rnd(0.1, 0.35), rnd(0.78, 0.88), bg, 6), fitContrast(ha, rnd(0.55, 0.85), rnd(0.55, 0.68), bg, 4.5), bg]
+        : [fitContrast(hn, rnd(0.3, 0.6), rnd(0.08, 0.16), bg, 9), fitContrast(hn, rnd(0.2, 0.45), rnd(0.2, 0.3), bg, 6), fitContrast(ha, rnd(0.55, 0.85), rnd(0.28, 0.38), bg, 4.5), bg];
+    },
+    frame(P) {
+      const h = pick(hueSet(P));
+      return Math.random() < 0.25
+        ? [hsl2hex(h, rnd(0.15, 0.35), rnd(0.84, 0.92)), hsl2hex(h + rnd(-15, 15), rnd(0.4, 0.7), rnd(0.35, 0.5))]
+        : [hsl2hex(h, rnd(0.5, 0.85), rnd(0.55, 0.7)), hsl2hex(h + rnd(-25, 25), rnd(0.4, 0.7), rnd(0.26, 0.4))];
+    },
+    solid(P) { return [hsl2hex(pick(hueSet(P)), rnd(0.12, 0.45), rnd(0.06, 0.3))]; },
+    grad(P) {
+      const h = pick(hueSet(P)), d = rnd(20, 70) * (Math.random() < 0.5 ? -1 : 1), s0 = rnd(0.25, 0.5);
+      const L = [rnd(0.08, 0.18), rnd(0.16, 0.3), rnd(0.05, 0.1)];
+      if (Math.random() < 0.3) L.reverse();
+      return [hsl2hex(h, s0, L[0]), hsl2hex(h + d, s0, L[1]), hsl2hex(h + d * 2, s0, L[2])];
+    }
+  };
+  const ALT = { text: [], frame: [], solid: [], grad: [] };
+  let ALTKEY;
+  const REROLL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>';
+  function altRow(id, kind, P, apply, title) {
+    const box = $(id); if (!box) return;
+    const fresh = () => { ALT[kind] = [GENALT[kind](P), GENALT[kind](P), GENALT[kind](P)]; };
+    if (ALTKEY !== PALKEY || ALT[kind].length !== 3) fresh();
+    const draw = () => {
+      box.textContent = '';
+      ALT[kind].forEach((cols, i) => {
+        const b = mk('button', 'pre'); b.type = 'button'; b.title = 'Alternative ' + (i + 1) + ': ' + title; b.setAttribute('aria-label', b.title + ' (' + cols.join(', ') + ')');
+        const n = cols.length;
+        b.style.backgroundImage = 'linear-gradient(90deg,' + cols.map((c, k) => c + ' ' + (k * 100 / n) + '% ' + ((k + 1) * 100 / n) + '%').join(',') + ')';
+        b.addEventListener('click', () => { apply(cols); syncUI(); schedule(); save(); });
+        box.appendChild(b);
+      });
+      const r = mk('button', 'reroll'); r.type = 'button'; r.innerHTML = REROLL_SVG; r.title = 'Generate new alternatives'; r.setAttribute('aria-label', 'Generate new alternatives');
+      r.addEventListener('click', () => {
+        fresh(); draw();
+        const n = $(id).querySelector('.reroll svg'); if (n && GFX && n.animate) n.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 450, easing: 'ease-out' });
+      });
+      box.appendChild(r);
+    };
+    draw();
+  }
   function buildPresets() { try { buildPresets2(); } catch (e) { /* ignora */ } }
   function buildPresets2() {
     if (!$('pr-text')) return;
@@ -1662,7 +1720,8 @@
       const bg = hsl2hex(h1, Math.min(0.4, s1), 0.9);
       text.push([fitContrast(h1, 0.5, 0.13, bg, 9), fitContrast(h1, 0.3, 0.25, bg, 6), fitContrast(h2, 0.75, 0.32, bg, 4.5), bg]);
     }
-    presetBlocks('pr-text', text, c => { S.nameColor = c[0]; S.descColor = c[1]; S.accent = c[2]; S.panelColor = c[3]; }, i => ['Night tones from the image', 'Complementary accent', 'Light panel with dark text'][i] + ' (name, description, accent, background)');
+    const aText = c => { S.nameColor = c[0]; S.descColor = c[1]; S.accent = c[2]; S.panelColor = c[3]; };
+    presetBlocks('pr-text', text, aText, i => ['Night tones from the image', 'Complementary accent', 'Light panel with dark text'][i] + ' (name, description, accent, background)');
     /* Cornice: [bordo esterno, bordo interno] */
     const frame = [
       [hsl2hex(h1, 0.65, 0.62), hsl2hex(h1, 0.55, 0.36)],
@@ -1670,14 +1729,16 @@
       [hsl2hex(h1, 0.25, 0.88), hsl2hex(h1, 0.5, 0.45)],
       ['#e0a63a', hsl2hex(36, 0.62, 0.28)]
     ];
-    presetBlocks('pr-frame', frame, c => { S.frame1Color = c[0]; S.frame2Color = c[1]; }, () => 'Outer border, inner border');
+    const aFrame = c => { S.frame1Color = c[0]; S.frame2Color = c[1]; };
+    presetBlocks('pr-frame', frame, aFrame, () => 'Outer border, inner border');
     /* Maschera in tinta unita: 10 colori */
     const solid = [
       hsl2hex(h1, sl, 0.07), hsl2hex(h1, sl, 0.11), hsl2hex(h1, sl, 0.16), hsl2hex(h1, sl, 0.23),
       hsl2hex(h2, Math.min(s2, 0.4), 0.12), hsl2hex(h2, Math.min(s2, 0.4), 0.2),
       hsl2hex(h1 + 180, 0.25, 0.12), '#0d0f13', hsl2hex(h1, 0.2, 0.36), hsl2hex(h1, 0.28, 0.86)
     ];
-    presetBlocks('pr-solid', solid.map(c => [c]), c => { S.maskColor = c[0]; }, () => 'Solid color');
+    const aSolid = c => { S.maskColor = c[0]; };
+    presetBlocks('pr-solid', solid.map(c => [c]), aSolid, () => 'Solid color');
     /* Maschera a gradiente: 5 blocchi da 3 colori */
     const grad = [
       [hsl2hex(h1, 0.4, 0.1), hsl2hex(h1, 0.35, 0.24), hsl2hex(h1, 0.4, 0.07)],
@@ -1686,7 +1747,13 @@
       [hsl2hex(h1, 0.45, 0.14), hsl2hex(h2, 0.4, 0.22), hsl2hex(h2, 0.4, 0.08)],
       [hsl2hex(h1, 0.3, 0.3), hsl2hex(h1, 0.35, 0.16), hsl2hex(h1, 0.4, 0.06)]
     ];
-    presetBlocks('pr-grad', grad, c => { S.stops = [{ p: 0, c: c[0] }, { p: 50, c: c[1] }, { p: 100, c: c[2] }]; }, () => 'Gradient colors');
+    const aGrad = c => { S.stops = [{ p: 0, c: c[0] }, { p: 50, c: c[1] }, { p: 100, c: c[2] }]; };
+    presetBlocks('pr-grad', grad, aGrad, () => 'Gradient colors');
+    altRow('pa-text', 'text', P, aText, 'text colors (name, description, accent, background)');
+    altRow('pa-frame', 'frame', P, aFrame, 'frame colors');
+    altRow('pa-solid', 'solid', P, aSolid, 'solid color');
+    altRow('pa-grad', 'grad', P, aGrad, 'gradient colors');
+    ALTKEY = PALKEY;
   }
 
   function ensureFonts() {
