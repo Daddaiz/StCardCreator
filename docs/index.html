@@ -3025,6 +3025,66 @@
     const c = cv.getContext('2d');
     const still = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
     let W = 0, H = 0, P = [], t = 0, last = 0;
+    /* Fontana di carte: dieci carte lanciate dal basso a ventaglio, poi ricadono per gravità */
+    const CW0 = 100, CH0 = 150, NC = 10;
+    let cardImg = null, cardSpr = null, cardScale = 1, cards = [], cardWait = 2.2, cardOn = false;
+    (function loadCard() {
+      const src = document.querySelector('.flip-back img');
+      if (!src) return;
+      const im = new Image();
+      im.onload = () => { cardImg = im; cardSpr = null; };
+      im.src = src.currentSrc || src.src;
+    })();
+    function sprite() {
+      const d = Math.min(window.devicePixelRatio || 1, 2), k = W < 600 ? 0.7 : 1;
+      cardScale = k;
+      const w = Math.round(CW0 * k * d), h = Math.round(CH0 * k * d);
+      const o = document.createElement('canvas'); o.width = w; o.height = h;
+      const x = o.getContext('2d'); x.imageSmoothingQuality = 'high';
+      let im = cardImg, cw = im.naturalWidth, ch = im.naturalHeight;
+      while (cw / 2 > w) { const t2 = document.createElement('canvas'); cw = Math.round(cw / 2); ch = Math.round(ch / 2); t2.width = cw; t2.height = ch; const x2 = t2.getContext('2d'); x2.imageSmoothingQuality = 'high'; x2.drawImage(im, 0, 0, cw, ch); im = t2; }
+      x.drawImage(im, 0, 0, w, h);
+      cardSpr = o;
+    }
+    function launch() {
+      const G = Math.max(900, H * 1.25), cx = W * (0.4 + Math.random() * 0.2);
+      cards = Array.from({ length: NC }, (_, i) => {
+        const ang = (Math.random() * 2 - 1) * 0.42;
+        const apex = H * (0.5 + Math.random() * 0.4);
+        const vy = -Math.sqrt(2 * G * apex);
+        return { delay: i * 0.07 + Math.random() * 0.08, x: cx + (Math.random() - 0.5) * 60, y: H + 90, vx: -vy * Math.tan(ang) * (0.8 + Math.random() * 0.4), vy: vy * (0.94 + Math.random() * 0.12), G,
+          rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 5, ry: Math.random() * 6.28, vry: (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 3.5), live: true };
+      });
+      cardOn = true;
+    }
+    function stepCards(dt) {
+      if (!cardImg) return;
+      if (!cardOn) { cardWait -= dt; if (cardWait <= 0) launch(); return; }
+      let alive = 0;
+      cards.forEach(k => {
+        if (!k.live) return;
+        if (k.delay > 0) { k.delay -= dt; alive++; return; }
+        k.vy += k.G * dt; k.vx *= 1 - 0.12 * dt;
+        k.x += k.vx * dt; k.y += k.vy * dt; k.rot += k.vr * dt; k.ry += k.vry * dt;
+        if (k.vy > 0 && k.y > H + 110) k.live = false; else alive++;
+      });
+      if (!alive) { cardOn = false; cardWait = 5 + Math.random() * 5; }
+    }
+    function drawCards() {
+      if (!cardOn || !cardImg) return;
+      if (!cardSpr) sprite();
+      const w = CW0 * cardScale, h = CH0 * cardScale;
+      cards.forEach(k => {
+        if (!k.live || k.delay > 0) return;
+        const sx = Math.cos(k.ry), a = Math.max(Math.abs(sx), 0.1) * Math.sign(sx || 1);
+        c.save();
+        c.translate(k.x, k.y); c.rotate(k.rot); c.scale(a, 1);
+        c.shadowColor = 'rgba(0,0,0,0.4)'; c.shadowBlur = 14; c.shadowOffsetY = 6;
+        c.globalAlpha = 0.55 + 0.4 * Math.abs(sx);
+        c.drawImage(cardSpr, -w / 2, -h / 2, w, h);
+        c.restore();
+      });
+    }
     const spawn = init => ({ x: Math.random() * W, y: init ? Math.random() * H : H + 12, r: 0.5 + Math.random() * 1.4, vy: 0.07 + Math.random() * 0.2, ph: Math.random() * 6.28, sp: 0.5 + Math.random() * 0.9, sw: 5 + Math.random() * 14, tone: Math.random() < 0.7 ? 0 : 1 });
     function size() {
       const d = Math.min(window.devicePixelRatio || 1, 2);
@@ -3047,12 +3107,13 @@
         c.fillStyle = 'rgba(' + col + ',' + a.toFixed(3) + ')';
         c.beginPath(); c.arc(x, p.y, p.r, 0, 6.2832); c.fill();
       });
+      drawCards();
     }
     function frame(ts) {
       requestAnimationFrame(frame);
-      if (document.hidden || ts - last < 33) return;
-      const dt = Math.min((ts - last) / 1000, 0.1); last = ts;
-      t += dt;
+      if (document.hidden) { last = ts; return; }
+      const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
+      t += dt; stepCards(dt);
       P.forEach(p => { p.y -= p.vy * dt * 60; if (p.y < -12) Object.assign(p, spawn(false)); });
       paint();
     }
