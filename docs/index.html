@@ -1145,9 +1145,9 @@
  "Posizione del punto {n}": "Position of point {n}",
  "Aggiunti da te": "Added by you",
  "Fantascienza e tech": "Sci-fi and tech",
- "Eleganti con grazie": "Elegant serif",
+ "Eleganti con grazie": "Elegant",
  "Senza grazie": "Sans-serif",
- "Corsivi e a mano": "Script and handwritten",
+ "Corsivi e a mano": "Script",
  "Nessun font con questo nome. Prova ad aggiungerlo qui sotto.": "No font with this name. Try adding it below.",
  "Cerco il font…": "Looking for the font…",
  "Aggiunto: {f}": "Added: {f}",
@@ -1381,7 +1381,7 @@
 
   /* ---------- Lista dei font ---------- */
   const list = $('flist'), search = $('fsearch');
-  let FCAT = 'all';
+  let FCAT = 'fantasy';
   function buildList() {
     const q = search.value.trim().toLowerCase();
     let groups = [];
@@ -1390,14 +1390,14 @@
     CATS.forEach(c => groups.push({ id: c.id, label: tr(c.label), fonts: c.fonts }));
     if (custom.length) groups[0].id = 'custom';
     const cats = $('fcats');
-    if (!groups.some(g => g.id === FCAT)) FCAT = 'all';
+    if (!groups.some(g => g.id === FCAT)) FCAT = groups[0].id;
     cats.textContent = '';
-    [{ id: 'all', label: 'All' }].concat(groups.map(g => ({ id: g.id, label: g.label }))).forEach(c => {
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = c.label; b.setAttribute('aria-pressed', String(c.id === FCAT));
-      b.addEventListener('click', () => { FCAT = c.id; buildList(); });
+    groups.map(g => ({ id: g.id, label: g.label })).forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = c.label; b.setAttribute('aria-pressed', String(c.id === FCAT && !q));
+      b.addEventListener('click', () => { FCAT = c.id; if (search.value) search.value = ''; buildList(); });
       cats.appendChild(b);
     });
-    if (FCAT !== 'all') groups = groups.filter(g => g.id === FCAT);
+    if (!q) groups = groups.filter(g => g.id === FCAT);
     const cur = S[target + 'Font'];
     list.textContent = '';
     let any = false;
@@ -1423,7 +1423,7 @@
       list.appendChild(p);
     }
     const sel = list.querySelector('[aria-pressed="true"]');
-    if (sel && !q && FCAT === 'all') list.scrollTop = Math.max(0, sel.offsetTop - list.clientHeight / 2 + 18);
+    if (sel && !q) list.scrollTop = Math.max(0, sel.offsetTop - list.clientHeight / 2 + 18);
   }
   function syncTabs() {
     $('tabName').setAttribute('aria-pressed', String(target === 'name'));
