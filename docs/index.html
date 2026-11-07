@@ -368,6 +368,12 @@
   body.starting .app { visibility: hidden; }
   .start { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; overflow: auto; padding: 24px 16px 150px; }
   .start[hidden] { display: none; }
+  @keyframes dlgIn { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes bdIn { from { opacity: 0; } to { opacity: 1; } }
+  dialog[open] { animation: dlgIn .2s ease-out; }
+  dialog[open]::backdrop { animation: bdIn .2s ease-out; }
+  @media (prefers-reduced-motion: reduce) { dialog[open], dialog[open]::backdrop { animation: none; } }
+  .dghost { position: fixed; z-index: 150; pointer-events: none; margin: 0 !important; inset: auto; }
   body.flying { overflow: hidden; }
   body.flying .start, body.flying .app { transform-origin: 50% 50%; will-change: transform, opacity; }
   .stin { position: relative; z-index: 1; display: grid; justify-items: center; gap: 18px; width: min(1000px, 100%); }
@@ -4128,6 +4134,41 @@
     window.scrollTo(0, 0);
   }
   function resumeTarget() { const d = loadDrafts(); return d.list.find(x => x.id === d.cur) || d.list[0] || null; }
+  /* Finestre: entrata con dissolvenza rapida, uscita "come fumo" su una copia che non intercetta i click */
+  (function () {
+    const oc = HTMLDialogElement.prototype.close;
+    function ghost(d) {
+      try {
+        const r = d.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        const bd = getComputedStyle(d, '::backdrop').backgroundColor;
+        const g = d.cloneNode(true);
+        g.removeAttribute('id'); g.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+        g.setAttribute('open', ''); g.setAttribute('inert', ''); g.classList.add('dghost');
+        g.style.cssText = 'left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;animation:none;';
+        const oc2 = d.querySelectorAll('canvas'), gc = g.querySelectorAll('canvas');
+        oc2.forEach((c, i) => { try { gc[i].getContext('2d').drawImage(c, 0, 0); } catch (e) {} });
+        const ot = d.querySelectorAll('textarea,input,select'), gt = g.querySelectorAll('textarea,input,select');
+        ot.forEach((c, i) => { try { gt[i].value = c.value; } catch (e) {} });
+        const b = document.createElement('div');
+        b.className = 'dghost'; b.style.cssText = 'inset:0;z-index:149;background:' + bd;
+        document.body.append(b, g);
+        const o = { duration: 420, easing: 'cubic-bezier(.3,.6,.4,1)', fill: 'forwards' };
+        b.animate([{ opacity: 1 }, { opacity: 0 }], o);
+        const a = g.animate([
+          { opacity: 1, transform: 'translateY(0) scale(1)', filter: 'blur(0px)' },
+          { opacity: 0.55, transform: 'translateY(-8px) scale(1.015)', filter: 'blur(3px)', offset: 0.4 },
+          { opacity: 0, transform: 'translateY(-26px) scale(1.04)', filter: 'blur(10px)' }], o);
+        a.onfinish = () => { g.remove(); b.remove(); };
+      } catch (e) { /* ignora */ }
+    }
+    HTMLDialogElement.prototype.close = function (rv) {
+      if (this.open && flyOk()) ghost(this);
+      return oc.call(this, rv);
+    };
+    document.addEventListener('cancel', e => { if (e.target instanceof HTMLDialogElement) { e.preventDefault(); e.target.close(); } }, true);
+  })();
+
   function showStartInfo() {
     const r = resumeTarget(), b = $('stResume'), sub = b.querySelector('small');
     b.disabled = !r;
@@ -4135,7 +4176,7 @@
   }
   /* Transizione "volo in avanti": la schermata uscente vola verso il centro e svanisce, quella entrante arriva da dietro */
   let flyTok = 0;
-  const FLY_MS = 780;
+  const FLY_MS = 560;
   function flyOk() { return !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) && typeof Element.prototype.animate === 'function'; }
   function flyRun(outEl, inEl, done) {
     const tok = ++flyTok, b = document.body;
