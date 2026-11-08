@@ -3,7 +3,6 @@
 <p align="center">Make <a href="https://docs.sillytavern.app">SillyTavern</a> character cards in one place: the cover, the data, and the PNG with everything embedded.</p>
 
 <p align="center"><img src="docs/demo.gif" alt="ST Card Creator demo" width="800"></p>
-<p align="center"><a href="https://github.com/user-attachments/assets/3f06b4f8-472d-4f00-87a0-cca7e39b5522">Watch the full-quality video</a></p>
 
 ## Try it
 
