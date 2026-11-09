@@ -57,14 +57,44 @@ ipcMain.handle('st-request', async (e, req) => {
 function start() { app.whenReady().then(async () => {
   const port = await startServer();
   Menu.setApplicationMenu(null);
+  const saved = loadBounds();
   win = new BrowserWindow({
     width: 1280, height: Math.min(1075, screen.getPrimaryDisplay().workAreaSize.height), minWidth: 420, minHeight: 600,
+    ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : {}),
+    show: false, // appare solo quando la pagina è pronta: niente finestra vuota all'avvio
     backgroundColor: '#0f1217', title: 'ST Card Creator',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     // L'app carica solo i suoi file locali. webSecurity disattivata: serve per chiamare le API (OpenRouter, server locali, ecc.) senza blocchi CORS.
     webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
+  win.once('ready-to-show', () => { if (saved && saved.maximized) win.maximize(); win.show(); });
+  let bt = null;
+  const remember = () => { clearTimeout(bt); bt = setTimeout(saveBounds, 400); };
+  win.on('resize', remember); win.on('move', remember); win.on('maximize', remember); win.on('unmaximize', remember);
+  win.on('close', saveBounds);
   win.loadURL('http://127.0.0.1:' + port + '/');
 }); }
+
+// Posizione e dimensione della finestra: ricordate tra un avvio e l'altro (file nella cartella dati dell'app).
+const BOUNDS = () => path.join(app.getPath('userData'), 'window.json');
+function loadBounds() {
+  try {
+    const b = JSON.parse(fs.readFileSync(BOUNDS(), 'utf8'));
+    if (!b || typeof b.width !== 'number' || typeof b.height !== 'number') return null;
+    // Solo se la finestra cade ancora dentro uno schermo collegato (es. monitor esterno scollegato)
+    const d = screen.getDisplayMatching({ x: b.x, y: b.y, width: b.width, height: b.height }).workArea;
+    const inside = b.x + b.width > d.x + 40 && b.x < d.x + d.width - 40 && b.y >= d.y - 10 && b.y < d.y + d.height - 40;
+    const o = { width: Math.min(b.width, d.width), height: Math.min(b.height, d.height), maximized: !!b.maximized };
+    if (inside) { o.x = b.x; o.y = b.y; }
+    return o;
+  } catch (e) { return null; }
+}
+function saveBounds() {
+  if (!win || win.isDestroyed()) return;
+  try {
+    const b = win.isMaximized() ? win.getNormalBounds() : win.getBounds();
+    fs.writeFileSync(BOUNDS(), JSON.stringify({ ...b, maximized: win.isMaximized() }));
+  } catch (e) { /* ignora */ }
+}
 app.on('window-all-closed', () => app.quit());

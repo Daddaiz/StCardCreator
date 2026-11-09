@@ -1,4 +1,4 @@
-<p align="center"><img src="app/wordmark.png" width="260" alt="ST Card Creator"></p>
+<p align="center"><img src="app/wordmark.webp" width="260" alt="ST Card Creator"></p>
 
 <p align="center">Make <a href="https://docs.sillytavern.app">SillyTavern</a> character cards in one place: the cover, the data, and the PNG with everything embedded.</p>
 
