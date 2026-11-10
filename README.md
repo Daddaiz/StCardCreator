@@ -1,7 +1,7 @@
 <p align="center"><img src="app/logo.webp" width="150" alt="ST Card Creator logo"></p>
 <p align="center"><img src="app/wordmark.webp" width="260" alt="ST Card Creator"></p>
 
-<p align="center">Make <a href="https://docs.sillytavern.app">SillyTavern</a> cards Creator</p>
+<p align="center">Another <a href="https://docs.sillytavern.app">SillyTavern</a> cards Creator</p>
 
 <p align="center"><a href="https://daddaiz.github.io/StCardCreator/"><b>Try it online</b></a> · <a href="https://github.com/Daddaiz/StCardCreator/releases/latest"><b>Download</b></a></p>
 
