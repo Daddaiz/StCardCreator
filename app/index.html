@@ -508,8 +508,8 @@
   .cin { padding: 16px; display: grid; gap: 14px; }
   .chead { display: flex; align-items: center; gap: 12px; }
   .chead b { font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
-  .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
-  @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font-size: 30px; } }
+  .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
+  @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, .atitle.big { font-size: 30px; } }
   .chead .btn { margin-left: auto; }
   dialog.gdlg { width: min(820px, calc(100vw - 32px)); }
   .gdlg .chead { position: sticky; top: 0; z-index: 2; background: var(--surface); margin: -16px -16px 0; padding: 14px 16px; border-bottom: 1px solid var(--line); }
@@ -530,6 +530,45 @@
   .ccard .tk { display: block; white-space: normal; overflow-wrap: anywhere; }
   .cbtn { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   dialog.wdlg::backdrop { background: rgba(0,0,0,0.55); }
+
+  /* Test chat */
+  dialog.pdlg { width: min(880px, calc(100vw - 32px)); height: min(860px, calc(100vh - 48px)); overflow: hidden; }
+  dialog.pdlg::backdrop { background: rgba(6, 8, 12, 0.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  .pdlg .cin { height: 100%; grid-template-rows: auto minmax(0, 1fr) auto auto auto; }
+  .plog { overflow-y: auto; align-content: start; border: 1px solid var(--line); border-radius: 8px; background: var(--stage); scroll-behavior: smooth; }
+  .pmsg { display: grid; grid-template-columns: 50px minmax(0, 1fr); gap: 4px 14px; padding: 12px 14px; }
+  .pmsg + .pmsg { border-top: 1px solid var(--line); }
+  .pav { grid-row: 1 / span 3; width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1px solid var(--line); background: var(--raised); }
+  .pav.usr { object-fit: cover; object-position: 78% 50%; border-color: var(--gold); background: radial-gradient(circle at 50% 45%, #4a4258, #1d1a26 75%); }
+  .phead { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .phead b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .phead .tk { margin-left: auto; }
+  .ptext { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+  .ptext em { color: var(--muted); }
+  .ptext .pq { color: var(--warn); }
+  .pmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+  .pmeta .tk { white-space: normal; }
+  .pchip { font: 400 12px var(--font-mono); color: var(--muted); border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+  .pswipe { display: inline-flex; align-items: center; gap: 6px; }
+  .pswipe button { width: 26px; height: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--fg); font: inherit; line-height: 1; cursor: pointer; }
+  .pswipe button:hover:not(:disabled) { border-color: var(--gold); }
+  .pswipe button:disabled { opacity: 0.4; cursor: default; }
+  .pdots { display: inline-flex; gap: 5px; padding: 6px 0; }
+  .pdots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: pdot 1.1s ease-in-out infinite; }
+  .pdots i:nth-child(2) { animation-delay: 0.15s; } .pdots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes pdot { 0%, 60%, 100% { opacity: 0.25; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+  html.nogfx .pdots i { animation: none; opacity: 0.6; }
+  @media (prefers-reduced-motion: reduce) { .pdots i { animation: none; opacity: 0.6; } }
+  .pempty { padding: 28px 16px; text-align: center; color: var(--muted); }
+  .pbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+  .pbar textarea { width: 100%; min-height: 46px; max-height: 180px; resize: none; padding: 10px 11px; border: 1px solid var(--line); border-radius: 7px; background: var(--raised); color: var(--fg); font: inherit; }
+  .pbar textarea:focus { outline: none; border-color: var(--gold); }
+  .pbar .btn { min-width: 84px; height: 46px; }
+  .pfoot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pfoot .hint { margin: 0 0 0 auto; }
+  .pdlg #pstat:empty { display: none; }
+  .export .pcbtn { grid-column: 1 / -1; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+  .export .pcbtn:disabled { opacity: 0.5; }
   .wd { display: grid; gap: 14px; padding: 18px; }
   .wdh { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
   .wdh h3 { margin: 0; font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
@@ -861,6 +900,7 @@
         <button type="button" class="btn" id="tbtn">Miniature</button>
         <button type="button" class="btn stbtn" id="stadd" disabled>Add to SillyTavern</button>
         <button type="button" class="btn ckbtn" id="ckbtn" disabled title="Needs a configured API"><span aria-hidden="true">🪄</span> Consistency check</button>
+        <button type="button" class="btn pcbtn" id="pcbtn" disabled title="Needs a configured API"><span aria-hidden="true">💬</span> Test chat</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
 
@@ -1062,6 +1102,7 @@
 <figure><canvas class="mini" data-w="64"></canvas><figcaption>64 px</figcaption></figure>
 </div><p class="hint" id="smallcap"></p></div></dialog>
   <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
+  <dialog class="wdlg cdlg pdlg" id="pdlg" aria-label="Test chat"><div class="cin"><div class="chead"><b>Test chat</b><span class="tk" id="psum"></span><button type="button" class="btn quiet" id="pclose">Close</button></div><div class="plog" id="plog" aria-live="polite"></div><p class="hint" id="pstat" role="status"></p><div class="pbar"><textarea id="pin" rows="1" spellcheck="false" placeholder="Type a message as User. Enter sends, Shift+Enter goes to a new line." aria-label="Your message"></textarea><button type="button" class="btn primary" id="psend">Send</button></div><div class="pfoot"><button type="button" class="btn" id="pregen">Regenerate</button><button type="button" class="btn" id="prestart">Restart</button><p class="hint">Nothing is saved, and SillyTavern is not touched.</p></div></div></dialog>
   <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><button type="button" class="wand" id="gall" title="Regenerate everything" aria-label="Regenerate everything">🪄</button><span class="tk" id="gtk"></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div><div class="krow"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></div></div></dialog>
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
@@ -4158,7 +4199,7 @@
   /* Se si chiude con Esc dalla pagina dei risultati, il voto viene comunque calcolato */
   $('qdlg').addEventListener('close', () => { if (CKST === 'findings' && CKITEMS.length) { CKSCORE = ckScoreCalc(CKITEMS); CKSCORE.thumb = ckThumb(); ckBadge(CKSCORE); } if (CKST === 'wait' && CKCTL) CKCTL.abort(); CKST = 'idle'; ckReveal(); });
   $('qbadge').addEventListener('click', () => { if (!CKSCORE) return; const d = $('qdlg'); if (!d.open) d.showModal(); ckScoreDraw(CKSCORE, false); });
-  function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; }
+  function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; const c = $('pcbtn'); c.disabled = !on; c.title = on ? 'Chat with this card to hear how it speaks. Nothing is saved.' : 'Needs a configured API'; }
 
   /* Bozze salvate nel browser */
   const DKEY = 'st-card-creator-drafts-v1';
@@ -5722,6 +5763,153 @@
     window.scrollTo(0, 0);
   }
   function resumeTarget() { const d = loadDrafts(); return d.list.find(x => x.id === d.cur) || d.list[0] || null; }
+  /* ---------- Test chat: prova la carta con l'API configurata. Niente viene salvato e SillyTavern non viene toccato ---------- */
+  const PC = { msgs: [], greet: 0, busy: false, ctl: null, charAv: '', userAv: '' };
+  /* Prompt principale predefinito di SillyTavern: usato se la carta non ne ha uno suo */
+  const PC_MAIN = "Write {{char}}'s next reply in a fictional chat between {{char}} and {{user}}.";
+  const pcName = () => (K.name || '').trim() || 'Character';
+  const pcSub = t => bkSub(String(t || '').replace(/\{\{\s*original\s*\}\}/gi, PC_MAIN)).trim();
+  const pcGreets = () => [K.first_mes].concat(K.alt || []).map(x => str(x)).filter(x => x.trim());
+  /* Voci del lorebook attive: quelle costanti, più quelle con una parola chiave negli ultimi messaggi */
+  function pcLore() {
+    const scan = PC.msgs.slice(-4).map(m => m.text).join('\n').toLowerCase();
+    return (K.entries || []).filter(e => e.enabled && str(e.content).trim() && (e.constant || str(e.keys).split(',').map(k => k.trim().toLowerCase()).filter(Boolean).some(k => scan.includes(k))))
+      .sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+  /* Stessa struttura che SillyTavern manda al modello: prompt principale, descrizione, personalità, scenario, lorebook, esempi, note */
+  function pcSystem(lore) {
+    const t = k => str(K[k]).trim(), out = [];
+    out.push(pcSub(t('system_prompt') || PC_MAIN));
+    if (t('description')) out.push(pcSub(t('description')));
+    if (t('personality')) out.push(pcSub("{{char}}'s personality: " + t('personality')));
+    if (t('scenario')) out.push(pcSub('Scenario: ' + t('scenario')));
+    lore.forEach(e => out.push(pcSub(e.content)));
+    t('mes_example').split(/<START>/i).map(x => x.trim()).filter(Boolean).forEach(x => out.push('[Example Chat]\n' + pcSub(x)));
+    if (t('dp_prompt')) out.push(pcSub(t('dp_prompt')));
+    if (t('post_history')) out.push(pcSub(t('post_history')));
+    return out.join('\n\n');
+  }
+  function pcRequest(lore) {
+    const sys = pcSystem(lore), nm = pcName();
+    if (PROVS[API.prov].kind === 'sample') {
+      const log = PC.msgs.map(m => (m.role === 'user' ? 'User' : nm) + ': ' + m.text).join('\n\n');
+      return [{ role: 'system', content: sys }, { role: 'user', content: '[Start a new Chat]\n\n' + log + '\n\nWrite only the next reply of ' + nm + ', without the name in front.' }];
+    }
+    const msgs = [{ role: 'system', content: sys }];
+    if (!PC.msgs.length || PC.msgs[0].role !== 'user') msgs.push({ role: 'user', content: '[Start a new Chat]' });
+    PC.msgs.forEach(m => msgs.push({ role: m.role, content: m.text }));
+    return msgs;
+  }
+  const pcEsc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  /* Come in SillyTavern: "battute" colorate, *azioni* in corsivo, **forte** in grassetto */
+  const pcFmt = s => pcEsc(s)
+    .replace(/"([^"\n]+)"|“([^”\n]+)”/g, m => '<span class="pq">' + m + '</span>')
+    .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+  function pcAvatars() {
+    PC.userAv = document.querySelector('.stlogo').getAttribute('src');
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 120;
+      const x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+      /* Dall'immagine della carta, senza titolo e cornice: quadrato in alto al centro, dove di solito c'è il volto */
+      const im = IMG || (sampleOk ? SAMPLE : null), w = im && (im.naturalWidth || im.width), hh = im && (im.naturalHeight || im.height);
+      if (w && hh) { const s = Math.min(w, hh) * 0.8; x.drawImage(im, (w - s) / 2, (hh - s) * 0.2, s, s, 0, 0, 120, 120); }
+      else x.drawImage(card, card.width * 0.125, card.height * 0.1, card.width * 0.75, card.width * 0.75, 0, 0, 120, 120);
+      PC.charAv = c.toDataURL('image/jpeg', 0.88);
+    } catch (e) { PC.charAv = PC.userAv; }
+  }
+  function pcRender() {
+    const log = $('plog'), nm = pcName(), greets = pcGreets();
+    log.textContent = '';
+    if (!PC.msgs.length && !PC.busy) { const p = mk('p', 'pempty'); p.textContent = 'This card has no first message: write to start the chat.'; log.appendChild(p); }
+    const row = (m, i) => {
+      const r = mk('div', 'pmsg'), user = m.role === 'user';
+      const av = mk('img', 'pav' + (user ? ' usr' : '')); av.alt = ''; av.src = user ? PC.userAv : PC.charAv;
+      const hd = mk('div', 'phead'), b = mk('b'), tk = mk('span', 'tk');
+      b.textContent = user ? 'User' : nm; tk.textContent = '#' + (i + 1) + (m.text ? ' · ' + nf(tok(m.text)) + ' tokens' : '');
+      hd.append(b, tk);
+      const tx = mk('div', 'ptext');
+      if (m.wait) { const d = mk('span', 'pdots'); d.append(mk('i'), mk('i'), mk('i')); d.setAttribute('aria-label', 'Writing'); tx.appendChild(d); } else tx.innerHTML = pcFmt(m.text);
+      r.append(av, hd, tx);
+      const meta = mk('div', 'pmeta');
+      if (m.greet && greets.length > 1) {
+        const sw = mk('span', 'pswipe'), a = mk('button'), z = mk('button'), n = mk('span', 'tk');
+        a.type = z.type = 'button'; a.textContent = '‹'; z.textContent = '›'; a.title = 'Previous greeting'; z.title = 'Next greeting';
+        a.setAttribute('aria-label', a.title); z.setAttribute('aria-label', z.title);
+        n.textContent = (PC.greet + 1) + ' / ' + greets.length;
+        a.disabled = z.disabled = PC.busy || PC.msgs.length > 1;
+        a.onclick = () => pcStart((PC.greet - 1 + greets.length) % greets.length);
+        z.onclick = () => pcStart((PC.greet + 1) % greets.length);
+        sw.append(a, n, z); meta.appendChild(sw);
+        if (PC.msgs.length > 1) { const h = mk('span', 'tk'); h.textContent = 'Restart to change greeting'; meta.appendChild(h); }
+      }
+      (m.lore || []).forEach(t => { const c = mk('span', 'pchip'); c.textContent = t; c.title = 'Lorebook entry sent with this reply'; meta.appendChild(c); });
+      if (meta.childNodes.length) r.appendChild(meta);
+      log.appendChild(r);
+    };
+    PC.msgs.forEach(row);
+    if (PC.busy) row({ role: 'assistant', text: '', wait: true }, PC.msgs.length);
+    log.scrollTop = log.scrollHeight;
+    const s = $('psend'); s.textContent = PC.busy ? 'Stop' : 'Send'; s.classList.toggle('primary', !PC.busy);
+    $('pregen').disabled = PC.busy || !PC.msgs.some(m => m.role === 'user');
+    $('prestart').disabled = PC.busy || (PC.msgs.length <= 1 && !!greets.length) || !PC.msgs.length;
+    $('psum').textContent = nm + ' · ' + (String(API.model[API.prov] || '').trim() || PROVS[API.prov].name || API.prov);
+  }
+  function pcStart(g) {
+    if (PC.ctl) PC.ctl.abort();
+    const greets = pcGreets();
+    PC.greet = greets.length ? Math.max(0, Math.min(g || 0, greets.length - 1)) : 0;
+    PC.msgs = greets.length ? [{ role: 'assistant', text: pcSub(greets[PC.greet]), greet: true }] : [];
+    PC.busy = false; say('pstat', '', null, false); pcRender();
+  }
+  async function pcReply() {
+    if (PC.busy) return;
+    const lore = pcLore(), nm = pcName();
+    PC.busy = true; PC.ctl = new AbortController(); say('pstat', '', null, false); pcRender();
+    const ctl = PC.ctl;
+    try {
+      const r = await callLLM(pcRequest(lore), { signal: ctl.signal });
+      if (ctl !== PC.ctl) return;
+      let text = r.text.trim();
+      const pre = nm.toLowerCase() + ':'; if (text.toLowerCase().startsWith(pre)) text = text.slice(pre.length).trim();
+      PC.msgs.push({ role: 'assistant', text, lore: lore.map(e => str(e.title).trim() || str(e.keys).split(',')[0].trim()).filter(Boolean) });
+    } catch (e) {
+      if (ctl !== PC.ctl) return;
+      const k = errKey(e); say('pstat', k[0], k[1] || null, !(e && e.code === 'abort'));
+    } finally {
+      if (ctl === PC.ctl) { PC.busy = false; PC.ctl = null; pcRender(); if ($('pdlg').open) $('pin').focus(); }
+    }
+  }
+  function pcSend() {
+    if (PC.busy) { if (PC.ctl) PC.ctl.abort(); return; }
+    const ta = $('pin'), text = ta.value.trim();
+    if (!text) return;
+    PC.msgs.push({ role: 'user', text }); ta.value = ''; pcGrow(); pcReply();
+  }
+  function pcGrow() { const ta = $('pin'); ta.style.height = 'auto'; ta.style.height = Math.min(180, ta.scrollHeight + 2) + 'px'; }
+  function pcOpen() {
+    if (!apiReady()) return;
+    pcAvatars(); pcStart(0);
+    const d = $('pdlg'); if (!d.open) d.showModal();
+    $('pin').value = ''; pcGrow(); $('pin').focus();
+  }
+  $('pcbtn').addEventListener('click', pcOpen);
+  $('pclose').addEventListener('click', () => $('pdlg').close());
+  /* Click fuori dalla finestra: si torna all'app */
+  $('pdlg').addEventListener('mousedown', e => { PC.down = e.target === $('pdlg'); });
+  $('pdlg').addEventListener('click', e => { if (e.target === $('pdlg') && PC.down) $('pdlg').close(); });
+  $('pdlg').addEventListener('close', () => { if (PC.ctl) PC.ctl.abort(); PC.ctl = null; PC.busy = false; PC.msgs = []; });
+  $('psend').addEventListener('click', pcSend);
+  $('pin').addEventListener('input', pcGrow);
+  $('pin').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!PC.busy) pcSend(); } });
+  $('pregen').addEventListener('click', () => {
+    if (PC.busy) return;
+    const last = PC.msgs[PC.msgs.length - 1];
+    if (last && last.role === 'assistant' && !last.greet) PC.msgs.pop();
+    pcReply();
+  });
+  $('prestart').addEventListener('click', () => pcStart(PC.greet));
+
   /* Finestre: entrata con dissolvenza rapida, uscita "come fumo" su una copia che non intercetta i click */
   (function () {
     const oc = HTMLDialogElement.prototype.close;

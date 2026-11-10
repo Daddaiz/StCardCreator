@@ -15,6 +15,7 @@
 - **AI-assisted generation**: describe the idea in any language, pick the fields, get them written one by one in English. *Needs an API.*
 - **Lorebook**: import a lorebook JSON, or let the AI suggest entries from the description with proper names and focused trigger keywords
 - **Consistency check**: finds accidental contradictions (ages, looks, names), `{{char}}`/`{{user}}` misuse and leftover text
+- 💬 **Test chat**: talk to the card before exporting it, with the same prompt layout SillyTavern sends. Greetings to swipe, lorebook entries shown when they trigger, nothing saved. *Needs an API.*
 
 **Design**
 - Cover with image, name, tagline, fonts, frames, masks, and three palettes per color set taken from the image (with a shuffle button).
