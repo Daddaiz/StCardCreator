@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
 <title>ST Card Creator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,6 +38,7 @@
   }
 
   * { box-sizing: border-box; }
+  form { margin: 0 0 1em; }
   body {
     background: var(--bg);
     color: var(--fg);
@@ -481,7 +485,7 @@
   .xin.fin textarea { height: 100%; }
   .frow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .xh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-  .xh b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .xh b { font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
   .wand {
     flex: none; width: 28px; height: 24px; padding: 0; display: inline-grid; place-items: center; line-height: 1;
     font: 15px/1 "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
@@ -503,7 +507,7 @@
   .hempty { color: var(--muted); padding: 8px 2px; }
   .cin { padding: 16px; display: grid; gap: 14px; }
   .chead { display: flex; align-items: center; gap: 12px; }
-  .chead b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .chead b { font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
   .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
   @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font-size: 30px; } }
   .chead .btn { margin-left: auto; }
@@ -528,7 +532,7 @@
   dialog.wdlg::backdrop { background: rgba(0,0,0,0.55); }
   .wd { display: grid; gap: 14px; padding: 18px; }
   .wdh { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-  .wdh h3 { margin: 0; font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .wdh h3 { margin: 0; font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
   .wexc { white-space: pre-wrap; max-height: 150px; overflow: auto; font-size: 13px; line-height: 1.45; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--muted); }
   .wq { display: grid; gap: 6px; }
   .wq b { font-size: 13px; font-weight: 500; }
@@ -635,7 +639,7 @@
       <button type="button" class="sbtn" id="stResume" data-start="resume"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7.5V12l3 2"/></svg><b>Resume</b><small>Nothing saved yet.</small></button>
       <button type="button" class="sbtn" data-start="cards"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect x="3" y="7" width="12" height="14" rx="2"/><path d="M8 3h11a2 2 0 0 1 2 2v12"/></svg><b>Cards</b><small>Browse, edit or delete every card saved in this browser.</small></button>
       <button type="button" class="sbtn" data-start="png"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg><b>Edit your PNG</b><small>Add text and frames to a finished image.</small></button>
-      <button type="button" class="sbtn" data-start="gen"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M11 3l1.9 5.4L18.5 10l-5.6 1.7L11 17l-1.9-5.3L3.5 10l5.6-1.6z"/><path d="M19 15v5M16.5 17.5h5"/></svg><b>IA Generation</b><small>Let the AI draft a card from your idea. Needs an API.</small></button>
+      <button type="button" class="sbtn" data-start="gen"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M11 3l1.9 5.4L18.5 10l-5.6 1.7L11 17l-1.9-5.3L3.5 10l5.6-1.6z"/><path d="M19 15v5M16.5 17.5h5"/></svg><b>AI Generation</b><small>Let the AI draft a card from your idea. Needs an API.</small></button>
       <button type="button" class="sbtn" data-start="import"><svg class="sic" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v3h16v-3"/></svg><b>Import</b><small>Load a card PNG or JSON to edit its text.</small></button>
     </div>
     <div id="upd" class="upd" role="status" hidden><span id="updTxt"></span><a id="updLink" href="https://github.com/Daddaiz/stcardcreator/releases/latest" target="_blank" rel="noopener">Download</a><button type="button" id="updX" aria-label="Dismiss">×</button></div>
@@ -2372,7 +2376,7 @@
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', schedule);
 
   /* ---------- Esportazione ---------- */
-  const slug = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'carta';
+  const slug = s => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'carta';
   async function saveBlob(blob, filename) {
     let dl = null;
     try { if (typeof claude !== 'undefined' && claude.use) dl = await claude.use('downloads'); } catch (e) { dl = null; }
@@ -2505,11 +2509,17 @@
 
   const mk = (t, c) => { const e = document.createElement(t); if (c) e.className = c; return e; };
   const nf = n => n.toLocaleString(LANG === 'en' ? 'en-US' : 'it-IT');
+  /* Stima dei token. I testi lunghi restano in memoria: a ogni tasto si ricalcola solo il campo che cambia */
+  const TOKC = new Map();
   const tok = s => {
     if (!s) return 0;
-    const parts = String(s).match(/[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu) || [];
+    s = String(s);
+    const long = s.length > 200;
+    if (long) { const hit = TOKC.get(s); if (hit !== undefined) return hit; }
+    const parts = s.match(/[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu) || [];
     let n = 0;
-    for (const p of parts) n += /^[\p{L}\p{N}]+$/u.test(p) ? Math.max(1, Math.ceil(p.length / 4)) : 1;
+    for (const p of parts) n += /^[\p{L}\p{N}]/u.test(p) ? Math.max(1, Math.ceil(p.length / 4)) : 1;
+    if (long) { if (TOKC.size > 400) TOKC.clear(); TOKC.set(s, n); }
     return n;
   };
   const split = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
@@ -4882,7 +4892,7 @@
   function genReady() {
     const ok = apiReady(), has = $('genIdea').value.trim().length >= 10, busy = !!GEN_CTL;
     $('genGo').disabled = !ok || !has || busy;
-    $('genNote').textContent = ok ? 'Describe the character in a few lines, in any language. The selected fields are written one at a time in English, each with the rules for that field, and you can undo the whole generation.' : 'Set up an API in the API tab first (or use "Claude (built-in)" inside the artifact).';
+    $('genNote').textContent = ok ? 'Describe the character in a few lines, in any language. The selected fields are written one at a time in English, each with the rules for that field, and you can undo the whole generation.' : 'Set up an API in the API settings first (the gear button).';
   }
 
   /* ---------- Idee precedenti (AI-assisted generation) ---------- */

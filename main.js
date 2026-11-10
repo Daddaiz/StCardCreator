@@ -19,10 +19,11 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.png': 'image/png', '.jpg'
 function startServer() {
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
-      let p = decodeURIComponent((req.url || '/').split('?')[0]);
+      let p;
+      try { p = decodeURIComponent((req.url || '/').split('?')[0]); } catch (e) { res.writeHead(400); return res.end(); }
       if (p === '/') p = '/index.html';
       const f = path.normalize(path.join(ROOT, p));
-      if (!f.startsWith(ROOT)) { res.writeHead(403); return res.end(); }
+      if (f !== path.join(ROOT, 'index.html') && !f.startsWith(ROOT + path.sep)) { res.writeHead(403); return res.end(); }
       fs.readFile(f, (err, data) => {
         if (err) { res.writeHead(404); return res.end(); }
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(f).toLowerCase()] || 'application/octet-stream' });
