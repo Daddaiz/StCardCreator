@@ -1,4 +1,5 @@
-const { app, BrowserWindow, Menu, shell, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, screen, ipcMain, dialog } = require('electron');
+const https = require('https');
 const stClient = require('./st-client.js');
 const http = require('http');
 const fs = require('fs');
@@ -52,6 +53,44 @@ ipcMain.handle('st-request', async (e, req) => {
   } catch (err) {
     return { ok: false, error: String((err && err.message) || err) };
   }
+});
+
+// Download dei checkpoint (file grandi da huggingface.co) nella cartella scelta dall'utente.
+const DL = {};
+ipcMain.handle('pick-dir', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Folder for the checkpoint (models\\Stable-diffusion of your WebUI)', properties: ['openDirectory', 'createDirectory'] });
+  return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
+});
+ipcMain.handle('dl-cancel', (e, id) => { const d = DL[id]; if (d) { d.cancelled = true; if (d.req) d.req.destroy(); } return true; });
+ipcMain.handle('dl-start', (e, o) => {
+  const id = String(o && o.id || ''), url = String(o && o.url || ''), dir = String(o && o.dir || ''), file = String(o && o.file || '').replace(/[^\w.-]/g, '_');
+  const send = d => { if (win && !win.isDestroyed()) win.webContents.send('dl-progress', Object.assign({ id }, d)); };
+  if (!/^https:\/\/huggingface\.co\//.test(url) || !dir || !file) { send({ error: 'bad request' }); return false; }
+  const dest = path.join(dir, file), part = dest + '.part';
+  const st = DL[id] = { cancelled: false, req: null };
+  let received = 0, total = 0, last = 0;
+  const fail = msg => { try { fs.unlinkSync(part); } catch (err) { /* niente */ } delete DL[id]; send({ error: msg }); };
+  const get = (u, hops) => {
+    if (st.cancelled) return fail('cancelled');
+    st.req = https.get(u, { headers: { 'User-Agent': 'ST-Card-Creator' } }, res => {
+      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && hops < 6) { res.resume(); return get(new URL(res.headers.location, u).toString(), hops + 1); }
+      if (res.statusCode !== 200) { res.resume(); return fail('HTTP ' + res.statusCode); }
+      total = +res.headers['content-length'] || 0;
+      const out = fs.createWriteStream(part);
+      res.on('data', c => { received += c.length; const now = Date.now(); if (now - last > 400) { last = now; send({ received, total }); } });
+      res.on('error', err => fail(String(err && err.message || err)));
+      out.on('error', err => fail(String(err && err.message || err)));
+      out.on('finish', () => {
+        if (st.cancelled) return fail('cancelled');
+        try { fs.renameSync(part, dest); } catch (err) { return fail(String(err && err.message || err)); }
+        delete DL[id]; send({ received, total, done: true });
+      });
+      res.pipe(out);
+    });
+    st.req.on('error', err => fail(st.cancelled ? 'cancelled' : String(err && err.message || err)));
+  };
+  get(url, 0);
+  return true;
 });
 
 function start() { app.whenReady().then(async () => {

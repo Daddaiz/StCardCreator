@@ -29,7 +29,7 @@ Every SillyTavern field in one clean page: description, personality, scenario, f
 <p align="center"><img src="docs/data.png?v=4" width="900" alt="Data page with tabs"></p>
 
 ### Design the cover
-Pick an image, add the name and a short line, choose fonts, frames and masks. **Your PNG frames** lets you upload transparent PNG or WebP frames of your own: they stay saved in the browser, with opacity control and the choice of drawing them over or under the text. The **Download** menu exports a PNG with the card data embedded (`chara` and `ccv3`), a Character Card **V3** or **V2** JSON, a **CHARX** package for RisuAI, or a flat **TavernAI V1** JSON. The **Thumbnails** button shows how the cover looks at 140, 100 and 64 px. Bring your own image with **Upload PNG** (the app does not generate images). You can also import any existing card, or just decorate a ready image.
+Pick an image (or let the AI draw it), add the name and a short line, choose fonts, frames and masks. Each color set has three palettes taken from the image, with a shuffle button for three more. **Your PNG frames** lets you upload transparent PNG or WebP frames of your own: they stay saved in the browser, with opacity control and the choice of drawing them over or under the text. The **Download** menu exports a PNG with the card data embedded (`chara` and `ccv3`), a Character Card **V3** or **V2** JSON, a **CHARX** package for RisuAI, or a flat **TavernAI V1** JSON. The **Thumbnails** button shows how the cover looks at 140, 100 and 64 px. Bring your own image with **Upload PNG** (the app does not generate images). You can also import any existing card, or just decorate a ready image.
 
 <p align="center"><img src="docs/cover.png?v=4" width="900" alt="Cover page with tabs"></p>
 
@@ -46,8 +46,10 @@ Write an idea in any language. Choose which fields to write, and watch the progr
 ### Add it to SillyTavern (exe only)
 In the Windows exe, **Add to SillyTavern** sends the card straight into your SillyTavern, and **SillyTavern cards** lists the ones already there so you can edit and update them. Before an update, a review window shows every field that changes, with the old and new words marked, so nothing is overwritten by surprise. SillyTavern must be running. If it asks for a login, enter your SillyTavern username and password in the API page. After adding or updating, reload the SillyTavern page (F5) to see the change. In the browser versions these buttons stay off.
 
-### Image prompts
+### Image prompts and image generation
 Tick **Stable diffusion**, choose your image model, and get ready-to-paste prompts for the character and for the first message scene. They follow the style each model likes: natural language, FLUX, SDXL/SD3, Pony tags, anime tags. These prompts are not part of the card: you make the image with your own tool, then upload it as the cover. If you host it online, one click adds `![](URL)` under the first message.
+
+The app can also draw the image for you. In the API page, **Image generation** has its own service, separate from the text one: **ChatGPT / OpenAI** (gpt-image-1, dall-e-3), **OpenRouter** (any model that outputs images), **Nano-GPT**, a local **Stable Diffusion WebUI / Forge** (free, on your own GPU, started with `--api`), or a **Custom** OpenAI-compatible server. **Create with AI** on the Cover page, or **Create the image** in the Image prompts tab, draws the character from the prompt, shows the result, and puts it on the cover with one click (cropped to 2:3). For Stable Diffusion, the exe can also download a small checkpoint for you (DreamShaper 8, Realistic Vision 5.1, Animagine XL 3.1, SDXL Turbo) into the WebUI models folder.
 
 <p align="center"><img src="docs/prompts.png?v=4" width="900" alt="Image prompts"></p>
 

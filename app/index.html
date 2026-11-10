@@ -272,6 +272,18 @@
   .ftile .fx { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.65); color: #fff; font: 13px/20px var(--font-ui); cursor: pointer; opacity: 0; transition: opacity 0.15s; }
   .ftile:hover .fx, .ftile:focus-within .fx { opacity: 1; }
   .ftile.add { border-style: dashed; font-size: 26px; line-height: 1; color: var(--accent); }
+  /* Generazione dell'immagine */
+  .ibody { display: grid; justify-items: center; gap: 10px; min-height: 120px; }
+  .ibody img { max-height: min(68vh, 720px); max-width: 100%; border-radius: 12px; border: 1px solid var(--line); background: var(--raised); }
+  .ibody .sm { text-align: center; max-width: 60ch; }
+  dialog.idlg { width: min(640px, calc(100vw - 32px)); }
+  .dlgrid { display: grid; gap: 8px; }
+  .dlrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
+  .dlrow b { font-weight: 600; }
+  .dlrow .sm { margin: 0; }
+  .dlrow progress { grid-column: 1 / -1; width: 100%; height: 6px; accent-color: var(--accent); }
+  .dlrow .dlst { grid-column: 1 / -1; }
+  .iabtn { display: inline-flex; align-items: center; gap: 8px; }
   .ftile .fnm { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 4px; font-size: 10px; line-height: 1.2; background: rgba(0,0,0,0.6); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
 
   .dlmenu button { font: 500 14px var(--font-ui); padding: 10px 14px; text-align: left; border: 0; border-top: 1px solid var(--gold); background: none; color: var(--fg); cursor: pointer; }
@@ -589,7 +601,7 @@
       <details class="drawer" data-group="cover"><summary><h2 id="h-img">Immagine</h2></summary><div class="dbody">
         <div class="filerow">
           <input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-          <button type="button" class="btn" id="pick">Carica PNG</button>
+          <button type="button" class="btn" id="pick">Carica PNG</button><button type="button" class="btn iabtn" id="iaPick" title="Draws the character with the image service set in the API page"><span aria-hidden="true">🪄</span> Create with AI</button>
           <span id="fileinfo" class="muted mono">Immagine d'esempio</span>
         </div>
         <label class="rng"><span>Zoom</span><output data-out="zoom" data-suf="%"></output><input type="range" data-k="zoom" min="100" max="300" step="1"></label>
@@ -813,6 +825,30 @@
       <p class="sm" id="astatus" role="status"></p>
     </section>
     </div></details>
+    <details class="acc" name="apiacc" id="acc3"><summary><h2 class="atitle">Image generation</h2></summary><div class="accb">
+    <section class="apibox">
+      <p class="sm">Draws the character image from the prompts in the <b>Image prompts</b> tab and puts it on the cover. This is separate from the text API above: it only draws.</p>
+      <div class="chips fit" id="iprovs" role="group" aria-label="Image service"></div>
+      <p class="sm"><span id="iNote"></span> <a id="iDoc" target="_blank" rel="noopener noreferrer" hidden></a></p>
+      <div class="df" id="iUrlRow"><span class="dfh"><b>Server address (base URL)</b></span><input type="text" id="iUrl" autocomplete="off" spellcheck="false" aria-label="Server address (base URL)"></div>
+      <label class="df" id="iKeyRow"><span class="dfh"><b>API key</b></span><input type="password" id="iKey" autocomplete="off" spellcheck="false"></label>
+      <label class="chk" id="iRemRow"><input type="checkbox" id="iRem"> Remember the key on this device</label>
+      <div class="df"><span class="dfh"><b id="iModelLbl">Model</b></span><div class="mrow"><input type="text" id="iModel" list="imlist" autocomplete="off" spellcheck="false" placeholder="Model name" aria-label="Model"><datalist id="imlist"></datalist><button type="button" class="btn" id="iModels">Load models</button></div></div>
+      <div class="grid2" id="iSdRow">
+        <label class="df"><span class="dfh"><b>Size</b></span><select id="iSize"><option value="512x768">512 × 768 · SD 1.5</option><option value="832x1248">832 × 1248 · SDXL</option><option value="1024x1536">1024 × 1536 · SDXL, slow</option></select></label>
+        <label class="df"><span class="dfh"><b>Steps</b></span><input type="number" id="iSteps" min="1" max="150" step="1"></label>
+        <label class="df"><span class="dfh"><b>CFG scale</b></span><input type="number" id="iCfg" min="1" max="30" step="0.5"></label>
+        <label class="df"><span class="dfh"><b>Sampler</b></span><input type="text" id="iSampler" list="islist" autocomplete="off" spellcheck="false" placeholder="server default"><datalist id="islist"></datalist></label>
+      </div>
+      <div class="ctl"><button type="button" class="btn primary" id="iTest">Check connection</button><button type="button" class="btn quiet" id="iClear">Forget these settings</button></div>
+      <p class="sm" id="istatus" role="status"></p>
+    </section>
+    <section class="apibox" id="iDl">
+      <h2 class="atitle">Download a checkpoint</h2>
+      <p class="sm" id="iDlNote"></p>
+      <div class="dlgrid" id="iDlList"></div>
+    </section>
+    </div></details>
     <details class="acc" name="apiacc" id="acc2"><summary><h2 class="atitle">SillyTavern</h2></summary><div class="accb">
     <section class="apibox" id="sSt">
       <div class="df">
@@ -948,6 +984,7 @@
   <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><button type="button" class="wand" id="gall" title="Regenerate everything" aria-label="Regenerate everything">🪄</button><span class="tk" id="gtk"></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div><div class="krow"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></div></div></dialog>
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span><button type="button" class="btn quiet" id="qagain" hidden>Check again</button><button type="button" class="btn quiet" id="qclose">Close</button></div><div class="qbody" id="qbody"></div></div></dialog>
+  <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
@@ -3071,6 +3108,8 @@
     if (c === 'nomodel') return ['Scegli o scrivi un modello.'];
     if (c === 'nokey') return ['Inserisci la chiave API.'];
     if (c === 'nourl') return ['Inserisci l\'indirizzo del server.'];
+    if (c === 'noprompt') return ['There is no image prompt yet, and writing one needs the text API: set it up in the API page, or write the prompt yourself in the Image prompts tab.'];
+    if (c === 'nodesc') return ['Write the character description first: the image prompt comes from it.'];
     if (c === 'nolocal') return ['Non trovo server locali sulle porte più comuni. Avvia il server e riprova, oppure scrivi l\'indirizzo.'];
     return ['Errore del servizio: {m}', { m: String(e && e.msg || e && e.message || e).slice(0, 240) }];
   }
@@ -4747,6 +4786,14 @@
       catch (e) { IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) { const k = errKey(e); s.textContent = tr(k[0], k[1] || null); s.classList.add('warn'); } }
     });
     ctl.append(go, stat); box.appendChild(ctl);
+    {
+      const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b'); b.textContent = 'Create the image'; h.appendChild(b); w.appendChild(h);
+      const p = mk('p', 'sm'); p.textContent = iaReady() ? 'Draws the character image from the prompt above with ' + IPROVS[IA.prov].name + ', then you can use it as the cover.' : 'Choose an image service in the API page (OpenAI, OpenRouter, Nano-GPT, a local Stable Diffusion WebUI, or a custom server) to draw the character here.'; w.appendChild(p);
+      const r = mk('div', 'ctl'), g = mk('button', 'btn primary iabtn'); g.type = 'button'; g.id = 'iaGo'; g.innerHTML = '<span aria-hidden="true">🪄</span> Create the image'; g.addEventListener('click', () => iaRun());
+      const o = mk('button', 'btn quiet'); o.type = 'button'; o.textContent = 'Image settings'; o.addEventListener('click', () => { showView('api'); const a = $('acc3'); if (a) { a.open = true; a.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
+      r.append(g, o); w.appendChild(r); box.appendChild(w);
+      syncIaBtns();
+    }
     const u = mk('div', 'item imgp'), uh = mk('div', 'dfh'), ub = mk('b');
     ub.textContent = 'Put the finished image in the first message'; uh.appendChild(ub); u.appendChild(uh);
     const ur = mk('div', 'mrow'), ui = mk('input'), ua = mk('button', 'btn');
@@ -4764,6 +4811,283 @@
       ui.value = ''; ust.textContent = 'Added at the end of the first message as ![](link).'; ust.classList.remove('warn');
     });
     ur.append(ui, ua); u.append(ur, ust); box.appendChild(u);
+  }
+
+  /* ---------- Generazione dell'immagine: servizi, impostazioni, chiamate, finestra del risultato ---------- */
+  const IAKEY = 'st-card-creator-image';
+  const IPROVS = {
+    openai: { name: 'ChatGPT / OpenAI', base: 'https://api.openai.com/v1', doc: 'https://platform.openai.com/docs/guides/image-generation', key: true, kind: 'oai', model: 'gpt-image-1',
+      note: 'gpt-image-1 draws at 1024 × 1536, the card ratio. dall-e-3 works too (cropped from 1024 × 1792). Each image is billed by OpenAI.' },
+    openrouter: { name: 'OpenRouter', base: 'https://openrouter.ai/api/v1', doc: 'https://openrouter.ai/docs/guides/overview/multimodal/image-generation', key: true, kind: 'or', model: 'google/gemini-2.5-flash-image',
+      note: 'One key for many image models. "Load models" lists the ones that output images; the card ratio 2:3 is requested when the model allows it.' },
+    nanogpt: { name: 'Nano-GPT', base: 'https://api.nano-gpt.com/v1', doc: 'https://docs.nano-gpt.com/api-reference/image-generation', key: true, kind: 'oai', model: 'hidream',
+      note: 'OpenAI-compatible image endpoint, paid per image. If a model refuses the size, the request is sent again without it.' },
+    sd: { name: 'Stable Diffusion WebUI / Forge', base: 'http://127.0.0.1:7860', doc: 'https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/API', key: false, kind: 'sd', model: '',
+      note: 'Free and local: your own GPU draws it. Start WebUI or Forge with --api (in the browser version also --cors-allow-origins=*). "Load models" lists the checkpoints it has; leave the model empty to use the one selected there.' },
+    custom: { name: 'Custom', base: '', doc: '', key: false, kind: 'oai', model: '',
+      note: 'Any server with an OpenAI-compatible /images/generations endpoint (LocalAI, SD.Next with --api, a proxy, …). The server must accept requests from the browser (CORS).' }
+  };
+  const IMODELS = [
+    { name: 'DreamShaper 8', kind: 'SD 1.5 · versatile: semi-realistic, fantasy, anime', size: '2.1 GB', file: 'DreamShaper_8_pruned.safetensors', url: 'https://huggingface.co/Lykon/DreamShaper/resolve/main/DreamShaper_8_pruned.safetensors', page: 'https://huggingface.co/Lykon/DreamShaper', lic: 'license on the model page' },
+    { name: 'Realistic Vision 5.1', kind: 'SD 1.5 · photographic people', size: '2.1 GB', file: 'Realistic_Vision_V5.1_fp16-no-ema.safetensors', url: 'https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE/resolve/main/Realistic_Vision_V5.1_fp16-no-ema.safetensors', page: 'https://huggingface.co/SG161222/Realistic_Vision_V5.1_noVAE', lic: 'CreativeML OpenRAIL-M' },
+    { name: 'Animagine XL 3.1', kind: 'SDXL · anime, Danbooru tags', size: '6.9 GB', file: 'animagine-xl-3.1.safetensors', url: 'https://huggingface.co/cagliostrolab/animagine-xl-3.1/resolve/main/animagine-xl-3.1.safetensors', page: 'https://huggingface.co/cagliostrolab/animagine-xl-3.1', lic: 'OpenRAIL++' },
+    { name: 'SDXL Turbo', kind: 'SDXL · 1 to 4 steps, very fast, lower detail', size: '6.9 GB', file: 'sd_xl_turbo_1.0_fp16.safetensors', url: 'https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors', page: 'https://huggingface.co/stabilityai/sdxl-turbo', lic: 'Stability AI, non-commercial' }
+  ];
+  const IA0 = () => ({ prov: 'openai', url: {}, model: {}, remember: false, size: '832x1248', steps: 25, cfg: 6, sampler: '' });
+  let IA = IA0(), IAKEYS = {}, IACTL = null, IAFILE = null, IAURL = null;
+  function iaLoad() {
+    try {
+      const o = JSON.parse(localStorage.getItem(IAKEY) || 'null');
+      if (!o || typeof o !== 'object') return;
+      IA = Object.assign(IA0(), o, { url: o.url || {}, model: o.model || {} });
+      if (o.keys && IA.remember) IAKEYS = o.keys;
+      if (!IPROVS[IA.prov]) IA.prov = 'openai';
+      delete IA.keys;
+    } catch (e) { /* ignora */ }
+  }
+  function iaSave() { try { const o = Object.assign({}, IA); if (IA.remember) o.keys = IAKEYS; else delete o.keys; localStorage.setItem(IAKEY, JSON.stringify(o)); } catch (e) { /* ignora */ } }
+  const iaUrl = () => String(IA.url[IA.prov] !== undefined ? IA.url[IA.prov] : IPROVS[IA.prov].base).trim().replace(/\/+$/, '');
+  const iaModel = () => String(IA.model[IA.prov] !== undefined ? IA.model[IA.prov] : IPROVS[IA.prov].model).trim();
+  function iaWhy() {
+    const P = IPROVS[IA.prov];
+    if (!iaUrl()) return 'nourl';
+    if (P.key && !String(IAKEYS[IA.prov] || '').trim()) return 'nokey';
+    if (P.kind !== 'sd' && !iaModel()) return 'nomodel';
+    return '';
+  }
+  const iaReady = () => !iaWhy();
+  function iaHeaders(json) {
+    const h = {}; if (json) h['Content-Type'] = 'application/json';
+    const k = String(IAKEYS[IA.prov] || '').trim(); if (k) h.Authorization = 'Bearer ' + k;
+    if (IA.prov === 'openrouter') { h['HTTP-Referer'] = 'https://github.com/Daddaiz/StCardCreator'; h['X-Title'] = 'ST Card Creator'; }
+    return h;
+  }
+  async function iaFetch(method, url, body, signal) {
+    let res;
+    try { res = await fetch(url, { method, headers: iaHeaders(!!body), body: body ? JSON.stringify(body) : undefined, signal }); }
+    catch (e) { if (e && e.name === 'AbortError') throw { code: 'abort' }; throw { code: 'net', msg: String(e && e.message || e) }; }
+    const txt = await res.text(); let j = null; try { j = JSON.parse(txt); } catch (e) { /* non JSON */ }
+    if (!res.ok) throw { code: res.status === 401 || res.status === 403 ? 'auth' : res.status === 404 ? 'notfound' : res.status === 429 ? 'rate' : 'http', status: res.status, msg: errMsg(j, txt) };
+    return j;
+  }
+  const b64blob = (b64, mime) => { const bin = atob(b64.replace(/\s+/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: mime || 'image/png' }); };
+  /* Ritaglia al centro in 2:3 (la carta) e restituisce un File PNG */
+  function fit23(blob) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(blob), im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        const w = im.naturalWidth, h = im.naturalHeight;
+        if (!w || !h) return rej({ code: 'empty' });
+        let cw = w, ch = Math.round(w * 1.5); if (ch > h) { ch = h; cw = Math.round(h / 1.5); }
+        if (Math.abs(w / h - 2 / 3) < 0.01 && blob.type === 'image/png') return res(new File([blob], 'ai-image.png', { type: 'image/png' }));
+        const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+        cv.getContext('2d').drawImage(im, Math.round((w - cw) / 2), Math.round((h - ch) / 2), cw, ch, 0, 0, cw, ch);
+        cv.toBlob(b => b ? res(new File([b], 'ai-image.png', { type: 'image/png' })) : rej({ code: 'empty' }), 'image/png');
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); rej({ code: 'empty' }); };
+      im.src = url;
+    });
+  }
+  async function iaGenerate(pos, neg, signal) {
+    const why = iaWhy(); if (why) throw { code: why };
+    const P = IPROVS[IA.prov], base = iaUrl(), model = iaModel();
+    let b64 = null, url = null, mime = 'image/png';
+    if (P.kind === 'sd') {
+      const [w, h] = String(IA.size || '832x1248').split('x').map(Number);
+      const body = { prompt: pos, negative_prompt: neg || '', width: w, height: h, steps: +IA.steps || 25, cfg_scale: +IA.cfg || 6, batch_size: 1, n_iter: 1 };
+      if (String(IA.sampler || '').trim()) body.sampler_name = IA.sampler.trim();
+      if (model) body.override_settings = { sd_model_checkpoint: model };
+      const j = await iaFetch('POST', base + '/sdapi/v1/txt2img', body, signal);
+      b64 = j && Array.isArray(j.images) ? j.images[0] : null;
+      if (b64 && b64.startsWith('data:')) { const m = /^data:([^;]+);base64,(.*)$/s.exec(b64); if (m) { mime = m[1]; b64 = m[2]; } }
+    } else if (P.kind === 'or') {
+      const j = await iaFetch('POST', base + '/images', { model, prompt: pos + (neg ? '\n\nAvoid: ' + neg : ''), n: 1, aspect_ratio: '2:3' }, signal);
+      const d = j && Array.isArray(j.data) ? j.data[0] : null;
+      if (d) { b64 = d.b64_json || null; url = d.url || null; if (d.media_type) mime = d.media_type; }
+    } else {
+      const body = { model, prompt: pos + (neg ? '\n\nAvoid: ' + neg : ''), n: 1 };
+      if (/^dall-e/i.test(model)) body.response_format = 'b64_json';
+      const sizes = [/^dall-e-3/i.test(model) ? '1024x1792' : '1024x1536', null];
+      let j = null;
+      for (const sz of sizes) {
+        const b = Object.assign({}, body); if (sz) b.size = sz;
+        try { j = await iaFetch('POST', base + '/images/generations', b, signal); break; }
+        catch (e) { if (!sz || e.code === 'abort' || e.code === 'auth' || e.code === 'net' || e.code === 'rate') throw e; }
+      }
+      const d = j && Array.isArray(j.data) ? j.data[0] : null;
+      if (d) { b64 = d.b64_json || null; url = d.url || null; }
+    }
+    if (!b64 && !url) throw { code: 'empty' };
+    let blob;
+    if (b64) blob = b64blob(b64, mime);
+    else { let r; try { r = await fetch(url, { signal }); } catch (e) { throw { code: 'net' }; } blob = await r.blob(); }
+    return fit23(blob);
+  }
+  async function iaModels() {
+    const P = IPROVS[IA.prov], base = iaUrl();
+    if (!base) throw { code: 'nourl' };
+    if (P.key && !String(IAKEYS[IA.prov] || '').trim()) throw { code: 'nokey' };
+    const names = j => (Array.isArray(j) ? j : (j && (j.data || j.models || j.items)) || []).map(m => typeof m === 'string' ? m : (m && (m.id || m.title || m.name || m.model_name))).filter(Boolean);
+    let list = [], samplers = [];
+    if (P.kind === 'sd') {
+      list = names(await iaFetch('GET', base + '/sdapi/v1/sd-models', null));
+      try { samplers = names(await iaFetch('GET', base + '/sdapi/v1/samplers', null)); } catch (e) { /* senza elenco */ }
+    } else if (P.kind === 'or') list = names(await iaFetch('GET', base + '/models?output_modalities=image', null));
+    else if (IA.prov === 'nanogpt') list = names(await iaFetch('GET', base.replace(/\/v1$/, '') + '/api/v1/image-models', null));
+    else { list = names(await iaFetch('GET', base + '/models', null)); if (IA.prov === 'openai') list = list.filter(x => /image|dall/i.test(x)); }
+    const fill = (id, arr) => { const dl = $(id); dl.textContent = ''; arr.forEach(x => { const o = mk('option'); o.value = x; dl.appendChild(o); }); };
+    fill('imlist', list); if (samplers.length) fill('islist', samplers);
+    return list;
+  }
+  /* Pagina API: sezione Image generation */
+  function iaRender() {
+    const P = IPROVS[IA.prov];
+    document.querySelectorAll('#iprovs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.prov === IA.prov)));
+    $('iNote').textContent = P.note;
+    const a = $('iDoc'); a.hidden = !P.doc; a.href = P.doc || '#'; a.textContent = P.doc ? 'Documentation' : '';
+    $('iUrlRow').hidden = !(P.kind === 'sd' || IA.prov === 'custom');
+    $('iKeyRow').hidden = !P.key; $('iRemRow').hidden = !P.key;
+    $('iSdRow').hidden = P.kind !== 'sd'; $('iDl').hidden = P.kind !== 'sd';
+    $('iModelLbl').textContent = P.kind === 'sd' ? 'Checkpoint (optional)' : 'Model';
+    if (document.activeElement !== $('iUrl')) $('iUrl').value = iaUrl();
+    if (document.activeElement !== $('iKey')) $('iKey').value = IAKEYS[IA.prov] || '';
+    $('iRem').checked = !!IA.remember;
+    if (document.activeElement !== $('iModel')) $('iModel').value = iaModel();
+    $('iSize').value = IA.size; $('iSteps').value = IA.steps; $('iCfg').value = IA.cfg; $('iSampler').value = IA.sampler || '';
+    $('iTest').textContent = P.kind === 'sd' ? 'Check connection and list checkpoints' : 'Check connection';
+    iaDlRender(); syncIaBtns();
+  }
+  function syncIaBtns() {
+    const ok = iaReady(), b = $('iaPick');
+    if (b) { b.disabled = !ok || !!IACTL; b.title = ok ? 'Draws the character with ' + IPROVS[IA.prov].name : 'Set up Image generation in the API page first'; }
+    const g = $('iaGo'); if (g) { g.disabled = !ok || !!IACTL; g.title = ok ? '' : 'Set up Image generation in the API page first'; }
+  }
+  function iaInit() {
+    iaLoad();
+    const box = $('iprovs'); box.textContent = '';
+    Object.keys(IPROVS).forEach(k => { const b = mk('button'); b.type = 'button'; b.dataset.prov = k; b.textContent = IPROVS[k].name; b.addEventListener('click', () => { IA.prov = k; iaSave(); iaRender(); say('istatus', '', null, false); }); box.appendChild(b); });
+    const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
+    on('iUrl', 'input', e => { IA.url[IA.prov] = e.target.value; iaSave(); syncIaBtns(); });
+    on('iKey', 'input', e => { IAKEYS[IA.prov] = e.target.value; iaSave(); syncIaBtns(); });
+    on('iRem', 'change', e => { IA.remember = e.target.checked; iaSave(); });
+    on('iModel', 'input', e => { IA.model[IA.prov] = e.target.value; iaSave(); syncIaBtns(); });
+    on('iSize', 'change', e => { IA.size = e.target.value; iaSave(); });
+    on('iSteps', 'input', e => { IA.steps = +e.target.value || 25; iaSave(); });
+    on('iCfg', 'input', e => { IA.cfg = +e.target.value || 6; iaSave(); });
+    on('iSampler', 'input', e => { IA.sampler = e.target.value; iaSave(); });
+    on('iModels', 'click', async () => {
+      const b = $('iModels'); b.disabled = true; say('istatus', 'Loading the model list…', null, false);
+      try { const l = await iaModels(); say('istatus', l.length ? '{n} models loaded: pick one from the Model field.' : 'The service answered, but the list is empty: write the model name by hand.', { n: l.length }, !l.length); }
+      catch (e) { const k = errKey(e); say('istatus', k[0], k[1] || null, true); }
+      b.disabled = false;
+    });
+    on('iTest', 'click', async () => {
+      const b = $('iTest'); b.disabled = true; say('istatus', 'Checking…', null, false);
+      try {
+        const l = await iaModels();
+        say('istatus', IPROVS[IA.prov].kind === 'sd' ? (l.length ? 'Connected. {n} checkpoints found.' : 'Connected, but no checkpoint found: download one below and press "Refresh" in WebUI.') : 'Connected. {n} image models available.', { n: l.length }, false);
+      } catch (e) { const k = errKey(e); say('istatus', k[0], k[1] || null, true); }
+      b.disabled = false;
+    });
+    on('iClear', 'click', () => { IA = IA0(); IAKEYS = {}; try { localStorage.removeItem(IAKEY); } catch (e) { /* ignora */ } iaRender(); say('istatus', 'Settings forgotten.', null, false); });
+    on('iclose', 'click', () => { if (IACTL) IACTL.abort(); $('idlg').close(); });
+    on('iaPick', 'click', () => iaRun());
+    iaRender();
+  }
+  /* Finestra del risultato */
+  function iaWait(msg) {
+    const box = $('ibody'); box.textContent = '';
+    const w = mk('div', 'qwait'); w.append(mk('i'), document.createTextNode(msg)); box.appendChild(w);
+    $('irow').textContent = ''; $('isum').textContent = IPROVS[IA.prov].name + (iaModel() ? ' · ' + iaModel() : '');
+  }
+  function iaShow(file) {
+    if (IAURL) URL.revokeObjectURL(IAURL);
+    IAFILE = file; IAURL = URL.createObjectURL(file);
+    const box = $('ibody'); box.textContent = '';
+    const im = mk('img'); im.src = IAURL; im.alt = 'Generated character image'; box.appendChild(im);
+    const row = $('irow'); row.textContent = '';
+    const again = mk('button', 'btn'); again.type = 'button'; again.textContent = 'Generate again'; again.addEventListener('click', () => iaRun());
+    const save = mk('button', 'btn'); save.type = 'button'; save.textContent = 'Save PNG'; save.addEventListener('click', () => saveBlob(IAFILE, slug(K.name || 'character') + '-ai.png').catch(() => { /* annullato */ }));
+    const use = mk('button', 'btn primary'); use.type = 'button'; use.textContent = 'Use as cover';
+    use.addEventListener('click', () => { setImage(IAFILE); $('idlg').close(); showView('cover'); say('status', 'The generated image is now the cover. Adjust zoom, text and frame in the Cover tabs.', null, false); });
+    row.append(again, save, use);
+  }
+  function iaFail(e) {
+    const box = $('ibody'); box.textContent = '';
+    const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'No image this time'; const m = mk('span');
+    const k = errKey(e); m.textContent = tr(k[0], k[1] || null); p.append(b, m); box.appendChild(p);
+    const row = $('irow'); row.textContent = '';
+    const again = mk('button', 'btn primary'); again.type = 'button'; again.textContent = 'Try again'; again.addEventListener('click', () => iaRun()); row.appendChild(again);
+  }
+  async function iaRun() {
+    if (IACTL) return;
+    const d = $('idlg'); if (!d.open) d.showModal();
+    IACTL = new AbortController(); syncIaBtns();
+    try {
+      if (!IMGP || !IMGP.portrait || !IMGP.portrait.pos) {
+        if (!apiReady()) throw { code: 'noprompt' };
+        if (!K.description.trim()) throw { code: 'nodesc' };
+        iaWait('Writing the image prompt from the card…');
+        await imgRun(IACTL.signal);
+        if (!IMGP || !IMGP.portrait || !IMGP.portrait.pos) throw { code: 'empty' };
+      }
+      iaWait('Drawing the character with ' + IPROVS[IA.prov].name + '… this can take a while.');
+      const file = await iaGenerate(IMGP.portrait.pos, IMGP.portrait.neg || '', IACTL.signal);
+      iaShow(file);
+    } catch (e) {
+      if (e && (e.code === 'abort' || e.name === 'AbortError')) { /* chiusa */ }
+      else iaFail(e);
+    } finally { IACTL = null; syncIaBtns(); }
+  }
+  /* Download dei checkpoint (solo exe: il processo principale scarica nella cartella scelta) */
+  const DLS = {};
+  function iaDlRender() {
+    const box = $('iDlList'); if (!box) return;
+    const exe = !!(window.stBridge && window.stBridge.download);
+    $('iDlNote').textContent = exe
+      ? 'Small, versatile checkpoints for Stable Diffusion WebUI / Forge. Pick the folder models\\Stable-diffusion of your WebUI; after the download press "Refresh" next to the checkpoint list in WebUI. SD 1.5 models run on 4 GB of VRAM, SDXL wants 8 GB or more.'
+      : 'Small, versatile checkpoints for Stable Diffusion WebUI / Forge. In the browser version the links open the model page: save the file into models\\Stable-diffusion of your WebUI. The exe downloads them for you.';
+    box.textContent = '';
+    IMODELS.forEach((m, i) => {
+      const row = mk('div', 'dlrow'); const left = mk('div'); const b = mk('b'); b.textContent = m.name;
+      const s = mk('p', 'sm'); s.textContent = m.kind + ' · ' + m.size + ' · ' + m.lic; left.append(b, s);
+      let right;
+      if (exe) { right = mk('button', 'btn'); right.type = 'button'; right.textContent = 'Download…'; right.addEventListener('click', () => iaDownload(m, row, right)); }
+      else { right = mk('a', 'btn'); right.href = m.page; right.target = '_blank'; right.rel = 'noopener noreferrer'; right.textContent = 'Open on Hugging Face'; }
+      row.append(left, right); box.appendChild(row);
+      const st = DLS[m.file]; if (st) iaDlPaint(row, right, st);
+    });
+  }
+  const fmtGB = n => (n / 1073741824).toFixed(2) + ' GB';
+  function iaDlPaint(row, btn, st) {
+    let pr = row.querySelector('progress'), tx = row.querySelector('.dlst');
+    if (!pr) { pr = mk('progress'); pr.max = 1000; tx = mk('p', 'sm dlst'); row.append(pr, tx); }
+    if (st.error) { pr.remove(); tx.textContent = 'Download failed: ' + st.error; tx.classList.add('warn'); btn.disabled = false; btn.textContent = 'Download…'; return; }
+    if (st.done) { pr.remove(); tx.textContent = 'Saved in ' + st.dir + '. Press "Refresh" next to the checkpoint list in WebUI, then "Load models" above.'; tx.classList.remove('warn'); btn.disabled = false; btn.textContent = 'Download again'; return; }
+    pr.value = st.total ? Math.round(st.received / st.total * 1000) : 0; if (!st.total) pr.removeAttribute('value');
+    tx.textContent = fmtGB(st.received) + (st.total ? ' of ' + fmtGB(st.total) : '') + ' · ' + (st.speed ? (st.speed / 1048576).toFixed(1) + ' MB/s' : '…');
+    btn.disabled = false; btn.textContent = 'Cancel';
+  }
+  async function iaDownload(m, row, btn) {
+    const cur = DLS[m.file];
+    if (cur && !cur.done && !cur.error) { window.stBridge.cancelDownload(cur.id); return; }
+    let dir;
+    try { dir = await window.stBridge.pickDir(); } catch (e) { dir = null; }
+    if (!dir) return;
+    const id = 'dl' + Date.now().toString(36);
+    DLS[m.file] = { id, dir, received: 0, total: 0, speed: 0, t0: Date.now() };
+    btn.disabled = true; iaDlPaint(row, btn, DLS[m.file]);
+    window.stBridge.download({ id, url: m.url, dir, file: m.file });
+  }
+  if (window.stBridge && window.stBridge.onDownload) {
+    window.stBridge.onDownload(d => {
+      const key = Object.keys(DLS).find(k => DLS[k].id === d.id); if (!key) return;
+      const st = DLS[key];
+      if (d.error) st.error = d.error; else if (d.done) st.done = true; else { st.received = d.received; st.total = d.total; st.speed = d.received / Math.max(0.5, (Date.now() - st.t0) / 1000); }
+      if (st.done && IPROVS[IA.prov].kind === 'sd') iaFetch('POST', iaUrl() + '/sdapi/v1/refresh-checkpoints', {}, null).catch(() => { /* WebUI spento o senza API */ });
+      iaDlRender();
+    });
   }
 
   /* Suggerimenti per il lorebook (finestra) */
@@ -5098,6 +5422,7 @@
   initLive();
   applyLangUI();
   apiInit();
+  iaInit();
   initFeatures();
   initTabs();
   syncData();
