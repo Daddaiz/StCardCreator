@@ -150,7 +150,8 @@
   @media (max-width: 899px) { .stage { order: -1; } }
   .cardwrap { background: var(--stage); border-radius: 12px; padding: 18px; display: grid; place-items: center; }
   .cardwrap.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
-  .flip { width: min(100%, 340px); perspective: 1000px; cursor: pointer; }
+  .flip { width: min(100%, 340px); perspective: 1000px; cursor: pointer; position: relative; }
+  .dust { position: absolute; z-index: -1; bottom: 2%; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle, rgba(205,192,168,0.62) 0%, rgba(205,192,168,0.28) 45%, rgba(205,192,168,0) 72%); filter: blur(1.5px); }
   .flip-in { position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
   .flip:hover .flip-in { transform: rotateY(180deg); }
   #card { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.14), 0 8px 18px rgba(0,0,0,0.2); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
@@ -276,7 +277,7 @@
   .qname span { font-size: 13px; color: var(--muted); }
   .qring { --s: 96px; width: var(--s); height: var(--s); border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--c) calc(var(--v) * 1%), var(--line) 0); position: relative; flex: none; }
   .qring::before { content: ""; position: absolute; inset: calc(var(--s) * 0.11); border-radius: 50%; background: var(--surface); }
-  .qring span { position: relative; font: 700 calc(var(--s) * 0.38)/1 var(--font-title); }
+  .qring span { position: relative; font: 800 calc(var(--s) * 0.5)/1 var(--font-ui); letter-spacing: -0.02em; }
   .qring.gold { box-shadow: 0 0 14px 2px rgba(232,194,106,0.55), 0 0 32px 6px rgba(232,194,106,0.25); }
   .qring.gold span { color: #f3d98f; text-shadow: 0 0 8px rgba(232,194,106,0.9), 0 0 18px rgba(232,194,106,0.6); background: linear-gradient(100deg, #e8c26a 30%, #fff6d0 50%, #e8c26a 70%) 0 0 / 250% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: qshine 2.6s linear infinite; filter: drop-shadow(0 0 5px rgba(232,194,106,0.8)); }
   .qring.green { box-shadow: 0 0 10px 1px rgba(79,191,130,0.35); }
@@ -292,6 +293,11 @@
   .qbar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .qbar i { display: block; height: 100%; border-radius: inherit; }
   .qpc { font: 700 15px var(--font-title); text-align: right; }
+  .qwhy { margin-top: 4px; }
+  .qwhy summary { cursor: pointer; font-size: 12px; color: var(--accent); width: fit-content; }
+  .qwhy ul { margin: 6px 0 0; padding-left: 16px; font-size: 12px; color: var(--fg); line-height: 1.45; }
+  .qwhy li + li { margin-top: 3px; }
+  .qwhy li.ig { color: var(--muted); }
   .qnote { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 4px 0 0; }
   @media (max-width: 560px) { .qscore { grid-template-columns: 70px minmax(0, 1fr); } .qscore .qring { grid-column: 1 / -1; justify-self: center; } .qcat { grid-template-columns: minmax(0, 1fr) 48px; } .qcat .qbar { grid-column: 1 / -1; grid-row: 2; } }
   .qbadge { position: relative; justify-self: end; display: flex; align-items: center; gap: 8px; margin: -6px 6px 0 0; padding: 4px 12px 4px 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--raised); cursor: pointer; font-size: 12px; color: var(--muted); }
@@ -498,6 +504,8 @@
   .cin { padding: 16px; display: grid; gap: 14px; }
   .chead { display: flex; align-items: center; gap: 12px; }
   .chead b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
+  @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, .atitle.big { font-size: 30px; } }
   .chead .btn { margin-left: auto; }
   dialog.gdlg { width: min(820px, calc(100vw - 32px)); }
   .gdlg .chead { position: sticky; top: 0; z-index: 2; background: var(--surface); margin: -16px -16px 0; padding: 14px 16px; border-bottom: 1px solid var(--line); }
@@ -572,11 +580,11 @@
   .sbtn b { grid-column: 2; align-self: center; min-height: 28px; display: flex; align-items: center; }
   .sic { fill: none; stroke: #B39A6F; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   .sbtn:disabled .sic { stroke: var(--muted); }
-  .sbtn b { font: 700 16px/1.2 var(--font-title); letter-spacing: 0.02em; }
-  .sbtn small { grid-column: 2; font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+  .sbtn b { font: 700 22.4px/1.2 var(--font-title); letter-spacing: 0.02em; }
+  .sbtn small { grid-column: 2; font-size: 17.5px; line-height: 1.4; color: var(--muted); }
   .sbtn { position: relative; overflow: hidden; }
   .sbtn:hover:not(:disabled) { border-color: #d9c18f; }
-  .sbtn::after { content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%; pointer-events: none; opacity: 0; transform: translateX(300%) skewX(-18deg); mix-blend-mode: screen; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,214,170,0.12) 30%, rgba(255,255,255,0.3) 50%, rgba(170,210,255,0.12) 70%, rgba(255,255,255,0) 100%); }
+  .sbtn::after { content: ""; position: absolute; top: -10%; bottom: -10%; left: 0; width: 34%; pointer-events: none; opacity: 0; transform: translateX(300%) skewX(-18deg); mix-blend-mode: screen; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,214,170,0.08) 30%, rgba(255,255,255,0.19) 50%, rgba(170,210,255,0.08) 70%, rgba(255,255,255,0) 100%); }
   .sbtn:hover:not(:disabled)::after { animation: sbshine 0.9s cubic-bezier(0.4, 0, 0.2, 1) 1; }
   @keyframes sbshine { from { opacity: 1; transform: translateX(300%) skewX(-18deg); } to { opacity: 1; transform: translateX(-130%) skewX(-18deg); } }
   @media (prefers-reduced-motion: reduce) { .sbtn:hover:not(:disabled)::after { animation: none; } }
@@ -940,7 +948,7 @@
   </div>
   <div id="view-gen" class="apiview" hidden>
     <section class="apibox">
-      <h2 class="atitle">AI-assisted generation</h2>
+      <h2 class="atitle big">AI-assisted generation</h2>
       <p class="sm" id="genNote"></p>
       <div class="df"><span class="dfh"><b>Your idea</b></span><textarea id="genIdea" rows="5" spellcheck="false" placeholder="e.g. A tired lighthouse keeper who secretly talks to the sea. Gentle, dry humor, hides a past as a navy medic."></textarea></div>
       <div class="df"><span class="dfh"><b>Fields to write</b></span><div class="chkgrid" id="genFields"></div></div>
@@ -2678,7 +2686,19 @@
     fl.addEventListener('pointerleave', () => { PX = -1; PY = -1; release(); });
     const go = () => {
       if (!GFX || document.hidden || !fl.offsetParent || held || over() || fl.matches(':hover')) return;
+      dust();
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
+    };
+    /* Sbuffo di polvere ai lati, da sotto la carta, mentre trema */
+    const dust = () => {
+      for (let side = -1; side <= 1; side += 2) for (let i = 0; i < 5; i++) {
+        const d = document.createElement('i'), sz = 14 + Math.random() * 20, dx = side * (20 + Math.random() * 34), dy = -(4 + Math.random() * 34), delay = 80 + Math.random() * 380;
+        d.className = 'dust'; d.setAttribute('aria-hidden', 'true');
+        d.style.width = d.style.height = sz + 'px'; d.style.bottom = (Math.random() * 8 - 1) + '%'; d.style[side < 0 ? 'left' : 'right'] = (-sz * 0.35 + Math.random() * 8) + 'px';
+        fl.appendChild(d);
+        const a = d.animate([{ opacity: 0, transform: 'translate(0,0) scale(.4)' }, { opacity: 0.85, transform: 'translate(' + dx * 0.4 + 'px,' + dy * 0.3 + 'px) scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1.7)' }], { duration: 1100 + Math.random() * 500, delay, easing: 'ease-out', fill: 'both' });
+        a.onfinish = a.oncancel = () => d.remove();
+      }
     };
     setInterval(go, 9000); fl.addEventListener('wiggle', go); window.__wiggle = go;
   })();
@@ -3590,7 +3610,7 @@
     let W = 0, H = 0, P = [], t = 0, last = 0;
     /* Fontana di carte: dieci carte lanciate dal basso a ventaglio, poi ricadono per gravità */
     const CW0 = 100, CH0 = 150, NC = 10;
-    let cardImg = null, cardScale = 1, cards = [], cardWait = 2.2, cardOn = false;
+    let cardImg = null, cardScale = 1, cards = [], cardWait = 2.2, cardOn = false, cardDone = false, cardArmed = false;
     (function loadCard() {
       const src = document.querySelector('.flip-back img');
       if (!src) return;
@@ -3651,10 +3671,12 @@
     let loading = false;
     function stepCards(dt) {
       if (!cardImg) return;
-      if (!startOn() || !GFX) { cardOn = false; cards = []; cardWait = 1.4; return; }
+      if (!startOn() || !GFX) { cardOn = false; cards = []; cardArmed = false; return; }
+      if (!cardArmed) { cardArmed = true; cardDone = false; cardWait = 5 + Math.random() * 5; }
       if (!cardOn) {
+        if (cardDone) return;
         cardWait -= dt;
-        if (cardWait <= 0 && !loading) { loading = true; loadFronts().then(() => { loading = false; if (startOn()) { if (!backSpr) sprite(); launch(); } else cardWait = 1.4; }); }
+        if (cardWait <= 0 && !loading) { loading = true; loadFronts().then(() => { loading = false; if (startOn()) { if (!backSpr) sprite(); launch(); } else cardArmed = false; }); }
         return;
       }
       let alive = 0;
@@ -3665,7 +3687,7 @@
         k.x += k.vx * dt; k.y += k.vy * dt; k.rot += k.vr * dt; k.ry += k.vry * dt;
         if (k.vy > 0 && k.y > H + 110) k.live = false; else alive++;
       });
-      if (!alive) { cardOn = false; cardWait = 5 + Math.random() * 5; }
+      if (!alive) { cardOn = false; cardDone = true; }
     }
     function drawCards() {
       if (!cardOn || !cardImg) return;
@@ -3777,6 +3799,7 @@
     if (K.tags.trim()) parts.push('### tags (Tags)\n' + K.tags.trim());
     return parts.join('\n\n');
   }
+  let CKAUTO = false, CKCHAIN = 0, CKFIXED = false;
   let CKCTL = null, CKDONE = 0, CKST = 'idle', CKITEMS = [], CKSCORE = null, CKBAR = 0;
   function ckSev(v) { v = String(v || '').toLowerCase(); return v === 'high' || v === 'medium' || v === 'low' ? v : 'medium'; }
   const CK_CATS = [
@@ -3842,6 +3865,10 @@
     if (hand) parts.push(hand + ' by hand');
     if (ign) parts.push(ign + ' ignored');
     $('qsum').textContent = parts.join(' · ') || '0 findings';
+    if (items.length && !CKAUTO && CKFIXED && CKCHAIN < 3 && items.every(it => it.done) && $('qdlg').open && CKST === 'findings') {
+      CKAUTO = true;
+      setTimeout(() => { if (CKITEMS === items && CKST === 'findings' && $('qdlg').open && items.every(it => it.done) && !$('fdlg').open) { CKCHAIN++; runCheck(true); } else CKAUTO = false; }, 900);
+    }
     const all = $('qall'); if (all) { const left = fixable - fixed; all.disabled = left < 1; all.textContent = left < 1 ? 'All fixed' : 'Fix all (' + left + ')'; }
   }
   function ckSetFoot(mode) {
@@ -3850,7 +3877,7 @@
     $('qclose').textContent = mode === 'wait' ? 'Cancel' : 'OK';
   }
   function ckRender(items) {
-    CKITEMS = items;
+    CKITEMS = items; CKAUTO = false; CKFIXED = false;
     const box = $('qbody'); box.textContent = '';
     ckSetFoot('findings');
     if (!items.length) { ckScoreShow(true); return; }
@@ -3885,7 +3912,7 @@
           if (it.done) return;
           const prev = it.f.get();
           if (!prev.includes(it.find)) { ckPaint(items); return; }
-          it.f.set(prev.replace(it.find, it.replace || '')); it.done = true;
+          it.f.set(prev.replace(it.find, it.replace || '')); it.done = true; CKFIXED = true;
           pushUndo('consistency fix · ' + it.f.label, () => { it.f.set(prev); it.done = false; it.gone = false; afterModel(); row.classList.remove('done'); b.textContent = 'Fix'; b.disabled = false; ckPaint(items); });
           afterModel(); ckPaint(items);
         };
@@ -3915,25 +3942,30 @@
      - campi principali presenti, niente testo segnaposto, tag puliti. */
   function ckLocal() {
     const t = k => str(K[k]).trim(), r = {}, dump = ckDump();
-    let clean = 100;
+    let clean = 100; const why = r.why = { clean: [], format: [], complete: [] };
     const left = new Set(); (dump.match(/\[\s*insert[^\]]*\]|\bTODO\b|\bFIXME\b|\bXXX\b|lorem ipsum|<\s*insert[^>]*>|\[\s*your name\s*\]/gi) || []).forEach(m => left.add(m.toLowerCase()));
     clean -= Math.min(60, left.size * 20);
+    if (left.size) why.clean.push('Leftover template or note text: ' + Array.from(left).slice(0, 4).join(', '));
     const tags = K.tags.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
-    if (tags.length > 20 || new Set(tags).size < tags.length) clean -= 15;
+    if (tags.length > 20 || new Set(tags).size < tags.length) { clean -= 15; why.clean.push(tags.length > 20 ? 'More than 20 tags: keep the most useful ones.' : 'Some tags are repeated.'); }
     r.clean = Math.max(0, clean);
     let fmt = 100; const ex = t('mes_example'), fm = t('first_mes'), ft = tok(fm);
-    if (!fm) fmt -= 40; else { if (ft < 40) fmt -= 20; else if (ft > 900) fmt -= 15; else if (ft > 600) fmt -= 5; }
-    if (!ex) fmt -= 15;
+    if (!fm) { fmt -= 40; why.format.push('There is no first message.'); } else { if (ft < 40) { fmt -= 20; why.format.push('The first message is very short (about ' + ft + ' tokens): aim for at least 40, ideally 150 to 500.'); } else if (ft > 900) { fmt -= 15; why.format.push('The first message is very long (about ' + ft + ' tokens): over 900 tokens it becomes a wall of text.'); } else if (ft > 600) { fmt -= 5; why.format.push('The first message is rather long (about ' + ft + ' tokens).'); } }
+    if (!ex) { fmt -= 15; why.format.push('There are no dialogue examples.'); }
     else {
       const turns = ex.split('\n').filter(l => /^\s*\S[^\n]{0,40}:/.test(l)).length, starts = (ex.match(/<START>/gi) || []).length;
-      if (turns > 3 && !starts) fmt -= 25; else if (turns && turns < 4 && !starts) fmt -= 5;
+      if (turns > 3 && !starts) { fmt -= 25; why.format.push('The dialogue examples have no <START> separators between exchanges.'); } else if (turns && turns < 4 && !starts) { fmt -= 5; why.format.push('The dialogue examples are very short and have no <START> separator.'); }
     }
     r.format = Math.max(0, fmt);
     const need = [['name', 1, 10], ['description', 80, 25], ['personality', 30, 15], ['scenario', 30, 15], ['first_mes', 60, 20], ['mes_example', 40, 10]];
-    let comp = 0; need.forEach(([k, n, w]) => { const l = t(k).length; comp += l >= n ? w : l > 0 ? w / 2 : 0; });
-    if (tags.length) comp += 5;
+    const FN = { name: 'Name', description: 'Description', personality: 'Personality', scenario: 'Scenario', first_mes: 'First message', mes_example: 'Dialogue examples' };
+    let comp = 0; need.forEach(([k, n, w]) => { const l = t(k).length; comp += l >= n ? w : l > 0 ? w / 2 : 0; if (l === 0) why.complete.push(FN[k] + ' is empty.'); else if (l < n) why.complete.push(FN[k] + ' is too short (' + l + ' characters, aim for at least ' + n + ').'); });
+    if (tags.length) comp += 5; else why.complete.push('There are no tags.');
     const perm = tok(t('name') + ' ' + t('description') + ' ' + t('personality') + ' ' + t('scenario'));
-    if (perm > 2500) comp -= 35; else if (perm > 1500) comp -= 20; else if (perm > 1000) comp -= 8; else if (perm < 120 && perm > 0) comp -= 10;
+    if (perm > 2500) { comp -= 35; why.complete.push('Permanent tokens are very high (about ' + nf(perm) + '): trim the description, personality and scenario to roughly 500 to 1000.'); }
+    else if (perm > 1500) { comp -= 20; why.complete.push('Permanent tokens are high (about ' + nf(perm) + '): they are sent with every message, aim for roughly 500 to 1000.'); }
+    else if (perm > 1000) { comp -= 8; why.complete.push('Permanent tokens are a bit above the ideal range (about ' + nf(perm) + ', ideal 500 to 1000).'); }
+    else if (perm < 120 && perm > 0) { comp -= 10; why.complete.push('Very little text: only about ' + perm + ' permanent tokens, the character will sound generic. Aim for roughly 300 to 1000.'); }
     r.complete = Math.max(0, Math.round(comp));
     return r;
   }
@@ -3941,8 +3973,10 @@
     const loc = ckLocal(), pen = { high: 30, medium: 15, low: 7 }, res = {};
     CK_CATS.forEach(c => { res[c.k] = loc[c.k] === undefined ? 100 : loc[c.k]; });
     items.forEach(it => { if (!it.done) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
+    const why = {}; CK_CATS.forEach(c => { why[c.k] = (loc.why && loc.why[c.k] || []).map(t => ({ t })); });
+    items.forEach(it => { if (!it.done) why[it.cat || 'facts'].push({ t: it.issue, ign: !!it.ign, f: it.f ? it.f.label : '' }); });
     const vals = CK_CATS.map(c => Math.round(res[c.k]));
-    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, ignored: items.filter(it => it.ign && !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
+    return { why, cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, ignored: items.filter(it => it.ign && !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
   }
   const ckTone = v => ckGrade(v).c;
   function ckThumb() {
@@ -3967,7 +4001,7 @@
   function ckScoreDraw(sc, clean) {
     const box = $('qbody'); box.textContent = '';
     ckSetFoot('score');
-    $('qsum').textContent = 'card score';
+    $('qsum').textContent = '';
     const head = mk('div', 'qscore');
     const th = mk('div', 'qthumb'); if (sc.thumb) { const im = mk('img'); im.src = sc.thumb; im.alt = ''; th.appendChild(im); }
     const nm = mk('div', 'qname'); const b = mk('b'); b.textContent = sc.name;
@@ -3979,6 +4013,13 @@
     CK_CATS.forEach((c, i) => {
       const v = sc.cats[i], row = mk('div', 'qcat');
       const l = mk('div', 'qcl'); const n = mk('b'); n.textContent = c.name; const h = mk('span'); h.textContent = c.hint; l.append(n, h);
+      const wy = sc.why && sc.why[c.k];
+      if (v < 100 && wy && wy.length) {
+        const dt = mk('details', 'qwhy'), sm = mk('summary'), ul = mk('ul');
+        sm.textContent = 'What is holding it back (' + wy.length + ')';
+        wy.forEach(w => { const li = mk('li', w.ign ? 'ig' : ''); li.textContent = (w.f ? w.f + ': ' : '') + w.t + (w.ign ? ' (ignored, still counts)' : ''); ul.appendChild(li); });
+        dt.append(sm, ul); l.appendChild(dt);
+      }
       const bar = mk('div', 'qbar'); const fill = mk('i'); fill.style.width = v + '%'; fill.style.background = ckTone(v); bar.appendChild(fill);
       const pc = mk('span', 'qpc'); pc.textContent = v + '%'; pc.style.color = ckTone(v);
       row.append(l, bar, pc); list.appendChild(row);
@@ -4067,7 +4108,8 @@
     }, 400);
     return { done: () => new Promise(res => { clearInterval(iv); let i = shown; if (document.hidden) { paintSegs(CKSEGS); res(); return; } const step = () => { if (!bar.isConnected || i >= CKSEGS) { res(); return; } i++; paintSegs(i); setTimeout(step, 45); }; step(); }), stop: () => clearInterval(iv) };
   }
-  async function runCheck() {
+  async function runCheck(auto) {
+    if (auto !== true) CKCHAIN = 0;
     const d = $('qdlg'), box = $('qbody');
     if (!d.open) d.showModal();
     ckSetFoot('wait'); CKDONE = 0; CKITEMS = [];
@@ -4096,8 +4138,8 @@
       box.textContent = ''; const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'The check did not run'; const m = mk('span'); const ek = errKey(e); m.textContent = ek ? tr(ek[0], ek[1]) : (e && e.message) || 'The API did not answer.'; p.append(b, m); box.appendChild(p); ckSetFoot('score');
     }
   }
-  $('ckbtn').addEventListener('click', runCheck);
-  $('qagain').addEventListener('click', runCheck);
+  $('ckbtn').addEventListener('click', () => runCheck());
+  $('qagain').addEventListener('click', () => runCheck());
   $('qclose').addEventListener('click', () => {
     if (CKST === 'wait') { if (CKCTL) CKCTL.abort(); $('qdlg').close(); return; }
     if (CKST === 'findings') { ckScoreShow(false); return; }
@@ -4756,6 +4798,8 @@
     });
     return out.join(', ');
   }
+  const LORE_JUNK = /^(?:\W*(?:placeholder|tbd|todo|n\/a|none|null|lorem ipsum|description|content|to be (?:written|added|determined)|insert [a-z ]+|\.\.\.))+\W*$/i;
+  const defBook = () => { const had = K.book; if (!K.book.trim() && K.name.trim()) K.book = (K.name.trim() + "'s Lorebook").slice(0, 120); return had; };
   async function suggestLore(idea, signal) {
     const ctx = [];
     if (K.name.trim()) ctx.push('Name: ' + K.name.trim());
@@ -4765,12 +4809,12 @@
     const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
     const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
       (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
-      '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Do not contradict the card; you may expand the setting plausibly.';
+      '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
     const toItems = t => parseJSONArray(t).map(x => ({
       title: str(x && x.title).trim().slice(0, 80),
       keys: mergeKeys(x),
       content: str(x && x.content).trim()
-    })).filter(x => x.title && x.keys && x.content.length >= 10 && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
+    })).filter(x => x.title && x.keys && x.content.length >= 25 && !LORE_JUNK.test(x.content.replace(/[\s.…\-_*]+/g, ' ').trim()) && !/^(?:placeholder|tbd|todo|untitled|title|name|entry)\b/i.test(x.title) && x.content.toLowerCase().replace(/\W+/g, '') !== x.title.toLowerCase().replace(/\W+/g, '') && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
     const r = await callChecked([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 },
       t => toItems(t).length ? null : 'it was not a valid JSON array of objects with title, keys and content (or every entry was unusable)');
     const items = toItems(r.text);
@@ -4913,7 +4957,7 @@
           st.textContent = 'Writing ' + label.toLowerCase() + ' (' + (i + 1) + '/' + total + ')…';
           const items = await suggestLore(idea, GEN_CTL.signal);
           items.forEach(x => { K.entries.push(loreEntry(x)); GENRES.loreIdx.push(K.entries.length - 1); });
-          if (items.length) { changed++; afterModel(); }
+          if (items.length) { defBook(); changed++; afterModel(); }
           if (items.warn || !items.length) { warns.push(label); barSet(k, 'warn'); } else barSet(k, 'done');
           cur = null;
           continue;
@@ -5005,7 +5049,7 @@
         if (!items2.length) throw { code: 'empty' };
         GENRES.loreIdx.slice().sort((a, b) => b - a).forEach(i => K.entries.splice(i, 1)); GENRES.loreIdx = [];
         items2.forEach(x => { K.entries.push(loreEntry(x)); GENRES.loreIdx.push(K.entries.length - 1); });
-        afterModel(); openGenResultKeep();
+        defBook(); afterModel(); openGenResultKeep();
       };
       GENRES.loreIdx.forEach((ix, n) => {
         const en = K.entries[ix]; if (!en) return;
@@ -5539,6 +5583,16 @@
     const head = mk('div', 'wdh'), h = mk('h3'), x = mk('button', 'btn quiet');
     h.textContent = '🪄 Lorebook suggestions'; x.type = 'button'; x.textContent = 'Close'; x.addEventListener('click', closeWd);
     head.append(h, x); box.appendChild(head);
+    if (st.busy || st.items.length) {
+      const N = st.busy ? 8 : st.items.length, bar = mk('div', 'gbar qbarw'); bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-label', 'Entries');
+      for (let i = 0; i < N; i++) bar.appendChild(mk('span', 'seg'));
+      box.appendChild(bar);
+      const segs = bar.querySelectorAll('.seg'), paint = n => segs.forEach((g, i) => { g.className = 'seg' + (i < n ? ' done' : st.busy && i === n ? ' work' : ''); });
+      if (st.busy) {
+        st.t0 = st.t0 || Date.now(); paint(Math.min(N - 1, Math.floor(N * (1 - Math.exp(-(Date.now() - st.t0) / 16000)))));
+        const iv = setInterval(() => { if (!bar.isConnected || !st.busy) { clearInterval(iv); return; } paint(Math.min(N - 1, Math.floor(N * (1 - Math.exp(-(Date.now() - st.t0) / 16000))))); }, 500);
+      } else { st.t0 = 0; paint(N); }
+    }
     const p = mk('p', 'sm'); p.textContent = st.busy ? 'Reading the card and thinking up entries…' : (st.items.length ? 'Untick what you do not want and edit freely. Entries fire only when their keywords appear in the chat.' : ''); if (p.textContent) box.appendChild(p);
     st.items.forEach(it => {
       const w = mk('div', 'item'), top = mk('label', 'chk'), cb = mk('input'), t = mk('input'), k = mk('input'), c = mk('textarea');
@@ -5556,8 +5610,8 @@
       add.addEventListener('click', () => {
         const made = st.items.filter(i => i.on && i.content.trim()).map(loreEntry);
         if (!made.length) return;
-        K.entries.push(...made); afterModel();
-        pushUndo('added ' + made.length + ' lorebook entr' + (made.length > 1 ? 'ies' : 'y'), () => { K.entries = K.entries.filter(e => !made.includes(e)); afterModel(); });
+        const hadBook = defBook(); K.entries.push(...made); afterModel();
+        pushUndo('added ' + made.length + ' lorebook entr' + (made.length > 1 ? 'ies' : 'y'), () => { K.entries = K.entries.filter(e => !made.includes(e)); K.book = hadBook; afterModel(); });
         closeWd();
       });
       const again = mk('button', 'btn'); again.type = 'button'; again.textContent = st.items.length ? 'Suggest others' : 'Try again'; again.disabled = st.busy; again.addEventListener('click', () => loreRun(st));
