@@ -303,6 +303,19 @@
   .qbadge .puff { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, rgba(190,190,200,0.75), rgba(190,190,200,0) 70%); filter: blur(3px); opacity: 0; pointer-events: none; animation: qpuff 1.1s ease-out var(--d, 0s) forwards; }
   @keyframes qpuff { 0% { opacity: 0.9; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(2.6); } }
   @media (prefers-reduced-motion: reduce) { .qbadge.pop, .qbadge.smoke > * , .qbadge .puff { animation: none; } }
+  .qnudge { position: relative; justify-self: end; display: flex; align-items: center; gap: 9px; margin: -6px 6px 0 0; padding: 7px 14px 7px 10px; border: 1px solid var(--gold); border-radius: 999px; background: var(--raised); cursor: pointer; font-size: 12.5px; color: var(--muted); animation: qnpulse 2.4s ease-in-out infinite; }
+  .qnudge b { color: var(--fg); font-weight: 600; margin-right: 3px; }
+  .qnudge[hidden] { display: none; }
+  .qnudge:hover { border-color: var(--accent); color: var(--fg); }
+  .qnudge.pop { animation: qpop 0.5s cubic-bezier(.2,1.4,.4,1), qnpulse 2.4s ease-in-out 0.5s infinite; }
+  @keyframes qnpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240,199,94,0); } 50% { box-shadow: 0 0 14px 2px rgba(240,199,94,0.35); } }
+  .qnudge.boom { animation: qboom 0.52s ease-in forwards; pointer-events: none; }
+  @keyframes qboom { 0% { transform: scale(1); filter: brightness(1); opacity: 1; } 55% { transform: scale(1.25); filter: brightness(2.2); opacity: 1; } 100% { transform: scale(1.7); filter: brightness(3) blur(3px); opacity: 0; } }
+  .qnudge .spark { position: absolute; left: 50%; top: 50%; width: var(--sz); height: var(--sz); margin: calc(var(--sz) / -2); border-radius: 50%; background: #f6d77a; box-shadow: 0 0 8px 2px rgba(240,199,94,0.9); pointer-events: none; animation: qspark 0.7s ease-out forwards; }
+  @keyframes qspark { from { transform: translate(0, 0) scale(1); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; } }
+  .qbadge.first { animation: qpop 0.5s cubic-bezier(.2,1.4,.4,1), qflash 1.6s ease-out; }
+  @keyframes qflash { 0% { box-shadow: 0 0 0 0 var(--fc); } 25% { box-shadow: 0 0 34px 14px var(--fc); } 100% { box-shadow: 0 0 0 0 transparent; } }
+  @media (prefers-reduced-motion: reduce) { .qnudge, .qnudge.pop, .qbadge.first { animation: none; } }
   /* Cornici PNG dell'utente */
   .fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; }
   .ftile { position: relative; aspect-ratio: 2 / 3; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; overflow: hidden; display: grid; place-items: center; font: 500 12px var(--font-ui); }
@@ -799,6 +812,7 @@
           <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"></div></div>
         </div></div>
       </div>
+      <div class="qnudge" id="qnudge" role="button" tabindex="0" hidden title="Run the consistency check"><span class="qn-i" aria-hidden="true">✨</span><span class="qn-t"><b>Card ready?</b> Run the consistency check</span></div>
       <div class="qbadge" id="qbadge" role="button" tabindex="0" hidden></div>
       <p class="hint" id="hint">Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.</p>
       <div class="export">
@@ -3913,16 +3927,49 @@
     box.appendChild(note);
   }
   /* Voto in un angolo sotto la carta: sparisce come una nuvola di fumo se il testo cambia */
+  let CKPEND = false;
   function ckBadge(sc) {
     const bd = $('qbadge'); if (!bd) return;
-    bd.classList.remove('smoke'); bd.querySelectorAll('.puff').forEach(p => p.remove());
+    bd.classList.remove('smoke', 'pop', 'first'); bd.querySelectorAll('.puff').forEach(p => p.remove());
     bd.textContent = '';
     bd.appendChild(ckRing(sc.total, 48));
     const t = mk('span', 'qbt'); t.textContent = 'Card grade'; bd.appendChild(t);
-    bd.title = 'Consistency check score. Click to see the details';
-    bd.hidden = false; bd.classList.add('pop');
+    bd.title = 'Consistency check grade (' + sc.total + '%). Click to see the details';
+    bd.style.setProperty('--fc', ckGrade(sc.total).c);
+    bd.hidden = true; CKPEND = true;
     clearInterval(CKBAR); CKBAR = setInterval(ckWatch, 700);
+    if (!$('qdlg').open) ckReveal();
   }
+  /* Il voto compare quando la finestra si chiude; se c'era l'invito, questo esplode e si trasforma nel voto */
+  function ckReveal() {
+    if (!CKPEND) return; CKPEND = false;
+    const bd = $('qbadge'), n = $('qnudge');
+    if (!CKSCORE || !bd) return;
+    const show = first => { bd.hidden = false; bd.classList.add('pop'); if (first) bd.classList.add('first'); };
+    if (n && !n.hidden && flyOk()) {
+      n.classList.add('boom');
+      for (let i = 0; i < 18; i++) {
+        const a = (i / 18) * Math.PI * 2 + Math.random() * 0.3, d = 50 + Math.random() * 60, sp = mk('i', 'spark');
+        sp.style.setProperty('--dx', Math.cos(a) * d + 'px'); sp.style.setProperty('--dy', Math.sin(a) * d + 'px'); sp.style.setProperty('--sz', (4 + Math.random() * 5).toFixed(1) + 'px');
+        n.appendChild(sp);
+      }
+      setTimeout(() => { n.hidden = true; n.classList.remove('boom'); n.querySelectorAll('.spark').forEach(x => x.remove()); show(true); }, 520);
+    } else { if (n) n.hidden = true; show(!!(n && !n.hidden)); }
+  }
+  /* Invito a fare il controllo: solo se la carta ha abbastanza testo, c'è un'API e non c'è già un voto */
+  function ckEligible() {
+    const t = k => str(K[k]).trim();
+    return apiReady() && t('description').length >= 80 && t('first_mes').length >= 60 && tok(ckDump()) >= 250;
+  }
+  function ckNudgeSync() {
+    const n = $('qnudge'); if (!n || n.classList.contains('boom')) return;
+    const show = (!CKSCORE || CKPEND) && ckEligible();
+    if (show && n.hidden) { n.hidden = false; n.classList.remove('pop'); void n.offsetWidth; n.classList.add('pop'); }
+    else if (!show && !n.hidden) n.hidden = true;
+  }
+  setInterval(ckNudgeSync, 1200);
+  $('qnudge').addEventListener('click', () => { if (!$('qdlg').open) runCheck(); });
+  $('qnudge').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('qnudge').click(); } });
   function ckWatch() {
     if (!CKSCORE) { clearInterval(CKBAR); return; }
     if (ckDump() !== CKSCORE.hash) ckSmoke();
@@ -3996,7 +4043,7 @@
     $('qdlg').close();
   });
   /* Se si chiude con Esc dalla pagina dei risultati, il voto viene comunque calcolato */
-  $('qdlg').addEventListener('close', () => { if (CKST === 'findings' && CKITEMS.length) { CKSCORE = ckScoreCalc(CKITEMS); CKSCORE.thumb = ckThumb(); ckBadge(CKSCORE); } if (CKST === 'wait' && CKCTL) CKCTL.abort(); CKST = 'idle'; });
+  $('qdlg').addEventListener('close', () => { if (CKST === 'findings' && CKITEMS.length) { CKSCORE = ckScoreCalc(CKITEMS); CKSCORE.thumb = ckThumb(); ckBadge(CKSCORE); } if (CKST === 'wait' && CKCTL) CKCTL.abort(); CKST = 'idle'; ckReveal(); });
   $('qbadge').addEventListener('click', () => { if (!CKSCORE) return; const d = $('qdlg'); if (!d.open) d.showModal(); ckScoreDraw(CKSCORE, false); });
   function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; }
 
