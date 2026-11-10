@@ -4,6 +4,11 @@ const stClient = require('./st-client.js');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+// Con la finestra coperta o in secondo piano le animazioni e i timer non devono fermarsi (barra di generazione, controllo di coerenza)
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 
 const ROOT = path.join(__dirname, 'app');
 const PORT = 47831;
@@ -123,7 +128,7 @@ function start() { app.whenReady().then(async () => {
     backgroundColor: '#0f1217', title: 'ST Card Creator',
     icon: path.join(__dirname, 'build', 'icon.ico'),
     // L'app carica solo i suoi file locali. webSecurity disattivata: serve per chiamare le API (OpenRouter, server locali, ecc.) senza blocchi CORS.
-    webPreferences: { webSecurity: false, preload: path.join(__dirname, 'preload.js') }
+    webPreferences: { webSecurity: false, backgroundThrottling: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
   win.once('ready-to-show', () => { if (saved && saved.maximized) win.maximize(); win.show(); });

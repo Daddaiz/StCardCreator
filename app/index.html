@@ -535,7 +535,9 @@
   .gfoot { position: fixed; left: 0; right: 0; bottom: 0; z-index: 70; display: grid; justify-items: center; gap: 8px; padding: 34px 0 14px; pointer-events: none; user-select: none; }
   .gfoot::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, var(--bg) 62%, transparent); transition: opacity .35s; }
   body.starting .gfoot::before { opacity: 0; }
-  .gfl { position: relative; width: 197px; }
+  .gfl { position: relative; width: 197px; pointer-events: auto; cursor: pointer; }
+  body.starting .gfl { pointer-events: none; cursor: default; }
+  .gfl:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
   .gfl .stfan { width: 197px; }
   .gfoot .gfv { display: flex; align-items: center; gap: 8px; color: var(--muted); opacity: 0.85; font-size: 12px; line-height: 1; pointer-events: auto; }
   .gfoot .gfv a { color: inherit; display: block; }
@@ -591,6 +593,12 @@
   .langrow img { display: block; width: 30px; height: 20px; }
   .sdrow { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
   .sdrow select { width: auto; flex: 0 1 340px; min-width: 200px; }
+  .sdrow label.sty { display: flex; align-items: center; gap: 14px; }
+  .sdrow label.sty span, .imgst label.sty span { white-space: nowrap; }
+  .imgst label.sty { display: flex; align-items: center; gap: 14px; }
+  .imgst { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+  .imgst select { width: auto; flex: 0 1 260px; min-width: 180px; }
+  .imgh .imgx { display: flex; align-items: center; gap: 6px; }
   .imgbody { display: grid; gap: 14px; }
   .imgp { display: grid; gap: 10px; }
   .imgf { display: grid; gap: 6px; }
@@ -1044,7 +1052,7 @@
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
-<div class="gfoot"><div class="gfl" aria-hidden="true"><img class="stfan" src="wordmark.webp" width="197" height="51" alt=""><div class="stshine"><i></i></div></div><div class="gfv"><a href="https://github.com/Daddaiz/stcardcreator" target="_blank" rel="noopener" aria-label="ST Card Creator on GitHub" title="ST Card Creator on GitHub"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false" style="display:block"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"></path></svg></a><span id="stVer"></span></div></div>
+<div class="gfoot"><div class="gfl" id="gfl" role="button" tabindex="0" title="Back to the start page" aria-label="Back to the start page"><img class="stfan" src="wordmark.webp" width="197" height="51" alt=""><div class="stshine"><i></i></div></div><div class="gfv"><a href="https://github.com/Daddaiz/stcardcreator" target="_blank" rel="noopener" aria-label="ST Card Creator on GitHub" title="ST Card Creator on GitHub"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false" style="display:block"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"></path></svg></a><span id="stVer"></span></div></div>
 
 <script>
 (() => {
@@ -4004,7 +4012,7 @@
       const n = Math.min(CKSEGS - 1, Math.floor(CKSEGS * (1 - Math.exp(-(Date.now() - t0) / 14000))));
       if (n !== shown) paintSegs(n);
     }, 400);
-    return { done: () => new Promise(res => { clearInterval(iv); let i = shown; const step = () => { if (!bar.isConnected || i >= CKSEGS) { res(); return; } i++; paintSegs(i); setTimeout(step, 45); }; step(); }), stop: () => clearInterval(iv) };
+    return { done: () => new Promise(res => { clearInterval(iv); let i = shown; if (document.hidden) { paintSegs(CKSEGS); res(); return; } const step = () => { if (!bar.isConnected || i >= CKSEGS) { res(); return; } i++; paintSegs(i); setTimeout(step, 45); }; step(); }), stop: () => clearInterval(iv) };
   }
   async function runCheck() {
     const d = $('qdlg'), box = $('qbody');
@@ -4725,6 +4733,9 @@
           { transform: 'translateY(0) scale(1.06,2.1)', opacity: 1, offset: 0.8, easing: 'ease-out' },
           { transform: 'translateY(0) scale(1,1)', opacity: 1 }], { duration: 1000, fill: 'forwards' });
         a.onfinish = fin; a.oncancel = fin;
+        /* finestra nascosta: le animazioni si fermano, quindi chiudo subito invece di aspettare */
+        const vis = () => { if (document.hidden) { try { a.cancel(); } catch (e) { fin(); } } };
+        document.addEventListener('visibilitychange', vis, { once: false }); const rm = a.onfinish; a.onfinish = () => { document.removeEventListener('visibilitychange', vis); rm(); }; const rc = a.oncancel; a.oncancel = () => { document.removeEventListener('visibilitychange', vis); rc(); };
       } catch (e) { fin(); }
     });
   }
@@ -4734,7 +4745,7 @@
     BQ = BQ.then(() => {
       if (tok !== BTOK) return;
       const s = box.querySelector('.seg[data-k="' + k + '"]'); if (!s) return;
-      if (state === 'done' && !instant && flyOk() && s.classList.contains('work')) return barDrop(s);
+      if (state === 'done' && !instant && flyOk() && !document.hidden && s.classList.contains('work')) return barDrop(s);
       s.className = 'seg' + (state ? ' ' + state : '');
       barNote();
     });
@@ -4834,7 +4845,7 @@
       }
       if (SD.on && !GEN_CTL.signal.aborted) {
         cur = 'sd';
-        if (mode === 'empty' && IMGP && IMGP.model === SD.model && IMGP.portrait && IMGP.portrait.pos) { skipped++; barSet('sd', 'done', true); }
+        if (mode === 'empty' && IMGP && IMGP.model === SD.model && (IMGP.style || ISTY) === ISTY && IMGP.portrait && IMGP.portrait.pos) { skipped++; barSet('sd', 'done', true); }
         else {
           barSet('sd', 'work');
           st.textContent = 'Writing image prompts (' + total + '/' + total + ')…';
@@ -4973,6 +4984,36 @@
     ['C · Anime tag models', [['animagine', 'Animagine XL', 'anime', 'put "masterpiece, best quality, very aesthetic, absurdres" at the END of the positive prompt, after the character tags'], ['hassaku', 'Hassaku', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['counterfeit', 'Counterfeit', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['anything', 'Anything', 'anime', 'start the positive prompt with "masterpiece, best quality"']]]
   ];
   const sdInfo = () => { for (const [, list] of SDM) for (const m of list) if (m[0] === SD.model) return m; return SDM[0][1][0]; };
+  /* Stile dell'immagine: influenza solo i prompt per creare le immagini */
+  const ISTYKEY = 'st-card-creator-imgstyle';
+  const ISTYLES = [
+    ['Photorealistic', 'a photorealistic photograph: natural lighting, realistic skin, hair and fabric textures, real camera look (lens, depth of field)'],
+    ['Anime', 'anime illustration: clean line art, cel shading, expressive eyes, vivid colors'],
+    ['Manga', 'manga artwork: black and white ink, screentone shading, dynamic linework, comic page look'],
+    ['Semi-Realistic', 'semi-realistic illustration: realistic proportions and lighting with a polished painterly, stylized finish'],
+    ['Digital Art', 'polished digital painting: detailed brushwork, rich color, concept-art quality'],
+    ['Cinematic', 'a cinematic film still: dramatic lighting, shallow depth of field, widescreen color grading, movie-poster mood'],
+    ['3D Render', 'a high-quality 3D render: CGI character, physically based materials, soft studio lighting'],
+    ['Cartoon', 'western cartoon style: bold outlines, flat bright colors, exaggerated shapes'],
+    ['Fantasy Character Art', 'fantasy character art: detailed painterly concept art with epic lighting, ornate costume and props'],
+    ['Disney Style', 'the look of classic hand-drawn Disney animated feature films: soft expressive character design, warm colors, storybook backgrounds'],
+    ['Chibi', 'chibi style: super-deformed proportions, oversized head, tiny body, cute simplified features']
+  ];
+  let ISTY = 'Photorealistic';
+  try { const v = localStorage.getItem(ISTYKEY); if (v && ISTYLES.some(x => x[0] === v)) ISTY = v; } catch (e) { /* ignora */ }
+  const istyDesc = () => (ISTYLES.find(x => x[0] === ISTY) || ISTYLES[0])[1];
+  const ISTYSELS = [];
+  function istySelect(id) {
+    const sel = mk('select'); sel.id = id; sel.setAttribute('aria-label', 'Image style');
+    ISTYLES.forEach(([k]) => { const o = document.createElement('option'); o.value = k; o.textContent = k; sel.appendChild(o); });
+    sel.value = ISTY; ISTYSELS.push(sel);
+    sel.addEventListener('change', () => {
+      ISTY = sel.value; try { localStorage.setItem(ISTYKEY, ISTY); } catch (e) { /* ignora */ }
+      ISTYSELS.forEach(x => { if (x.isConnected && x !== sel) x.value = ISTY; });
+      drawImg();
+    });
+    return sel;
+  }
   let IMGP = null, IMG_CTL = null;
   const IMG_SYS = ['You write prompts for AI image generators, for fictional roleplay characters.',
     'Always write the prompt in English, whatever language the card is in.',
@@ -4992,7 +5033,7 @@
       ctx.push('First message: ' + fix(K.first_mes).slice(0, 1600));
       task = 'Write a prompt for an illustration of the opening scene in the first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Do not depict the user; if the user is involved, show it from their point of view.';
     }
-    const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
+    const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\nIMAGE STYLE: ' + ISTY + ' - ' + istyDesc() + '. The prompt must clearly ask for this style, expressed the way the target model understands it: plain words for natural-language models, matching tags for tag-based models. Do not let the model rules or default habits override this style (for example, no anime tags for a photorealistic image, and no photo terms for an anime image).\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
     return [{ role: 'system', content: IMG_SYS }, { role: 'user', content: u }];
   }
   function parseImg(t) {
@@ -5005,7 +5046,7 @@
   }
   async function imgRun(signal) {
     const m = sdInfo();
-    const next = { model: m[0], portrait: null, scene: null };
+    const next = { model: m[0], style: ISTY, portrait: null, scene: null };
     const r1 = await callLLM(imgMessages('portrait'), { signal, maxTokens: 700 });
     next.portrait = parseImg(r1.text);
     if (K.first_mes.trim()) {
@@ -5021,11 +5062,19 @@
       document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); return ok;
     } catch (e) { return false; }
   }
+  async function imgRegen() {
+    if (IMG_CTL) return;
+    IMG_CTL = new AbortController(); drawImg();
+    const s0 = $('imgStatus'); if (s0) { s0.textContent = 'Writing prompts…'; s0.classList.remove('warn'); }
+    try { await imgRun(IMG_CTL.signal); IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) s.textContent = 'Done.'; }
+    catch (e) { IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) { const k = errKey(e); s.textContent = tr(k[0], k[1] || null); s.classList.add('warn'); } }
+  }
   function drawImg() {
     const d = $('d-img'); if (!d) return;
     d.closest('details').hidden = !SD.on;
     const box = $('imgBody'); if (!SD.on) { box.textContent = ''; return; }
     const keep = box.querySelector('#imgUrl') ? box.querySelector('#imgUrl').value : '';
+    for (let i = ISTYSELS.length - 1; i >= 0; i--) if (!ISTYSELS[i].isConnected && ISTYSELS[i].id === 'imgStyleBox') ISTYSELS.splice(i, 1);
     box.textContent = '';
     const m = sdInfo(), sty = SDSTYLE[m[2]];
     const p0 = mk('p', 'sm'); p0.textContent = 'These prompts are not part of the card. Copy them into your image generator. Prompts are always written in English. Model: ' + m[1] + '. Change it in AI-assisted generation.';
@@ -5036,11 +5085,21 @@
       const t = mk('span', 'tk'); t.textContent = hint; h.appendChild(t); w.appendChild(h);
       const field = (lbl, key) => {
         const row = mk('div', 'imgf'), l = mk('span', 'sm'), ta = mk('textarea'), cp = mk('button', 'btn');
+        const xs = mk('span', 'imgx');
         l.textContent = lbl; ta.rows = key === 'pos' ? 5 : 3; ta.spellcheck = false; ta.value = o[key] || '';
         ta.addEventListener('input', () => { o[key] = ta.value; saveDataSoon(); });
         cp.type = 'button'; cp.textContent = 'Copy';
         cp.addEventListener('click', async () => { const ok = await copyText(ta.value); cp.textContent = ok ? 'Copied' : 'Select and copy'; setTimeout(() => { cp.textContent = 'Copy'; }, 1600); });
-        const top = mk('div', 'imgh'); top.append(l, cp); row.append(top, ta); w.appendChild(row);
+        if (key === 'pos') {
+          const wd = mk('button', 'wand'); wd.type = 'button'; wd.textContent = '🪄'; wd.className = 'wand imgwand';
+          const off = !apiReady() || !K.description.trim() || !!IMG_CTL;
+          wd.disabled = off; wd.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : 'Write both image prompts again'); wd.setAttribute('aria-label', 'Write the image prompts again');
+          wd.addEventListener('click', () => imgRegen());
+          xs.appendChild(wd);
+        }
+        xs.appendChild(makeExpand(ta, () => title + ' · ' + lbl));
+        xs.appendChild(cp);
+        const top = mk('div', 'imgh'); top.append(l, xs); row.append(top, ta); w.appendChild(row);
       };
       field('Prompt', 'pos');
       if (sty.neg) field('Negative prompt', 'neg');
@@ -5054,17 +5113,18 @@
     } else {
       const n = mk('p', 'sm'); n.textContent = 'No prompts yet. Write them here, or tick "Stable diffusion" when you generate a card.'; box.appendChild(n);
     }
-    const ctl = mk('div', 'ctl'), go = mk('button', 'btn primary'), stat = mk('span', 'sm'); stat.id = 'imgStatus'; stat.setAttribute('role', 'status');
-    go.type = 'button'; go.id = 'imgGo'; go.textContent = IMGP && IMGP.portrait ? 'Write them again' : 'Write image prompts';
-    go.disabled = !apiReady() || !K.description.trim() || !!IMG_CTL;
-    go.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : '');
-    go.addEventListener('click', async () => {
-      if (IMG_CTL) return;
-      IMG_CTL = new AbortController(); go.disabled = true; stat.textContent = 'Writing prompts…'; stat.classList.remove('warn');
-      try { await imgRun(IMG_CTL.signal); IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) s.textContent = 'Done.'; }
-      catch (e) { IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) { const k = errKey(e); s.textContent = tr(k[0], k[1] || null); s.classList.add('warn'); } }
-    });
-    ctl.append(go, stat); box.appendChild(ctl);
+    const ctl = mk('div', 'ctl imgst'), stat = mk('span', 'sm'); stat.id = 'imgStatus'; stat.setAttribute('role', 'status');
+    if (IMGP && IMGP.portrait && IMGP.style && IMGP.style !== ISTY) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for the style "' + IMGP.style + '". Press the wand to write them again as ' + ISTY + '.'; box.appendChild(n); }
+    const sl = mk('label', 'chk sty'), st = mk('span'); st.textContent = 'Image style'; sl.append(st, istySelect('imgStyleBox'));
+    ctl.appendChild(sl);
+    if (!(IMGP && IMGP.portrait)) {
+      const go = mk('button', 'btn primary'); go.type = 'button'; go.id = 'imgGo'; go.textContent = 'Write image prompts';
+      go.disabled = !apiReady() || !K.description.trim() || !!IMG_CTL;
+      go.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : '');
+      go.addEventListener('click', () => imgRegen());
+      ctl.appendChild(go);
+    }
+    ctl.appendChild(stat); box.appendChild(ctl);
     {
       const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b'); b.textContent = 'Create the image'; h.appendChild(b); w.appendChild(h);
       const p = mk('p', 'sm'); p.textContent = iaReady() ? 'Draws the character image from the prompt above with ' + IPROVS[IA.prov].name + ', then you can use it as the cover.' : 'Choose an image service in the API page (OpenAI, OpenRouter, Nano-GPT, a local Stable Diffusion WebUI, or a custom server) to draw the character here.'; w.appendChild(p);
@@ -5496,6 +5556,7 @@
     sc.addEventListener('change', () => { SD.on = sc.checked; sel.disabled = !SD.on; SDSAVE(); barSync(); drawImg(); });
     sel.addEventListener('change', () => { SD.model = sel.value; SDSAVE(); drawImg(); });
     row.append(sl, sel); box.appendChild(row);
+    { const r2 = mk('div', 'sdrow'), l2 = mk('label', 'chk sty'), t2 = mk('span'); t2.textContent = 'Image style'; const s2 = istySelect('imgStyleGen'); l2.append(t2, s2); r2.appendChild(l2); box.appendChild(r2); }
     $('d-img').closest('details').addEventListener('toggle', ev => { if (ev.target.open) drawImg(); });
     { const gi = $('genIdea'); gi.parentNode.querySelector('.dfh').appendChild(makeExpand(gi, () => 'Your idea')); addIdeasBtn(); }
     $('genIdea').addEventListener('input', genReady);
@@ -5594,6 +5655,7 @@
     b.classList.remove('starting'); b.classList.add('tofront');
     flyRun(st, document.querySelector('.app'), () => { st.hidden = true; st.style.pointerEvents = ''; });
   }
+  (() => { const g = $('gfl'); const go = () => { if ($('start').hidden) showStart(); }; g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } }); })();
   function startAct(a) {
     if (a === 'resume') {
       const r = resumeTarget(); if (!r) return;
