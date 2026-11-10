@@ -470,6 +470,10 @@
   dialog.xdlg::backdrop { background: rgba(0,0,0,0.62); }
   .xin { width: min(1000px, 94vw); height: min(88vh, 920px); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 10px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
   .xin textarea { resize: none; height: 100%; min-height: 0; font-size: 15px; line-height: 1.6; }
+  .xin.fin { width: min(820px, 94vw); height: min(72vh, 680px); grid-template-rows: minmax(0, 1fr) auto; }
+  .xin.fin .df { grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+  .xin.fin textarea { height: 100%; }
+  .frow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
   .xh { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .xh b { font: 700 14px/1.2 var(--font-title); letter-spacing: 0.02em; }
   .wand {
@@ -1052,6 +1056,7 @@
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn" id="kalt" hidden></button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
+  <dialog class="xdlg" id="fdlg" aria-label="Edit field"><div class="xin fin"><div class="df"><span class="dfh"><b id="ftitle"></b><span class="tk" id="ftk"></span></span><textarea id="fta" spellcheck="false"></textarea></div><div class="frow"><span class="sm">Click outside the box to go back without changes.</span><button type="button" class="btn primary" id="fok">OK</button></div></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
 <div class="gfoot"><div class="gfl" id="gfl" role="button" tabindex="0" title="Back to the start page" aria-label="Back to the start page"><img class="stfan" src="wordmark.webp" width="197" height="51" alt=""><div class="stshine"><i></i></div></div><div class="gfv"><a href="https://github.com/Daddaiz/stcardcreator" target="_blank" rel="noopener" aria-label="ST Card Creator on GitHub" title="ST Card Creator on GitHub"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" focusable="false" style="display:block"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"></path></svg></a><span id="stVer"></span></div></div>
@@ -3787,6 +3792,33 @@
     const el = f.el && f.el();
     if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); }
   }
+  /* "Open the field": editor sopra tutto, con il consistency check dietro. OK conferma, fuori dal riquadro annulla */
+  let FEI = null, FDOWN = null;
+  function ckEdit(it) {
+    const f = it.f; if (!f) return;
+    FEI = it; const d = $('fdlg'), ta = $('fta');
+    $('ftitle').textContent = f.label; ta.value = f.get(); ta.setAttribute('aria-label', f.label);
+    const cnt = () => { $('ftk').textContent = nf(tok(ta.value)) + ' ' + tr('token'); };
+    cnt(); ta.oninput = cnt;
+    if (!d.open) d.showModal();
+    ta.focus();
+    const i = it.find ? ta.value.indexOf(it.find) : -1;
+    if (i >= 0) { ta.setSelectionRange(i, i + it.find.length); const lh = parseFloat(getComputedStyle(ta).lineHeight) || 24, before = ta.value.slice(0, i); ta.scrollTop = Math.max(0, (before.split('\n').length - 3) * lh); }
+    else ta.setSelectionRange(0, 0);
+  }
+  $('fok').addEventListener('click', () => {
+    const it = FEI; if (!it) { $('fdlg').close(); return; }
+    const v = $('fta').value, prev = it.f.get();
+    if (v !== prev) {
+      it.f.set(v);
+      pushUndo('edit · ' + it.f.label, () => { it.f.set(prev); afterModel(); });
+      afterModel();
+    }
+    FEI = null; $('fdlg').close(); ckPaint(CKITEMS);
+  });
+  $('fdlg').addEventListener('pointerdown', e => { FDOWN = e.target; });
+  $('fdlg').addEventListener('click', e => { if (e.target === $('fdlg') && FDOWN === $('fdlg')) { FEI = null; $('fdlg').close(); } });
+  $('fdlg').addEventListener('close', () => { FEI = null; });
   /* Quali risultati sono ancora aperti: se un altro fix ha già cambiato il testo, questo è risolto */
   const ckCan = it => !!(it.f && it.find && it.f.get().includes(it.find));
   function ckPaint(items) {
@@ -3864,12 +3896,12 @@
       ig.addEventListener('click', async () => {
         if (it.ign) { it.ign = false; row.classList.remove('ignored'); ckPaint(items); return; }
         if (it.done) return;
-        const ok = await askConfirm('Ignore this finding?', ['It will stay in the card as it is and will not count in the grade.', 'Ignoring is not recommended: it is better to fix it or edit the text by hand. If you are sure it is intentional, ignore it.'], 'Ignore anyway');
+        const ok = await askConfirm('Ignore this finding?', ['It will stay in the card as it is, and it still counts against the grade.', 'Ignoring is not recommended: it is better to fix it or edit the text by hand.'], 'Ignore anyway');
         if (!ok) return;
         it.ign = true; row.classList.add('ignored'); ckPaint(items);
       });
       btns.appendChild(ig);
-      if (it.f) { const g = mk('button', 'btn quiet'); g.type = 'button'; g.textContent = 'Open the field'; g.addEventListener('click', () => ckJump(it.f)); btns.appendChild(g); }
+      if (it.f) { const g = mk('button', 'btn quiet'); g.type = 'button'; g.textContent = 'Open the field'; g.addEventListener('click', () => ckEdit(it)); btns.appendChild(g); }
       body.appendChild(btns);
       row.append(sev, body); box.appendChild(row);
     });
@@ -3908,9 +3940,9 @@
   function ckScoreCalc(items) {
     const loc = ckLocal(), pen = { high: 30, medium: 15, low: 7 }, res = {};
     CK_CATS.forEach(c => { res[c.k] = loc[c.k] === undefined ? 100 : loc[c.k]; });
-    items.forEach(it => { if (!it.done && !it.ign) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
+    items.forEach(it => { if (!it.done) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
     const vals = CK_CATS.map(c => Math.round(res[c.k]));
-    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done && !it.ign).length, ignored: items.filter(it => it.ign && !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
+    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, ignored: items.filter(it => it.ign && !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
   }
   const ckTone = v => ckGrade(v).c;
   function ckThumb() {
@@ -3939,7 +3971,7 @@
     const head = mk('div', 'qscore');
     const th = mk('div', 'qthumb'); if (sc.thumb) { const im = mk('img'); im.src = sc.thumb; im.alt = ''; th.appendChild(im); }
     const nm = mk('div', 'qname'); const b = mk('b'); b.textContent = sc.name;
-    const sub = mk('span'); sub.textContent = 'Score ' + sc.total + '% · ' + (clean ? 'no contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : (sc.ignored ? 'nothing left but ' + sc.ignored + ' ignored.' : 'every finding is fixed.'));
+    const sub = mk('span'); sub.textContent = 'Score ' + sc.total + '% · ' + (clean ? 'no contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : 'every finding is fixed.');
     nm.append(b, sub);
     head.append(th, nm, ckRing(sc.total, 96));
     box.appendChild(head);
