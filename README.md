@@ -13,6 +13,7 @@
 - Every SillyTavern field on one page: description, personality, scenario, first and alternate greetings, dialogue examples, advanced definitions, lorebook, creator's metadata. Live token counts, automatic drafts, undo for every AI action.
 - 🪄 **Wand** on each field: rewrites your text for that field, with optional questions first. *Needs an API.*
 - **AI-assisted generation**: describe the idea in any language, pick the fields, get them written one by one in English. *Needs an API.*
+- **Lorebook**: import a lorebook JSON, or let the AI suggest entries from the description with proper names and focused trigger keywords (optionally also in other languages, for chats not in English). *Needs an API.*
 - **Consistency check**: finds contradictions, `{{char}}`/`{{user}}` misuse and leftover text, offers one-click undoable fixes, then gives the card a grade (S+ to C) in five categories. *Needs an API.*
 
 **Design**
@@ -28,11 +29,12 @@
 **Import and export**
 - Import a card PNG or JSON. Export a PNG with the data embedded (`chara` + `ccv3`), JSON V3 or V2, CHARX (RisuAI) or TavernAI V1.
 - **Cards**: a gallery of your saved cards, in the browser.
+- A notice tells you when a newer release is out.
 
 **SillyTavern**
 - **Add to SillyTavern** and **SillyTavern cards** (list, edit, update, with a review of every changed field). *Windows exe only; SillyTavern must be running, with your login in the API page if it asks. Reload SillyTavern (F5) afterwards.*
 
-Dark and light themes, English and Italian.
+Dark and light themes. The interface is in English; the AI writes the card text in English.
 
 ## Get it
 
