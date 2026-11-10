@@ -228,8 +228,6 @@
   .dlmenu button b { font-weight: 600; }
   .dlmenu button span { font-size: 12px; line-height: 1.3; color: var(--muted); }
   .dlmenu button:hover span, .dlmenu button:focus span { color: inherit; }
-  .export .ckbtn { grid-column: 1 / -1; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
-  .export .ckbtn:disabled { opacity: 0.5; }
   /* Differenze prima dell'Update su SillyTavern */
   dialog.ddlg { width: min(820px, calc(100vw - 32px)); }
   .difs { display: grid; gap: 10px; }
@@ -899,7 +897,6 @@
         </div>
         <button type="button" class="btn" id="tbtn">Miniature</button>
         <button type="button" class="btn stbtn" id="stadd" disabled>Add to SillyTavern</button>
-        <button type="button" class="btn ckbtn" id="ckbtn" disabled title="Needs a configured API"><span aria-hidden="true">🪄</span> Consistency check</button>
         <button type="button" class="btn pcbtn" id="pcbtn" disabled title="Needs a configured API"><span aria-hidden="true">💬</span> Test chat</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
@@ -2740,12 +2737,12 @@
       dust();
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
-    /* Sbuffo di polvere ai lati, da sotto la carta, mentre trema */
+    /* Sbuffo di polvere solo a sinistra, da sotto la carta, mentre trema (a destra allargava la pagina e faceva comparire la barra di scorrimento) */
     const dust = () => {
-      for (let side = -1; side <= 1; side += 2) for (let i = 0; i < 5; i++) {
-        const d = document.createElement('i'), sz = 14 + Math.random() * 20, dx = side * (20 + Math.random() * 34), dy = -(4 + Math.random() * 34), delay = 80 + Math.random() * 380;
+      for (let i = 0; i < 5; i++) {
+        const side = -1, d = document.createElement('i'), sz = 14 + Math.random() * 20, dx = side * (20 + Math.random() * 34), dy = -(4 + Math.random() * 34), delay = 80 + Math.random() * 380;
         d.className = 'dust'; d.setAttribute('aria-hidden', 'true');
-        d.style.width = d.style.height = sz + 'px'; d.style.bottom = (Math.random() * 8 - 1) + '%'; d.style[side < 0 ? 'left' : 'right'] = (-sz * 0.35 + Math.random() * 8) + 'px';
+        d.style.width = d.style.height = sz + 'px'; d.style.bottom = (Math.random() * 8 - 1) + '%'; d.style.left = (-sz * 0.35 + Math.random() * 8) + 'px';
         fl.appendChild(d);
         const a = d.animate([{ opacity: 0, transform: 'translate(0,0) scale(.4)' }, { opacity: 0.85, transform: 'translate(' + dx * 0.4 + 'px,' + dy * 0.3 + 'px) scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1.7)' }], { duration: 1100 + Math.random() * 500, delay, easing: 'ease-out', fill: 'both' });
         a.onfinish = a.oncancel = () => d.remove();
@@ -4189,7 +4186,6 @@
       box.textContent = ''; const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'The check did not run'; const m = mk('span'); const ek = errKey(e); m.textContent = ek ? tr(ek[0], ek[1]) : (e && e.message) || 'The API did not answer.'; p.append(b, m); box.appendChild(p); ckSetFoot('score');
     }
   }
-  $('ckbtn').addEventListener('click', () => runCheck());
   $('qagain').addEventListener('click', () => runCheck());
   $('qclose').addEventListener('click', () => {
     if (CKST === 'wait') { if (CKCTL) CKCTL.abort(); $('qdlg').close(); return; }
@@ -4199,7 +4195,7 @@
   /* Se si chiude con Esc dalla pagina dei risultati, il voto viene comunque calcolato */
   $('qdlg').addEventListener('close', () => { if (CKST === 'findings' && CKITEMS.length) { CKSCORE = ckScoreCalc(CKITEMS); CKSCORE.thumb = ckThumb(); ckBadge(CKSCORE); } if (CKST === 'wait' && CKCTL) CKCTL.abort(); CKST = 'idle'; ckReveal(); });
   $('qbadge').addEventListener('click', () => { if (!CKSCORE) return; const d = $('qdlg'); if (!d.open) d.showModal(); ckScoreDraw(CKSCORE, false); });
-  function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; const c = $('pcbtn'); c.disabled = !on; c.title = on ? 'Chat with this card to hear how it speaks. Nothing is saved.' : 'Needs a configured API'; }
+  function syncCk() { const on = apiReady(); const c = $('pcbtn'); c.disabled = !on; c.title = on ? 'Chat with this card to hear how it speaks. Nothing is saved.' : 'Needs a configured API'; }
 
   /* Bozze salvate nel browser */
   const DKEY = 'st-card-creator-drafts-v1';
