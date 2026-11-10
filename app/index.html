@@ -3751,9 +3751,9 @@
   const CK_CATS = [
     { k: 'facts', name: 'Consistency', hint: 'Age, looks, names, places and relationships agree everywhere' },
     { k: 'roles', name: 'Roles & placeholders', hint: '{{char}} and {{user}} used correctly, nothing speaks for the player' },
-    { k: 'clean', name: 'Cleanliness', hint: 'No leftover notes, TODO or template text' },
-    { k: 'format', name: 'Dialogue format', hint: 'Greetings and examples are well formed' },
-    { k: 'complete', name: 'Completeness', hint: 'The key fields are filled in' }
+    { k: 'clean', name: 'Cleanliness', hint: 'No leftover notes, TODO or template text, tidy tags' },
+    { k: 'format', name: 'Greeting & dialogue', hint: 'First message of a healthy length, examples with <START> separators' },
+    { k: 'complete', name: 'Completeness & size', hint: 'Key fields filled in, permanent tokens in a healthy range (about 300–1000)' }
   ];
   function ckCat(v) { v = String(v || '').toLowerCase(); return ['facts', 'roles', 'clean', 'format'].includes(v) ? v : 'facts'; }
   function ckJump(f) {
@@ -3833,21 +3833,33 @@
     ckPaint(items);
   }
   /* ---------- Voti ---------- */
+  /* Metodo di valutazione locale. Soglie ricavate dalle guide e dai valutatori di carte più recenti:
+     - budget dei token permanenti (nome, descrizione, personalità, scenario): 500-1000 è la fascia consigliata, sotto ~150 la carta suona generica, sopra ~1500 ingombra il contesto;
+     - primo messaggio: è il campo con più peso sullo stile, né telegrafico né un muro di testo;
+     - esempi di dialogo: servono scambi separati da <START>;
+     - campi principali presenti, niente testo segnaposto, tag puliti. */
   function ckLocal() {
-    const t = k => str(K[k]).trim(), r = {};
-    const dump = ckDump();
+    const t = k => str(K[k]).trim(), r = {}, dump = ckDump();
     let clean = 100;
     const left = new Set(); (dump.match(/\[\s*insert[^\]]*\]|\bTODO\b|\bFIXME\b|\bXXX\b|lorem ipsum|<\s*insert[^>]*>|\[\s*your name\s*\]/gi) || []).forEach(m => left.add(m.toLowerCase()));
     clean -= Math.min(60, left.size * 20);
-    r.clean = clean;
-    let fmt = 100; const ex = t('mes_example');
-    if (!t('first_mes')) fmt -= 40;
-    if (!ex) fmt -= 15; else if (/\n\s*\S[^\n]{0,40}:/.test(ex) && ex.split('\n').filter(l => /^\s*\S[^\n]{0,40}:/.test(l)).length > 3 && !/<START>/i.test(ex)) fmt -= 25;
+    const tags = K.tags.split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+    if (tags.length > 20 || new Set(tags).size < tags.length) clean -= 15;
+    r.clean = Math.max(0, clean);
+    let fmt = 100; const ex = t('mes_example'), fm = t('first_mes'), ft = tok(fm);
+    if (!fm) fmt -= 40; else { if (ft < 40) fmt -= 20; else if (ft > 900) fmt -= 15; else if (ft > 600) fmt -= 5; }
+    if (!ex) fmt -= 15;
+    else {
+      const turns = ex.split('\n').filter(l => /^\s*\S[^\n]{0,40}:/.test(l)).length, starts = (ex.match(/<START>/gi) || []).length;
+      if (turns > 3 && !starts) fmt -= 25; else if (turns && turns < 4 && !starts) fmt -= 5;
+    }
     r.format = Math.max(0, fmt);
     const need = [['name', 1, 10], ['description', 80, 25], ['personality', 30, 15], ['scenario', 30, 15], ['first_mes', 60, 20], ['mes_example', 40, 10]];
     let comp = 0; need.forEach(([k, n, w]) => { const l = t(k).length; comp += l >= n ? w : l > 0 ? w / 2 : 0; });
-    if (K.tags.trim()) comp += 5;
-    r.complete = Math.round(comp);
+    if (tags.length) comp += 5;
+    const perm = tok(t('name') + ' ' + t('description') + ' ' + t('personality') + ' ' + t('scenario'));
+    if (perm > 2500) comp -= 35; else if (perm > 1500) comp -= 20; else if (perm > 1000) comp -= 8; else if (perm < 120 && perm > 0) comp -= 10;
+    r.complete = Math.max(0, Math.round(comp));
     return r;
   }
   function ckScoreCalc(items) {
@@ -3857,7 +3869,7 @@
     const vals = CK_CATS.map(c => Math.round(res[c.k]));
     return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
   }
-  const ckTone = v => v >= 85 ? '#4fbf82' : v >= 60 ? '#e0a63a' : '#e05a5a';
+  const ckTone = v => ckGrade(v).c;
   function ckThumb() {
     try { const c = $('card'), o = document.createElement('canvas'); o.width = 200; o.height = 300; o.getContext('2d').drawImage(c, 0, 0, 200, 300); return o.toDataURL('image/jpeg', 0.85); } catch (e) { return ''; }
   }
@@ -3884,7 +3896,7 @@
     const head = mk('div', 'qscore');
     const th = mk('div', 'qthumb'); if (sc.thumb) { const im = mk('img'); im.src = sc.thumb; im.alt = ''; th.appendChild(im); }
     const nm = mk('div', 'qname'); const b = mk('b'); b.textContent = sc.name;
-    const sub = mk('span'); sub.textContent = clean ? 'No contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : 'Every finding is fixed.';
+    const sub = mk('span'); sub.textContent = 'Score ' + sc.total + '% · ' + (clean ? 'no contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : 'every finding is fixed.');
     nm.append(b, sub);
     head.append(th, nm, ckRing(sc.total, 96));
     box.appendChild(head);
@@ -3897,7 +3909,7 @@
       row.append(l, bar, pc); list.appendChild(row);
     });
     box.appendChild(list);
-    const note = mk('p', 'qnote'); note.textContent = 'The total is the average of the five categories (100% means everything is fine). Checks are only as good as the model: a second pass with another model can still find something. If you edit the card text the score disappears and the check has to be run again.';
+    const note = mk('p', 'qnote'); note.textContent = 'Grade: S+ 91–100%, S 85–90%, A 61–84%, B 31–60%, C 0–30%. The total is the average of the five categories (100% means everything is fine). Checks are only as good as the model: a second pass with another model can still find something. If you edit the card text the score disappears and the check has to be run again.';
     box.appendChild(note);
   }
   /* Voto in un angolo sotto la carta: sparisce come una nuvola di fumo se il testo cambia */
@@ -3906,7 +3918,7 @@
     bd.classList.remove('smoke'); bd.querySelectorAll('.puff').forEach(p => p.remove());
     bd.textContent = '';
     bd.appendChild(ckRing(sc.total, 48));
-    const t = mk('span', 'qbt'); t.textContent = 'Card score'; bd.appendChild(t);
+    const t = mk('span', 'qbt'); t.textContent = 'Card grade'; bd.appendChild(t);
     bd.title = 'Consistency check score. Click to see the details';
     bd.hidden = false; bd.classList.add('pop');
     clearInterval(CKBAR); CKBAR = setInterval(ckWatch, 700);
