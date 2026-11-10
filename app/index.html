@@ -263,6 +263,8 @@
   .qi .qbtns .btn { padding: 6px 12px; font-size: 13px; }
   .qtop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
   .qtop .btn { margin-left: auto; }
+  .qi.ignored { opacity: 0.55; }
+  .qi.ignored .qfix { text-decoration: line-through; }
   .qfoot { display: flex; justify-content: flex-end; gap: 10px; }
   .qwaitbox { display: grid; gap: 10px; padding: 6px 0 10px; }
   .gbar.qbarw { flex: none; width: 100%; max-width: none; margin: 0; }
@@ -2507,6 +2509,7 @@
     e = e && typeof e === 'object' ? e : {};
     return {
       title: str(e.title), keys: str(e.keys), sec: str(e.sec), content: str(e.content),
+      uid: Number.isInteger(e.uid) && e.uid >= 0 ? e.uid : null,
       enabled: e.enabled !== false, constant: !!e.constant,
       pos: ni(e.pos, 0, 6, 1), depth: ni(e.depth, 0, 9999, 4), role: ni(e.role, 0, 2, 0),
       order: ni(e.order, -9999, 99999, 100), prob: ni(e.prob, 0, 100, 100), logic: [0, 1, 2, 3].includes(+e.logic) ? +e.logic : 0,
@@ -2543,6 +2546,7 @@
       entries: (Array.isArray(book.entries) ? book.entries : []).map(e => {
         const x = (e && e.extensions) || {};
         return {
+          uid: Number.isInteger(+e.id) && e.id !== null && e.id !== '' ? +e.id : null,
           title: str(e.comment) || str(e.name), keys: (e.keys || []).join(', '), sec: (e.secondary_keys || []).join(', '), content: e.content,
           enabled: e.enabled !== false, constant: !!e.constant,
           pos: Number.isInteger(x.position) ? x.position : (e.position === 'before_char' ? 0 : 1),
@@ -3786,18 +3790,26 @@
   /* Quali risultati sono ancora aperti: se un altro fix ha già cambiato il testo, questo è risolto */
   const ckCan = it => !!(it.f && it.find && it.f.get().includes(it.find));
   function ckPaint(items) {
-    let fixed = 0, fixable = 0;
+    let fixed = 0, fixable = 0, ign = 0;
     items.forEach(it => {
       if (!it.row) return;
+      if (it.ign) ign++;
       if (it.fixable) {
-        fixable++;
-        if (it.done) { fixed++; it.row.classList.add('done'); it.btn.textContent = it.gone ? 'Already fixed' : 'Fixed'; it.btn.disabled = true; }
-        else if (!ckCan(it)) { it.done = it.gone = true; fixed++; it.row.classList.add('done'); it.btn.textContent = 'Already fixed'; it.btn.disabled = true; }
+        if (!it.done && !ckCan(it)) { it.done = it.gone = true; }
+        if (it.ign) { if (!it.done) { it.btn.disabled = true; it.btn.textContent = 'Fix'; } }
+        else fixable++;
+        if (it.done) { if (!it.ign) fixed++; it.row.classList.add('done'); it.btn.textContent = it.gone ? 'Already fixed' : 'Fixed'; it.btn.disabled = true; }
+        else if (!it.ign) { it.btn.disabled = false; }
       }
+      if (it.ig) { it.ig.textContent = it.ign ? 'Undo ignore' : 'Ignore'; it.ig.disabled = !!it.done; }
     });
     CKDONE = fixed;
-    const hand = items.length - fixable;
-    $('qsum').textContent = fixable ? fixed + ' of ' + fixable + ' fixed' + (hand ? ' · ' + hand + ' by hand' : '') : items.length + ' to check by hand';
+    const hand = items.filter(it => !it.fixable && !it.ign).length;
+    const parts = [];
+    if (fixable || items.some(it => it.fixable)) parts.push(fixed + ' of ' + fixable + ' fixed');
+    if (hand) parts.push(hand + ' by hand');
+    if (ign) parts.push(ign + ' ignored');
+    $('qsum').textContent = parts.join(' · ') || '0 findings';
     const all = $('qall'); if (all) { const left = fixable - fixed; all.disabled = left < 1; all.textContent = left < 1 ? 'All fixed' : 'Fix all (' + left + ')'; }
   }
   function ckSetFoot(mode) {
@@ -3817,7 +3829,7 @@
     const cnt = mk('span');
     cnt.textContent = items.length + ' finding' + (items.length > 1 ? 's' : '') + (fixable.length ? ' · ' + fixable.length + ' can be fixed with one click' : '') + (hand ? ' · ' + hand + ' to fix by hand' : '');
     top.appendChild(cnt);
-    if (fixable.length > 1) { const all = mk('button', 'btn'); all.type = 'button'; all.id = 'qall'; all.textContent = 'Fix all (' + fixable.length + ')'; all.addEventListener('click', () => { items.forEach(it => { if (it.fixable && !it.done) it.fix(); }); }); top.appendChild(all); }
+    if (fixable.length > 1) { const all = mk('button', 'btn'); all.type = 'button'; all.id = 'qall'; all.textContent = 'Fix all (' + fixable.length + ')'; all.addEventListener('click', () => { items.forEach(it => { if (it.fixable && !it.done && !it.ign) it.fix(); }); }); top.appendChild(all); }
     box.appendChild(top);
     items.forEach(it => {
       const row = mk('div', 'qi'); const sev = mk('span', 'sev ' + it.sev); sev.title = it.sev + ' severity';
@@ -3848,6 +3860,15 @@
         b.addEventListener('click', it.fix); btns.appendChild(b);
       }
       it.row = row;
+      const ig = mk('button', 'btn quiet ign'); ig.type = 'button'; ig.textContent = 'Ignore'; it.ig = ig;
+      ig.addEventListener('click', async () => {
+        if (it.ign) { it.ign = false; row.classList.remove('ignored'); ckPaint(items); return; }
+        if (it.done) return;
+        const ok = await askConfirm('Ignore this finding?', ['It will stay in the card as it is and will not count in the grade.', 'Ignoring is not recommended: it is better to fix it or edit the text by hand. If you are sure it is intentional, ignore it.'], 'Ignore anyway');
+        if (!ok) return;
+        it.ign = true; row.classList.add('ignored'); ckPaint(items);
+      });
+      btns.appendChild(ig);
       if (it.f) { const g = mk('button', 'btn quiet'); g.type = 'button'; g.textContent = 'Open the field'; g.addEventListener('click', () => ckJump(it.f)); btns.appendChild(g); }
       body.appendChild(btns);
       row.append(sev, body); box.appendChild(row);
@@ -3887,9 +3908,9 @@
   function ckScoreCalc(items) {
     const loc = ckLocal(), pen = { high: 30, medium: 15, low: 7 }, res = {};
     CK_CATS.forEach(c => { res[c.k] = loc[c.k] === undefined ? 100 : loc[c.k]; });
-    items.forEach(it => { if (!it.done) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
+    items.forEach(it => { if (!it.done && !it.ign) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
     const vals = CK_CATS.map(c => Math.round(res[c.k]));
-    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
+    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done && !it.ign).length, ignored: items.filter(it => it.ign && !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
   }
   const ckTone = v => ckGrade(v).c;
   function ckThumb() {
@@ -3918,7 +3939,7 @@
     const head = mk('div', 'qscore');
     const th = mk('div', 'qthumb'); if (sc.thumb) { const im = mk('img'); im.src = sc.thumb; im.alt = ''; th.appendChild(im); }
     const nm = mk('div', 'qname'); const b = mk('b'); b.textContent = sc.name;
-    const sub = mk('span'); sub.textContent = 'Score ' + sc.total + '% · ' + (clean ? 'no contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : 'every finding is fixed.');
+    const sub = mk('span'); sub.textContent = 'Score ' + sc.total + '% · ' + (clean ? 'no contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : (sc.ignored ? 'nothing left but ' + sc.ignored + ' ignored.' : 'every finding is fixed.'));
     nm.append(b, sub);
     head.append(th, nm, ckRing(sc.total, 96));
     box.appendChild(head);
@@ -4418,6 +4439,36 @@
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
   }
+  /* Lorebook collegato: SillyTavern ricostruisce quello incorporato nella carta dal file del lorebook (world),
+     quindi per cambiare o cancellare le voci bisogna aggiornare quel file, nel suo formato nativo */
+  const WI_DEFAULT = { vectorized: false, selectiveLogic: 0, addMemo: true, ignoreBudget: false, excludeRecursion: false, preventRecursion: false, matchPersonaDescription: false, matchCharacterDescription: false, matchCharacterPersonality: false, matchCharacterDepthPrompt: false, matchScenario: false, matchCreatorNotes: false, delayUntilRecursion: false, group: '', groupOverride: false, groupWeight: 100, scanDepth: null, caseSensitive: null, matchWholeWords: null, useGroupScoring: null, automationId: '', sticky: null, cooldown: null, delay: null, triggers: [], characterFilter: { isExclude: false, names: [], tags: [] }, outletName: '' };
+  async function stSyncWorld(name) {
+    const l = await stJson('/api/worldinfo/list', {});
+    if (l.status === 401 || l.status === 403) throw { code: 'login' };
+    let names = []; try { names = (l.json() || []).map(x => String(x.file_id)); } catch (e) { names = []; }
+    if (l.status !== 200 || !names.includes(name)) return null;   /* il file non esiste: ST userà il lorebook incorporato */
+    const g = await stJson('/api/worldinfo/get', { name });
+    if (g.status !== 200) throw { message: 'Could not read the lorebook "' + name + '" from SillyTavern, so nothing was changed.' };
+    const world = g.json() || {}; const old = (world.entries && typeof world.entries === 'object') ? world.entries : {};
+    const used = new Set(); let next = Object.keys(old).reduce((m, k) => Math.max(m, +k || 0), -1) + 1;
+    K.entries.forEach(e => { if (Number.isInteger(e.uid)) next = Math.max(next, e.uid + 1); });
+    const out = {};
+    K.entries.forEach((e, i) => {
+      let uid = Number.isInteger(e.uid) && !used.has(e.uid) ? e.uid : next++;
+      used.add(uid);
+      const base = old[String(uid)] && Number.isInteger(e.uid) ? old[String(uid)] : { ...WI_DEFAULT, triggers: [] };
+      const sec = split(e.sec);
+      out[String(uid)] = Object.assign({}, base, {
+        uid, key: split(e.keys), keysecondary: sec, comment: e.title, content: e.content, constant: !!e.constant, selective: sec.length > 0,
+        order: e.order, position: e.pos, disable: !e.enabled, addMemo: !!e.title, displayIndex: i,
+        probability: e.prob, useProbability: true, depth: e.depth, role: e.role, selectiveLogic: e.logic
+      });
+    });
+    world.entries = out;
+    const e1 = await stJson('/api/worldinfo/edit', { name, data: world });
+    if (e1.status !== 200) throw { message: 'SillyTavern did not accept the lorebook update (' + e1.status + '). Nothing was changed.' };
+    return { name, count: K.entries.length, before: Object.keys(old).length };
+  }
   /* Backup dell'originale: solo la prima volta che una carta di SillyTavern viene toccata da qui, solo nell'exe */
   const BKKEY = 'st-card-creator-st-backup-asked-v1';
   const bkAsked = () => { try { const a = JSON.parse(localStorage.getItem(BKKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
@@ -4454,10 +4505,12 @@
       const paras = ['This replaces the card "' + curName + '" in SillyTavern with what you have here: all the data fields and the card image.', 'Chats are not touched.'];
       if (normName(curName) !== normName(K.name)) paras.push('The name changes from "' + curName + '" to "' + K.name.trim() + '". The file in SillyTavern keeps its name.');
       const ex = (cur.data && cur.data.extensions) || {};
-      if (ex.world && K.entries.length) paras.push('This card is linked to the SillyTavern lorebook "' + ex.world + '": SillyTavern rebuilds the card\'s embedded lorebook from that file, so lorebook edits made here may be overwritten.');
+      if (ex.world) paras.push('This card is linked to the SillyTavern lorebook "' + ex.world + '". It is updated too, so entries you changed or removed here change or disappear there. Any other card that uses that lorebook gets the same change.');
       if (!(await askDiff(paras, cur))) { say('status', 'Update cancelled.', null, false); return; }
       const bk = await stBackupFirst(av, curName);
       if (!bk.ok) { say('status', 'Update cancelled.', null, false); return; }
+      let wsync = null;
+      if (ex.world) { say('status', 'Updating the lorebook on SillyTavern…', null, false); wsync = await stSyncWorld(ex.world); }
       say('status', 'Updating the card on SillyTavern…', null, false);
       /* json_data conserva i campi che questa app non conosce (script regex, ecc.); il lorebook e i saluti di gruppo vengono dalla card di qui */
       let base = {}; try { base = JSON.parse(cur.json_data || '{}') || {}; } catch (e) { base = {}; }
@@ -4479,7 +4532,7 @@
       const f = await stForm(fields, new File([blob], av, { type: 'image/png' }));
       const r = await stReq('POST', '/api/characters/edit', f);
       if (r.status !== 200) throw { message: 'SillyTavern did not accept the update (' + r.status + '). Nothing was changed on the card.' };
-      say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.' + (bk.path ? ' The original is saved at ' + bk.path : ''), { n: K.name.trim() }, false);
+      say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.' + (wsync ? ' The lorebook "' + wsync.name + '" was updated too (' + wsync.count + ' entries).' : '') + (bk.path ? ' The original is saved at ' + bk.path : ''), { n: K.name.trim() }, false);
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
