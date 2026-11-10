@@ -5220,23 +5220,15 @@
     let rules = sty.rules.replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
     if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
     let task;
-    /* Personaggio: sempre figura intera in piedi su sfondo nero, è l'immagine di riferimento per le scene.
-       Scene (primo messaggio e alternativi): l'aspetto arriva dall'immagine di riferimento, quindi si descrive solo ciò che c'è e succede attorno, nel momento finale del messaggio. */
-    const tail = s => { const x = fix(s); return x.length > 2400 ? '[…] ' + x.slice(-2400) : x; };
-    const sceneTask = what => 'Write a prompt for an illustration of ' + what + ', in a wide 3:2 composition. Depict ONE moment: the situation at the very END of the message (its final lines), not its beginning and not a summary of everything that happens.\n' +
-      'The image will be generated with the character portrait as a reference image, so the character\'s look is already given: do NOT describe ' + nm + '\'s face, hair, eyes, body, age or clothing. Mention the character only as "the character" (never by name), with just what the portrait cannot give: where they are in the frame, their pose, what they are doing, and their expression at that moment.\n' +
-      'Spend the prompt on everything else: the place, the objects and other people around the character, what is happening around them, time of day, weather, lighting, atmosphere, camera angle. Do not depict the user; if the user is involved, show the scene from their point of view.';
-    if (kind === 'portrait') task = 'Write a prompt for a vertical 2:3 full-body image of ' + nm + ' that will be used as the reference image of the character. It must ALWAYS be: one single figure, standing, the whole body visible from head to feet, in a normal relaxed standing pose facing the viewer (no action, no dynamic or dramatic pose, not sitting, not cropped), on a plain solid black background with nothing else in the picture: no scenery, no furniture, no props that are not part of the outfit, no other people, no text. Describe the face, hair, body, outfit and signature details clearly. The facial expression is the one that best fits this character\'s personality.';
+    if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, simple background that suits the character, no text.';
     else if (kind === 'alt') {
-      ctx.length = 1; if (K.scenario.trim()) ctx.push(WF.scenario[0] + ': ' + fix(K.scenario).slice(0, 1200));
-      ctx.push('Alternate first message: ' + tail(K.alt[altIdx]));
-      task = sceneTask('the scene of this alternate first message');
+      ctx.push('Alternate first message: ' + fix(K.alt[altIdx]).slice(0, 1600));
+      task = 'Write a prompt for an illustration of the opening scene in this alternate first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
     } else {
-      ctx.length = 1; if (K.scenario.trim()) ctx.push(WF.scenario[0] + ': ' + fix(K.scenario).slice(0, 1200));
-      ctx.push('First message: ' + tail(K.first_mes));
-      task = sceneTask('the scene of the first message');
+      ctx.push('First message: ' + fix(K.first_mes).slice(0, 1600));
+      task = 'Write a prompt for an illustration of the opening scene in the first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Do not depict the user; if the user is involved, show it from their point of view.';
     }
-    const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\nIMAGE STYLE: ' + ISTY + ' - ' + istyDesc() + '. The prompt must clearly ask for this style, expressed the way the target model understands it: plain words for natural-language models, matching tags for tag-based models. Do not let the model rules or default habits override this style (for example, no anime tags for a photorealistic image, and no photo terms for an anime image).\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK (the model rules decide HOW the prompt is written; this task decides WHAT is in the picture, and wins wherever the two disagree): ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
+    const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\nIMAGE STYLE: ' + ISTY + ' - ' + istyDesc() + '. The prompt must clearly ask for this style, expressed the way the target model understands it: plain words for natural-language models, matching tags for tag-based models. Do not let the model rules or default habits override this style (for example, no anime tags for a photorealistic image, and no photo terms for an anime image).\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
     return [{ role: 'system', content: IMG_SYS }, { role: 'user', content: u }];
   }
   function parseImg(t) {
@@ -5335,12 +5327,12 @@
     };
     if (IMGP && IMGP.portrait) {
       if (IMGP.model !== m[0]) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for another model. Press the button below to write them again for ' + m[1] + '.'; box.appendChild(n); }
-      block('Character image', IMGP.portrait, 'full body 2:3 · black background');
-      if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2 · uses the character image as reference');
+      block('Character image', IMGP.portrait, 'portrait 2:3');
+      if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2');
       K.alt.forEach((t, i) => {
         if (!str(t).trim()) return;
         const o = IMGP.alts && IMGP.alts[i];
-        if (o && o.pos !== undefined) { block('Alternate message ' + (i + 1) + ' image', o, 'scene 3:2 · uses the character image as reference'); return; }
+        if (o && o.pos !== undefined) { block('Alternate message ' + (i + 1) + ' image', o, 'scene 3:2'); return; }
         const w = mk('div', 'item imgp'), hd = mk('div', 'dfh'), b = mk('b'), tk = mk('span', 'tk'), n = mk('p', 'sm');
         b.textContent = 'Alternate message ' + (i + 1) + ' image'; tk.textContent = 'scene 3:2'; hd.append(b, tk); w.appendChild(hd);
         if (IMG_ALT === i) n.textContent = 'Writing the prompt…';
