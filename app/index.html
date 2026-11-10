@@ -217,6 +217,62 @@
   .dlwrap > .btn { width: 100%; }
   .dlmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; display: grid; background: var(--raised); border: 1px solid var(--gold); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.35); overflow: hidden; }
   .dlmenu[hidden] { display: none; }
+  .dlmenu { width: max(100%, 330px); }
+  .dlmenu button { display: grid; gap: 2px; }
+  .dlmenu button b { font-weight: 600; }
+  .dlmenu button span { font-size: 12px; line-height: 1.3; color: var(--muted); }
+  .dlmenu button:hover span, .dlmenu button:focus span { color: inherit; }
+  .export .ckbtn { grid-column: 1 / -1; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
+  .export .ckbtn:disabled { opacity: 0.5; }
+  /* Differenze prima dell'Update su SillyTavern */
+  dialog.ddlg { width: min(820px, calc(100vw - 32px)); }
+  .difs { display: grid; gap: 10px; }
+  .dif { border: 1px solid var(--line); border-radius: 10px; background: var(--raised); overflow: hidden; }
+  .dif > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 10px 14px; font: 600 14px var(--font-ui); }
+  .dif > summary::-webkit-details-marker { display: none; }
+  .dif > summary .tk { margin-left: auto; }
+  .dif .dtxt { padding: 0 14px 12px; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; border-top: 1px solid var(--line); padding-top: 10px; max-height: 320px; overflow: auto; }
+  .dif ins { background: rgba(86, 196, 128, 0.22); color: inherit; text-decoration: none; border-radius: 3px; padding: 0 1px; box-shadow: inset 0 -1px 0 rgba(86, 196, 128, 0.7); }
+  .dif del { background: rgba(228, 88, 88, 0.22); color: inherit; text-decoration: line-through; text-decoration-color: rgba(228, 88, 88, 0.9); border-radius: 3px; padding: 0 1px; }
+  .dif .skip { color: var(--muted); }
+  .dsame { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .dsame b { color: var(--fg); font-weight: 600; }
+  .dchip { display: inline-block; font: 600 11px/1 var(--font-ui); letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; border: 1px solid var(--gold); color: var(--accent); }
+  .dchip.add { border-color: rgba(86, 196, 128, 0.7); color: #5ec98a; }
+  .dchip.del { border-color: rgba(228, 88, 88, 0.7); color: #e86a6a; }
+  .dchip.img { border-color: var(--gold); }
+  /* Controllo di coerenza con l'IA */
+  dialog.qdlg { width: min(820px, calc(100vw - 32px)); }
+  .qbody { display: grid; gap: 10px; }
+  .qwait { display: flex; align-items: center; gap: 12px; padding: 14px 4px; font-size: 14px; color: var(--muted); }
+  .qwait i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: qspin 0.9s linear infinite; }
+  @keyframes qspin { to { transform: rotate(360deg); } }
+  .qok { display: grid; justify-items: center; gap: 6px; padding: 26px 12px; text-align: center; color: var(--muted); }
+  .qok b { font: 600 18px var(--font-title); color: var(--fg); }
+  .qi { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
+  .qi.done { opacity: 0.55; }
+  .qi .sev { width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--muted); box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent); }
+  .qi .sev.high { background: #e05a5a; color: #e05a5a; }
+  .qi .sev.medium { background: #e0a63a; color: #e0a63a; }
+  .qi .sev.low { background: #6f9fd8; color: #6f9fd8; }
+  .qi .qh { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .qi .qtext { font-size: 14px; line-height: 1.5; margin: 4px 0 6px; }
+  .qi .qfix { font-size: 13px; line-height: 1.5; padding: 8px 10px; border-radius: 8px; background: var(--surface); border: 1px dashed var(--line); white-space: pre-wrap; word-break: break-word; }
+  .qi .qbtns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .qi .qbtns .btn { padding: 6px 12px; font-size: 13px; }
+  .qtop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .qtop .btn { margin-left: auto; }
+  /* Cornici PNG dell'utente */
+  .fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; }
+  .ftile { position: relative; aspect-ratio: 2 / 3; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; overflow: hidden; display: grid; place-items: center; font: 500 12px var(--font-ui); }
+  .ftile:hover { border-color: var(--accent); }
+  .ftile[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .ftile img { width: 100%; height: 100%; object-fit: fill; display: block; background: repeating-conic-gradient(rgba(127,127,127,0.18) 0 25%, transparent 0 50%) 0 0 / 12px 12px; }
+  .ftile .fx { position: absolute; top: 3px; right: 3px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.65); color: #fff; font: 13px/20px var(--font-ui); cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+  .ftile:hover .fx, .ftile:focus-within .fx { opacity: 1; }
+  .ftile.add { border-style: dashed; font-size: 26px; line-height: 1; color: var(--accent); }
+  .ftile .fnm { position: absolute; left: 0; right: 0; bottom: 0; padding: 3px 4px; font-size: 10px; line-height: 1.2; background: rgba(0,0,0,0.6); color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+
   .dlmenu button { font: 500 14px var(--font-ui); padding: 10px 14px; text-align: left; border: 0; border-top: 1px solid var(--gold); background: none; color: var(--fg); cursor: pointer; }
   .dlmenu button:first-child { border-top: 0; }
   .dlmenu button:hover, .dlmenu button:focus-visible { background: var(--accent); color: var(--accent-fg); outline: none; }
@@ -620,6 +676,14 @@
           <div class="presets" id="pr-frame"></div>
           <div class="presets alt" id="pa-frame"></div>
         </div>
+        <p class="subt sm2">Your PNG frames</p>
+        <p class="hint">A transparent PNG or WebP drawn over the whole card and stretched to 2:3. Frames stay saved in this browser.</p>
+        <div class="fgrid" id="fgrid"></div>
+        <input id="ffile" type="file" accept="image/png,image/webp" multiple hidden>
+        <div class="sub" data-show="frameImgOn=true">
+          <label class="rng"><span>Frame opacity</span><output data-out="frameImgAlpha"></output><input type="range" data-k="frameImgAlpha" min="10" max="100" step="1"></label>
+          <label class="chk"><input type="checkbox" data-k="frameImgUnder"> Draw the frame under the text</label>
+        </div>
       </div></details>
 
       <details class="drawer" data-group="cover"><summary><h2 id="h-mask">Maschera</h2></summary><div class="dbody">
@@ -695,10 +759,17 @@
         </select>
         <div class="dlwrap">
           <button type="button" class="btn primary" id="export" aria-haspopup="true" aria-expanded="false">Download</button>
-          <div class="dlmenu" id="dlmenu" hidden role="menu"><button type="button" role="menuitem" id="dlpng">PNG image</button><button type="button" role="menuitem" id="djson">JSON file</button></div>
+          <div class="dlmenu" id="dlmenu" hidden role="menu">
+            <button type="button" role="menuitem" id="dlpng"><b>PNG card</b><span>Image with V2 + V3 data embedded · SillyTavern, Chub, RisuAI, Agnai</span></button>
+            <button type="button" role="menuitem" id="djson"><b>JSON · Character Card V3</b><span>SillyTavern 1.12+, RisuAI, Chub · lorebook and group greetings included</span></button>
+            <button type="button" role="menuitem" id="djson2"><b>JSON · Character Card V2</b><span>Older SillyTavern, Agnai, TavernAI forks · lorebook included</span></button>
+            <button type="button" role="menuitem" id="dcharx"><b>CHARX · RisuAI package</b><span>Zip with card.json (V3) and the card image as icon asset</span></button>
+            <button type="button" role="menuitem" id="djson1"><b>JSON · TavernAI V1 (legacy)</b><span>Flat fields only · no lorebook, no alternate greetings</span></button>
+          </div>
         </div>
         <button type="button" class="btn" id="tbtn">Miniature</button>
         <button type="button" class="btn stbtn" id="stadd" disabled>Add to SillyTavern</button>
+        <button type="button" class="btn ckbtn" id="ckbtn" disabled title="Needs a configured API"><span aria-hidden="true">🪄</span> Consistency check</button>
       </div>
       <p class="hint" id="status" role="status" aria-live="polite"></p>
 
@@ -877,6 +948,8 @@
 </div><p class="hint" id="smallcap"></p></div></dialog>
   <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
   <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><button type="button" class="wand" id="gall" title="Regenerate everything" aria-label="Regenerate everything">🪄</button><span class="tk" id="gtk"></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div><div class="krow"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></div></div></dialog>
+  <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
+  <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span><button type="button" class="btn quiet" id="qagain" hidden>Check again</button><button type="button" class="btn quiet" id="qclose">Close</button></div><div class="qbody" id="qbody"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
@@ -928,6 +1001,7 @@
     zoom: 100, ox: 0, oy: 0,
     frameOn: false, frameTarget: 'card', frameInset: 20, frame1W: 6, frame2W: 2, frameGap: 10, frameRadius: 0,
     frame1Color: '#e0a63a', frame2Color: '#e0a63a',
+    frameImg: '', frameImgOn: false, frameImgAlpha: 100, frameImgUnder: false,
     maskType: 'none', maskFit: true, maskL: 60, maskT: 60, maskB: 240, maskRadius: 0, maskTooth: 36,
     maskBevel: 0, maskAlpha: 100, maskFill: 'solid', maskColor: '#141a22',
     gradType: 'linear', gradAngle: 90,
@@ -1796,6 +1870,67 @@
     im.onerror = () => { URL.revokeObjectURL(url); say('minfo', 'Non riesco a leggere questo file.'); };
     im.src = url;
   }
+  /* ---------- Cornici PNG dell'utente: indice in localStorage, file in IndexedDB ---------- */
+  const FKEY = 'st-card-creator-frames-v1';
+  const FR = { list: [], urls: {} };
+  const frLoad = () => { try { const a = JSON.parse(localStorage.getItem(FKEY) || '[]'); FR.list = Array.isArray(a) ? a.filter(x => x && typeof x.id === 'string') : []; } catch (e) { FR.list = []; } };
+  const frSave = () => { try { localStorage.setItem(FKEY, JSON.stringify(FR.list)); } catch (e) { /* ignora */ } };
+  const frUrl = async id => {
+    if (FR.urls[id]) return FR.urls[id];
+    const rec = await idbGet('frame:' + id);
+    if (!rec || !rec.blob) return null;
+    return (FR.urls[id] = URL.createObjectURL(rec.blob));
+  };
+  async function frUse(id) {
+    S.frameImg = id || ''; S.frameImgOn = !!id;
+    FIMG = null;
+    if (id) {
+      const u = await frUrl(id);
+      if (u) { const im = new Image(); im.onload = () => { if (S.frameImg === id) { FIMG = im; schedule(); } }; im.src = u; }
+      else { S.frameImg = ''; S.frameImgOn = false; FR.list = FR.list.filter(f => f.id !== id); frSave(); }
+    }
+    save(); syncVis(); frGrid(); schedule();
+  }
+  function frAdd(files) {
+    Array.from(files || []).filter(f => /^image\/(png|webp)$/.test(f.type)).forEach(file => {
+      const url = URL.createObjectURL(file), im = new Image();
+      im.onload = () => {
+        const id = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const name = (file.name || 'frame').replace(/\.[^.]+$/, '').slice(0, 40);
+        FR.list.unshift({ id, name, w: im.naturalWidth, h: im.naturalHeight, ts: Date.now() }); frSave();
+        FR.urls[id] = url;
+        idbPut('frame:' + id, { blob: file, name }).then(() => frUse(id));
+        if (Math.abs(im.naturalWidth / im.naturalHeight - 2 / 3) > 0.03) say('hint', 'The frame "{n}" is not 2:3 ({w}×{h}): it gets stretched to fit the card.', { n: name, w: im.naturalWidth, h: im.naturalHeight }, true);
+      };
+      im.onerror = () => URL.revokeObjectURL(url);
+      im.src = url;
+    });
+  }
+  async function frDel(id) {
+    const f = FR.list.find(x => x.id === id);
+    if (!(await askConfirm('Remove this frame?', ['"' + ((f && f.name) || id) + '" is deleted from this browser. Cards already exported keep it.'], 'Remove'))) return;
+    FR.list = FR.list.filter(x => x.id !== id); frSave(); idbDel('frame:' + id);
+    if (FR.urls[id]) { URL.revokeObjectURL(FR.urls[id]); delete FR.urls[id]; }
+    if (S.frameImg === id) frUse(''); else frGrid();
+  }
+  function frGrid() {
+    const g = $('fgrid'); if (!g) return;
+    g.textContent = '';
+    const tile = (cls, label) => { const b = mk('button', 'ftile' + (cls ? ' ' + cls : '')); b.type = 'button'; if (label) b.textContent = label; return b; };
+    const none = tile('', 'None'); none.setAttribute('aria-pressed', String(!S.frameImgOn)); none.addEventListener('click', () => frUse('')); g.appendChild(none);
+    FR.list.forEach(f => {
+      const b = tile(); b.setAttribute('aria-pressed', String(S.frameImgOn && S.frameImg === f.id)); b.title = f.name + ' · ' + f.w + '×' + f.h;
+      const im = mk('img'); im.alt = f.name; frUrl(f.id).then(u => { if (u) im.src = u; });
+      const nm = mk('span', 'fnm'); nm.textContent = f.name;
+      const x = mk('span', 'fx'); x.setAttribute('role', 'button'); x.tabIndex = 0; x.title = 'Remove'; x.textContent = '×';
+      x.addEventListener('click', e => { e.stopPropagation(); frDel(f.id); });
+      x.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); frDel(f.id); } });
+      b.append(im, nm, x); b.addEventListener('click', () => frUse(f.id)); g.appendChild(b);
+    });
+    const add = tile('add', '+'); add.title = 'Add a PNG frame'; add.setAttribute('aria-label', 'Add a PNG frame'); add.addEventListener('click', () => $('ffile').click()); g.appendChild(add);
+  }
+  $('ffile').addEventListener('change', e => { frAdd(e.target.files); e.target.value = ''; });
+  function initFrames() { frLoad(); if (S.frameImg && FR.list.some(f => f.id === S.frameImg)) frUse(S.frameImg); else { S.frameImg = ''; S.frameImgOn = false; frGrid(); } }
   $('pick').addEventListener('click', () => $('file').click());
   $('file').addEventListener('change', e => setImage(e.target.files[0]));
   $('mpick').addEventListener('click', () => $('mfile').click());
@@ -2086,7 +2221,17 @@
     c.save(); c.scale(U, U);
     drawArt(c);
     drawMask(c);
+    if (S.frameImgUnder) drawFrameImg(c);
     drawCard(c);
+    if (!S.frameImgUnder) drawFrameImg(c);
+    c.restore();
+  }
+  /* Cornice PNG dell'utente: stirata sull'intera carta */
+  let FIMG = null;
+  function drawFrameImg(c) {
+    if (!S.frameImgOn || !FIMG || !FIMG.naturalWidth) return;
+    c.save(); c.globalAlpha = S.frameImgAlpha / 100; c.imageSmoothingQuality = 'high';
+    c.drawImage(FIMG, 0, 0, 800, 1200);
     c.restore();
   }
 
@@ -2630,6 +2775,70 @@
       say('status', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
     }
   });
+  async function saveJsonAs(obj, suffix, label) {
+    dlMenu(false);
+    if (!K.name.trim()) { say('status', 'Scrivi prima il nome della carta.', null, true); return; }
+    try {
+      const fn = slug(K.name) + suffix;
+      await saveBlob(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }), fn);
+      say('status', label + ' saved as {fn}.', { fn }, false);
+    } catch (err) {
+      say('status', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
+    }
+  }
+  /* V2: la stessa struttura, senza i campi che esistono solo nella V3 */
+  $('djson2').addEventListener('click', () => saveJsonAs(buildCard('v2'), '.v2.json', 'Character Card V2'));
+  /* V1: i sei campi piatti di TavernAI */
+  $('djson1').addEventListener('click', () => saveJsonAs({
+    name: K.name.trim(), description: K.description, personality: K.personality, scenario: K.scenario,
+    first_mes: K.first_mes, mes_example: K.mes_example
+  }, '.v1.json', 'TavernAI V1 JSON'));
+  /* Zip senza compressione (metodo "store"): basta per un pacchetto .charx */
+  function zipStore(files) {
+    const enc = new TextEncoder(), parts = [], cd = [];
+    let off = 0;
+    const now = new Date();
+    const dosT = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+    const dosD = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+    files.forEach(f => {
+      const n = enc.encode(f.name), d = f.data, crc = crc32(d);
+      const h = new Uint8Array(30 + n.length), v = new DataView(h.buffer);
+      v.setUint32(0, 0x04034b50, true); v.setUint16(4, 20, true); v.setUint16(6, 0x0800, true); v.setUint16(8, 0, true);
+      v.setUint16(10, dosT, true); v.setUint16(12, dosD, true); v.setUint32(14, crc, true); v.setUint32(18, d.length, true); v.setUint32(22, d.length, true);
+      v.setUint16(26, n.length, true); v.setUint16(28, 0, true); h.set(n, 30);
+      const c = new Uint8Array(46 + n.length), w = new DataView(c.buffer);
+      w.setUint32(0, 0x02014b50, true); w.setUint16(4, 20, true); w.setUint16(6, 20, true); w.setUint16(8, 0x0800, true); w.setUint16(10, 0, true);
+      w.setUint16(12, dosT, true); w.setUint16(14, dosD, true); w.setUint32(16, crc, true); w.setUint32(20, d.length, true); w.setUint32(24, d.length, true);
+      w.setUint16(28, n.length, true); w.setUint32(42, off, true); c.set(n, 46);
+      parts.push(h, d); cd.push(c); off += h.length + d.length;
+    });
+    const cdLen = cd.reduce((a, c) => a + c.length, 0);
+    const e = new Uint8Array(22), ev = new DataView(e.buffer);
+    ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, files.length, true); ev.setUint16(10, files.length, true); ev.setUint32(12, cdLen, true); ev.setUint32(16, off, true);
+    return new Blob([...parts, ...cd, e], { type: 'application/zip' });
+  }
+  /* CHARX (Character Card V3): zip con card.json e l'immagine come asset "icon" */
+  $('dcharx').addEventListener('click', async () => {
+    dlMenu(false);
+    if (!K.name.trim()) { say('status', 'Scrivi prima il nome della carta.', null, true); return; }
+    const btn = $('export'); btn.disabled = true; say('status', 'Preparo il pacchetto…', null, false);
+    try {
+      await Promise.all([ensureFont(S.nameFont), ensureFont(S.descFont)]).catch(() => {});
+      const cv = document.createElement('canvas'); draw(cv, S.exportW);
+      const raw = await new Promise(r => cv.toBlob(r, 'image/png'));
+      const card = buildCard('v3');
+      card.data.assets = [{ type: 'icon', uri: 'embeded://assets/icon/main.png', name: 'main', ext: 'png' }];
+      const zip = zipStore([
+        { name: 'card.json', data: new TextEncoder().encode(JSON.stringify(card, null, 2)) },
+        { name: 'assets/icon/main.png', data: new Uint8Array(await raw.arrayBuffer()) }
+      ]);
+      const fn = slug(K.name) + '.charx';
+      await saveBlob(zip, fn);
+      say('status', 'CHARX saved as {fn}. Import it in RisuAI from the character list.', { fn }, false);
+    } catch (err) {
+      say('status', err && err.code === 'declined' ? 'Salvataggio annullato.' : 'Non sono riuscito a salvare il file. Riprova.', null, true);
+    } finally { btn.disabled = false; render(); }
+  });
   function coverTextReset() { S.name = ''; S.desc = ''; S.nameLink = false; S.rule = false; }
   function newCard() {
     K = defaultData(); DID = null; clearUndo();
@@ -3087,7 +3296,7 @@
     const t = has ? tr("Ottimizza con l'IA") : tr("Scrivi prima un po' di testo");
     w.b.title = t; w.b.setAttribute('aria-label', t);
   }
-  function refreshWands() { WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); genReady(); refreshLoreBtn(); }
+  function refreshWands() { syncCk(); WANDS = WANDS.filter(w => w.b.isConnected); WANDS.forEach(updateWand); genReady(); refreshLoreBtn(); }
   /* Editor a tutto schermo per i campi di testo */
   const XSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 9V3h6M3 3l6 6M15 3h6v6M21 3l-6 6M3 15v6h6M3 21l6-6M21 15v6h-6M21 21l-6-6"/></svg>';
   let XTA = null, XDOWN = null;
@@ -3449,6 +3658,118 @@
   /* Dopo una modifica al modello dati fatta da codice */
   function afterModel() { syncData(); schedule(); saveDataSoon(); refreshWands();  }
 
+  /* ---------- Controllo di coerenza con l'IA ---------- */
+  const CK_FIELDS = [
+    ['name', 'Name'], ['description', 'Description'], ['personality', 'Personality'], ['scenario', 'Scenario'], ['first_mes', 'First message'],
+    ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['system_prompt', 'System prompt'], ['post_history', 'Post-history instructions'], ['dp_prompt', "Character's note"]
+  ];
+  const CK_PANEL = { name: 'd-char', description: 'd-char', personality: 'd-char', scenario: 'd-char', first_mes: 'd-first', mes_example: 'd-ex', notes: 'd-meta', system_prompt: 'd-adv', post_history: 'd-adv', dp_prompt: 'd-adv' };
+  function ckField(id) {
+    id = String(id || '').trim();
+    let m;
+    const f = CK_FIELDS.find(x => x[0] === id);
+    if (f) return { label: f[1], get: () => str(K[id]), set: v => { K[id] = v; }, panel: CK_PANEL[id], el: () => document.querySelector('[data-f="' + id + '"]') };
+    if ((m = /^alt_(\d+)$/.exec(id)) && K.alt[+m[1] - 1] !== undefined) { const i = +m[1] - 1; return { label: 'Alternate greeting ' + (i + 1), get: () => str(K.alt[i]), set: v => { K.alt[i] = v; }, panel: 'd-first', el: () => $('altList').querySelectorAll('textarea')[i] }; }
+    if ((m = /^group_(\d+)$/.exec(id)) && K.group[+m[1] - 1] !== undefined) { const i = +m[1] - 1; return { label: 'Group greeting ' + (i + 1), get: () => str(K.group[i]), set: v => { K.group[i] = v; }, panel: 'd-first', el: () => $('grpList').querySelectorAll('textarea')[i] }; }
+    if ((m = /^lore_(\d+)$/.exec(id)) && K.entries[+m[1] - 1]) { const i = +m[1] - 1, e = K.entries[i]; return { label: 'Lorebook · ' + (e.title.trim() || e.keys.trim() || 'entry ' + (i + 1)), get: () => str(e.content), set: v => { e.content = v; }, panel: 'd-lore', el: () => { const t = document.querySelector('[data-tk="ent:' + i + '"]'); return t && t.closest('.entry, .ent, .lentry, details, li, div') ? t.closest('.entry, .ent, .lentry, details, li, div').querySelector('textarea') : null; } }; }
+    return null;
+  }
+  function ckDump() {
+    const parts = [];
+    const add = (id, label, text) => { text = String(text || '').trim(); if (text) parts.push('### ' + id + ' (' + label + ')\n' + text.slice(0, 6000)); };
+    CK_FIELDS.forEach(([k, l]) => add(k, l, K[k]));
+    K.alt.forEach((t, i) => add('alt_' + (i + 1), 'Alternate greeting ' + (i + 1), t));
+    K.group.forEach((t, i) => add('group_' + (i + 1), 'Group greeting ' + (i + 1), t));
+    K.entries.forEach((e, i) => add('lore_' + (i + 1), 'Lorebook entry: ' + (e.title.trim() || e.keys.trim() || 'entry ' + (i + 1)) + (e.keys.trim() ? ' · keywords: ' + e.keys.trim() : ''), e.content));
+    if (K.tags.trim()) parts.push('### tags (Tags)\n' + K.tags.trim());
+    return parts.join('\n\n');
+  }
+  let CKCTL = null, CKDONE = 0;
+  function ckSev(v) { v = String(v || '').toLowerCase(); return v === 'high' || v === 'medium' || v === 'low' ? v : 'medium'; }
+  function ckJump(f) {
+    showView('dati'); if (f.panel) selectTab('data', f.panel);
+    const el = f.el && f.el();
+    if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); }
+  }
+  function ckRender(items) {
+    const box = $('qbody'); box.textContent = '';
+    $('qagain').hidden = false;
+    if (!items.length) {
+      const ok = mk('div', 'qok'); const b = mk('b'); b.textContent = 'No contradictions found'; const p = mk('span'); p.textContent = 'The model read every field and found nothing that disagrees. Checks are only as good as the model: a second pass with another model can still find something.';
+      ok.append(b, p); box.appendChild(ok); $('qsum').textContent = 'all clear'; return;
+    }
+    const fixable = items.filter(it => it.f && it.find && it.f.get().includes(it.find));
+    const top = mk('div', 'qtop');
+    const cnt = mk('span'); cnt.textContent = items.length + ' finding' + (items.length > 1 ? 's' : '') + (fixable.length ? ' · ' + fixable.length + ' with a one-click fix' : '');
+    top.appendChild(cnt);
+    if (fixable.length > 1) { const all = mk('button', 'btn'); all.type = 'button'; all.textContent = 'Fix all (' + fixable.length + ')'; all.addEventListener('click', () => { items.forEach(it => { if (it.fix && !it.done) it.fix(); }); }); top.appendChild(all); }
+    box.appendChild(top);
+    $('qsum').textContent = items.length + ' finding' + (items.length > 1 ? 's' : '');
+    items.forEach(it => {
+      const row = mk('div', 'qi'); const sev = mk('span', 'sev ' + it.sev); sev.title = it.sev + ' severity';
+      const body = mk('div');
+      const h = mk('div', 'qh'); const chip = mk('span', 'dchip'); chip.textContent = it.f ? it.f.label : String(it.id || 'card');
+      h.appendChild(chip); if (it.f) { const j = mk('a'); j.href = '#'; j.textContent = 'show field'; j.addEventListener('click', e => { e.preventDefault(); ckJump(it.f); }); h.appendChild(j); }
+      const tx = mk('p', 'qtext'); tx.textContent = it.issue;
+      body.append(h, tx);
+      const can = it.f && it.find && it.f.get().includes(it.find);
+      if (it.find) {
+        const fx = mk('div', 'qfix');
+        const dl = mk('del'); dl.textContent = it.find; fx.appendChild(dl);
+        if (it.replace) { fx.appendChild(document.createTextNode('  →  ')); const ins = mk('ins'); ins.textContent = it.replace; fx.appendChild(ins); }
+        else fx.appendChild(document.createTextNode('  →  (remove)'));
+        if (!can) { const n = mk('span', 'skip'); n.textContent = '  · text not found as written: fix it by hand'; fx.appendChild(n); }
+        body.appendChild(fx);
+      }
+      const btns = mk('div', 'qbtns');
+      if (can) {
+        const b = mk('button', 'btn primary'); b.type = 'button'; b.textContent = 'Fix';
+        it.fix = () => {
+          if (it.done) return;
+          const prev = it.f.get(); if (!prev.includes(it.find)) return;
+          it.f.set(prev.replace(it.find, it.replace || '')); it.done = true; CKDONE++;
+          pushUndo('consistency fix · ' + it.f.label, () => { it.f.set(prev); it.done = false; afterModel(); });
+          afterModel(); row.classList.add('done'); b.textContent = 'Fixed'; b.disabled = true;
+          $('qsum').textContent = CKDONE + ' of ' + items.length + ' fixed';
+        };
+        b.addEventListener('click', it.fix); btns.appendChild(b);
+      }
+      if (it.f) { const g = mk('button', 'btn quiet'); g.type = 'button'; g.textContent = 'Open the field'; g.addEventListener('click', () => ckJump(it.f)); btns.appendChild(g); }
+      body.appendChild(btns);
+      row.append(sev, body); box.appendChild(row);
+    });
+  }
+  async function runCheck() {
+    const d = $('qdlg'), box = $('qbody');
+    if (!d.open) d.showModal();
+    $('qagain').hidden = true; CKDONE = 0;
+    box.textContent = ''; const w = mk('div', 'qwait'); w.append(mk('i'), document.createTextNode('Reading the whole card and looking for contradictions…')); box.appendChild(w);
+    $('qsum').textContent = '';
+    if (CKCTL) CKCTL.abort(); CKCTL = new AbortController();
+    const dump = ckDump();
+    if (!dump.trim()) { box.textContent = ''; const p = mk('p', 'qok'); p.textContent = 'The card is empty: nothing to check.'; box.appendChild(p); $('qagain').hidden = false; return; }
+    const sys = 'You are a meticulous continuity editor for roleplay character cards (SillyTavern format). You find contradictions and technical mistakes. You never rewrite style, never add content and never flag matters of taste. Output JSON only, no prose.';
+    const usr = 'Check this character card for consistency.\n\nCARD (each section starts with "### id (label)"):\n\n' + dump +
+      '\n\nLOOK FOR:\n- Facts that disagree between sections: age, appearance (hair, eyes, height, build), name spelling, relationships, job, places, species, timeline.\n- Placeholder misuse: {{char}} is the character, {{user}} is the player. Flag {{user}} used for the character, {{char}} used for the player, and any greeting that speaks, decides or acts for {{user}}.\n- Leftover placeholders or notes: things like [insert ...], TODO, XXX, lorem ipsum, "Name" used as a name.\n- Dialogue examples that mix speaker labels or lack <START> separators between examples.\n- Contradictions inside a single section.\n- Lorebook entries whose content contradicts the description or scenario.\n\nDO NOT FLAG: writing style, length, taste, missing optional sections, the proper name used instead of {{char}}, or the language of the text.' +
+      '\n\nReturn a JSON array with at most 12 items, the most serious first. Each item:\n{"id": "<section id exactly as given>", "severity": "high" | "medium" | "low", "issue": "<one or two sentences; name the sections that disagree>", "find": "<text copied verbatim from that section, at most 160 characters, or an empty string>", "replace": "<replacement for the found text that fixes the problem, same language and style, or an empty string>"}\nUse "find"/"replace" only when a small local edit really fixes the problem; otherwise leave both empty. If the card is consistent, return [].';
+    try {
+      const r = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: usr }], { signal: CKCTL.signal, maxTokens: 2200 });
+      const arr = parseJSONArray(String((r && typeof r === 'object' ? r.text : r) || ''));
+      const items = arr.filter(x => x && typeof x === 'object' && str(x.issue).trim()).slice(0, 12).map(x => ({
+        id: str(x.id).trim(), f: ckField(x.id), sev: ckSev(x.severity), issue: str(x.issue).trim(), find: str(x.find), replace: str(x.replace), done: false
+      }));
+      const rank = { high: 0, medium: 1, low: 2 }; items.sort((a, b) => rank[a.sev] - rank[b.sev]);
+      ckRender(items);
+    } catch (e) {
+      if (e && (e.name === 'AbortError' || e.code === 'abort')) return;
+      box.textContent = ''; const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'The check did not run'; const m = mk('span'); const ek = errKey(e); m.textContent = ek ? tr(ek[0], ek[1]) : (e && e.message) || 'The API did not answer.'; p.append(b, m); box.appendChild(p); $('qagain').hidden = false;
+    }
+  }
+  $('ckbtn').addEventListener('click', runCheck);
+  $('qagain').addEventListener('click', runCheck);
+  $('qclose').addEventListener('click', () => { if (CKCTL) CKCTL.abort(); $('qdlg').close(); });
+  function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; }
+
   /* Bozze salvate nel browser */
   const DKEY = 'st-card-creator-drafts-v1';
   let DID = null, DTIMER = 0, DREADY = false;
@@ -3681,6 +4002,113 @@
       d.showModal(); $('kno').focus();
     });
   }
+  /* ---------- Differenze campo per campo prima dell'Update ---------- */
+  const DIFF_FIELDS = [
+    ['name', 'Name'], ['description', 'Description'], ['personality', 'Personality'], ['scenario', 'Scenario'],
+    ['first_mes', 'First message'], ['alt', 'Alternate greetings'], ['group', 'Group greetings'], ['mes_example', 'Dialogue examples'],
+    ['system_prompt', 'System prompt'], ['post_history', 'Post-history instructions'], ['dp_prompt', "Character's note"],
+    ['lore', 'Lorebook'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['creator', 'Creator'], ['version', 'Character version']
+  ];
+  const joinList = a => (a || []).map(x => String(x || '').trim()).filter(Boolean).join('\n\n— — —\n\n');
+  const loreText = list => (list || []).map(e => {
+    const title = str(e.comment || e.name || e.title).trim(), keys = Array.isArray(e.keys) ? e.keys.join(', ') : str(e.keys);
+    return '• ' + (title || '(untitled)') + (keys ? ' [' + keys + ']' : '') + (e.enabled === false ? ' (disabled)' : '') + '\n' + str(e.content).trim();
+  }).join('\n\n');
+  function theirsOf(cur) {
+    const d = cur.data || {}, ex = d.extensions || {}, dp = ex.depth_prompt || {};
+    const pick = (a, b) => str(a !== undefined ? a : b);
+    const bookEntries = d.character_book && Array.isArray(d.character_book.entries) ? d.character_book.entries : [];
+    return {
+      name: pick(d.name, cur.name), description: pick(d.description, cur.description), personality: pick(d.personality, cur.personality),
+      scenario: pick(d.scenario, cur.scenario), first_mes: pick(d.first_mes, cur.first_mes), mes_example: pick(d.mes_example, cur.mes_example),
+      alt: joinList(d.alternate_greetings), group: joinList(d.group_only_greetings), system_prompt: str(d.system_prompt), post_history: str(d.post_history_instructions),
+      dp_prompt: str(dp.prompt), lore: loreText(bookEntries), notes: pick(d.creator_notes, cur.creatorcomment),
+      tags: (Array.isArray(d.tags) ? d.tags : Array.isArray(cur.tags) ? cur.tags : []).map(t => String(t).trim()).filter(Boolean).join(', '),
+      creator: str(d.creator), version: str(d.character_version)
+    };
+  }
+  function mineNow() {
+    return {
+      name: K.name.trim(), description: K.description, personality: K.personality, scenario: K.scenario, first_mes: K.first_mes, mes_example: K.mes_example,
+      alt: joinList(K.alt), group: joinList(K.group), system_prompt: K.system_prompt, post_history: K.post_history, dp_prompt: K.dp_prompt,
+      lore: loreText(K.entries.map(entryJSON)), notes: K.notes, tags: split(K.tags).join(', '), creator: K.creator.trim(), version: K.version
+    };
+  }
+  /* Differenze per parole: prefisso e suffisso comuni tolti prima, poi LCS sul tratto centrale */
+  function wordDiff(a, b) {
+    const tok = t => String(t || '').split(/(\s+)/).filter(Boolean);
+    const A0 = tok(a), B0 = tok(b);
+    let p = 0; while (p < A0.length && p < B0.length && A0[p] === B0[p]) p++;
+    let q = 0; while (q < A0.length - p && q < B0.length - p && A0[A0.length - 1 - q] === B0[B0.length - 1 - q]) q++;
+    const A = A0.slice(p, A0.length - q), B = B0.slice(p, B0.length - q), out = [];
+    const push = (t, v) => { const l = out[out.length - 1]; if (l && l[0] === t) l[1] += v; else out.push([t, v]); };
+    if (p) push('=', A0.slice(0, p).join(''));
+    const n = A.length, m = B.length;
+    if (n && m && n * m <= 4e6) {
+      const W = m + 1, L = new Uint16Array((n + 1) * W);
+      for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i * W + j] = A[i] === B[j] ? L[(i + 1) * W + j + 1] + 1 : Math.max(L[(i + 1) * W + j], L[i * W + j + 1]);
+      let i = 0, j = 0;
+      while (i < n && j < m) { if (A[i] === B[j]) { push('=', A[i]); i++; j++; } else if (L[(i + 1) * W + j] >= L[i * W + j + 1]) push('-', A[i++]); else push('+', B[j++]); }
+      while (i < n) push('-', A[i++]);
+      while (j < m) push('+', B[j++]);
+    } else { if (n) push('-', A.join('')); if (m) push('+', B.join('')); }
+    if (q) push('=', A0.slice(A0.length - q).join(''));
+    return out;
+  }
+  function diffNode(segs) {
+    const box = mk('div', 'dtxt');
+    segs.forEach(([t, v], i) => {
+      if (t === '=') {
+        const edge = i === 0 || i === segs.length - 1;
+        if (v.length > 320) {
+          const a = i === 0 ? '' : v.slice(0, 140), b = i === segs.length - 1 ? '' : v.slice(-140);
+          if (a) box.appendChild(document.createTextNode(a));
+          const sk = mk('span', 'skip'); sk.textContent = (a || b) ? ' […] ' : '[…]'; box.appendChild(sk);
+          if (b) box.appendChild(document.createTextNode(b));
+          if (!edge && !a && !b) box.appendChild(document.createTextNode(v));
+        } else box.appendChild(document.createTextNode(v));
+      } else { const e = mk(t === '+' ? 'ins' : 'del'); e.textContent = v; box.appendChild(e); }
+    });
+    return box;
+  }
+  function askDiff(paras, cur) {
+    return new Promise(res => {
+      const d = $('ddlg'), notes = $('dnotes'), box = $('difs');
+      notes.textContent = ''; box.textContent = '';
+      paras.forEach(t => { const p = mk('p'); p.textContent = t; notes.appendChild(p); });
+      const T = theirsOf(cur), M = mineNow();
+      const same = [];
+      let changed = 0;
+      DIFF_FIELDS.forEach(([k, label]) => {
+        const a = str(T[k]), b = str(M[k]);
+        if (a === b) { same.push(label); return; }
+        changed++;
+        const det = mk('details', 'dif'); det.open = changed <= 4;
+        const sum = mk('summary');
+        const chip = mk('span', 'dchip ' + (!a ? 'add' : !b ? 'del' : '')); chip.textContent = !a ? 'new' : !b ? 'removed' : 'changed';
+        const lb = mk('span'); lb.textContent = label;
+        const tk = mk('span', 'tk'); tk.textContent = (a ? '≈ ' + tok(a) : '0') + ' → ' + (b ? '≈ ' + tok(b) : '0') + ' tokens';
+        sum.append(chip, lb, tk); det.appendChild(sum);
+        det.appendChild(diffNode(wordDiff(a, b)));
+        box.appendChild(det);
+      });
+      const imgNew = !!IMGBLOB && IMGBLOB !== STIMG;
+      if (imgNew) {
+        const p = mk('div', 'dif'); const sm = mk('summary'); const chip = mk('span', 'dchip img'); chip.textContent = 'image';
+        const lb = mk('span'); lb.textContent = 'The card image is replaced' + (IMGNAME ? ' with "' + IMGNAME + '"' : '') + '.';
+        sm.append(chip, lb); p.appendChild(sm); box.appendChild(p);
+      }
+      if (same.length) { const p = mk('p', 'dsame'); const b = mk('b'); b.textContent = 'Unchanged: '; p.append(b, document.createTextNode(same.join(', '))); box.appendChild(p); }
+      $('dsum').textContent = changed ? changed + ' field' + (changed > 1 ? 's' : '') + ' changed' + (imgNew ? ' · new image' : '') : imgNew ? 'only the image changes' : 'no differences';
+      let done = false;
+      const fin = v => { if (done) return; done = true; $('dok').onclick = $('dno').onclick = $('dclose').onclick = d.onclick = d.oncancel = null; if (d.open) d.close(); res(v); };
+      $('dok').onclick = () => fin(true);
+      $('dno').onclick = $('dclose').onclick = () => fin(false);
+      d.oncancel = e => { e.preventDefault(); fin(false); };
+      d.onclick = e => { if (e.target === d) fin(false); };
+      d.showModal(); $('dno').focus();
+    });
+  }
   function setBusy(b) { ST.busy = b; updStUi(); }
   async function stAdd() {
     if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
@@ -3722,7 +4150,7 @@
       if (normName(curName) !== normName(K.name)) paras.push('The name changes from "' + curName + '" to "' + K.name.trim() + '". The file in SillyTavern keeps its name.');
       const ex = (cur.data && cur.data.extensions) || {};
       if (ex.world && K.entries.length) paras.push('This card is linked to the SillyTavern lorebook "' + ex.world + '": SillyTavern rebuilds the card\'s embedded lorebook from that file, so lorebook edits made here may be overwritten.');
-      if (!(await askConfirm('Update the card on SillyTavern?', paras, 'Update'))) { say('status', 'Update cancelled.', null, false); return; }
+      if (!(await askDiff(paras, cur))) { say('status', 'Update cancelled.', null, false); return; }
       say('status', 'Updating the card on SillyTavern…', null, false);
       /* json_data conserva i campi che questa app non conosce (script regex, ecc.); il lorebook e i saluti di gruppo vengono dalla card di qui */
       let base = {}; try { base = JSON.parse(cur.json_data || '{}') || {}; } catch (e) { base = {}; }
@@ -4695,6 +5123,7 @@
   ensureFonts();
   showView('dati');
   checkUpdate();
+  initFrames();
   render();
   DREADY = true;
   $('stVer').textContent = APP_VERSION === 'dev' ? 'dev build' : 'v' + APP_VERSION;
