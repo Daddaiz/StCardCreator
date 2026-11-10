@@ -263,6 +263,39 @@
   .qi .qbtns .btn { padding: 6px 12px; font-size: 13px; }
   .qtop { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
   .qtop .btn { margin-left: auto; }
+  .qfoot { display: flex; justify-content: flex-end; gap: 10px; }
+  .qwaitbox { display: grid; gap: 10px; padding: 6px 0 10px; }
+  .gbar.qbarw { flex: none; width: 100%; max-width: none; margin: 0; }
+  .qscore { display: grid; grid-template-columns: 90px minmax(0, 1fr) auto; gap: 18px; align-items: center; padding: 6px 2px 10px; }
+  .qthumb { width: 90px; aspect-ratio: 2 / 3; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); background: var(--raised); }
+  .qthumb img { width: 100%; height: 100%; display: block; object-fit: cover; }
+  .qname { display: grid; gap: 4px; min-width: 0; }
+  .qname b { font: 700 20px/1.2 var(--font-title); overflow-wrap: anywhere; }
+  .qname span { font-size: 13px; color: var(--muted); }
+  .qring { --s: 96px; width: var(--s); height: var(--s); border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--c) calc(var(--v) * 1%), var(--line) 0); position: relative; flex: none; }
+  .qring::before { content: ""; position: absolute; inset: calc(var(--s) * 0.11); border-radius: 50%; background: var(--surface); }
+  .qring span { position: relative; font: 700 calc(var(--s) * 0.26)/1 var(--font-title); }
+  .qcats { display: grid; gap: 4px; }
+  .qcat { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) 52px; gap: 14px; align-items: center; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
+  .qcl { display: grid; gap: 2px; min-width: 0; }
+  .qcl b { font-size: 14px; }
+  .qcl span { font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .qbar { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .qbar i { display: block; height: 100%; border-radius: inherit; }
+  .qpc { font: 700 15px var(--font-title); text-align: right; }
+  .qnote { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 4px 0 0; }
+  @media (max-width: 560px) { .qscore { grid-template-columns: 70px minmax(0, 1fr); } .qscore .qring { grid-column: 1 / -1; justify-self: center; } .qcat { grid-template-columns: minmax(0, 1fr) 48px; } .qcat .qbar { grid-column: 1 / -1; grid-row: 2; } }
+  .qbadge { position: relative; justify-self: end; display: flex; align-items: center; gap: 8px; margin: -6px 6px 0 0; padding: 4px 12px 4px 4px; border: 1px solid var(--line); border-radius: 999px; background: var(--raised); cursor: pointer; font-size: 12px; color: var(--muted); }
+  .qbadge:hover { border-color: var(--accent); }
+  .qbadge[hidden] { display: none; }
+  .qbadge.pop { animation: qpop 0.5s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes qpop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .qbadge.smoke > .qring, .qbadge.smoke > .qbt { animation: qsmoke 1.1s ease-out forwards; }
+  .qbadge.smoke { border-color: transparent; background: transparent; transition: background 0.4s, border-color 0.4s; }
+  @keyframes qsmoke { 0% { opacity: 1; filter: blur(0); transform: scale(1); } 100% { opacity: 0; filter: blur(14px); transform: scale(1.7) translateY(-16px); } }
+  .qbadge .puff { position: absolute; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, rgba(190,190,200,0.75), rgba(190,190,200,0) 70%); filter: blur(3px); opacity: 0; pointer-events: none; animation: qpuff 1.1s ease-out var(--d, 0s) forwards; }
+  @keyframes qpuff { 0% { opacity: 0.9; transform: translate(0, 0) scale(0.5); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(2.6); } }
+  @media (prefers-reduced-motion: reduce) { .qbadge.pop, .qbadge.smoke > * , .qbadge .puff { animation: none; } }
   /* Cornici PNG dell'utente */
   .fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 8px; }
   .ftile { position: relative; aspect-ratio: 2 / 3; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; overflow: hidden; display: grid; place-items: center; font: 500 12px var(--font-ui); }
@@ -759,6 +792,7 @@
           <div class="flip-back" aria-hidden="true"><img src="back.webp" alt=""><div class="bk-name"><span id="bkName"></span></div><div class="bk-desc" id="bkDesc"></div></div>
         </div></div>
       </div>
+      <div class="qbadge" id="qbadge" role="button" tabindex="0" hidden></div>
       <p class="hint" id="hint">Immagine d'esempio. Carica il tuo PNG o trascinalo sulla carta.</p>
       <div class="export">
         <select id="exportW" data-k="exportW" aria-label="Dimensione del file">
@@ -983,7 +1017,7 @@
   <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
   <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><button type="button" class="wand" id="gall" title="Regenerate everything" aria-label="Regenerate everything">🪄</button><span class="tk" id="gtk"></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div><div class="krow"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></div></div></dialog>
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
-  <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span><button type="button" class="btn quiet" id="qagain" hidden>Check again</button><button type="button" class="btn quiet" id="qclose">Close</button></div><div class="qbody" id="qbody"></div></div></dialog>
+  <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
@@ -3705,27 +3739,57 @@
     if (K.tags.trim()) parts.push('### tags (Tags)\n' + K.tags.trim());
     return parts.join('\n\n');
   }
-  let CKCTL = null, CKDONE = 0;
+  let CKCTL = null, CKDONE = 0, CKST = 'idle', CKITEMS = [], CKSCORE = null, CKBAR = 0;
   function ckSev(v) { v = String(v || '').toLowerCase(); return v === 'high' || v === 'medium' || v === 'low' ? v : 'medium'; }
+  const CK_CATS = [
+    { k: 'facts', name: 'Consistency', hint: 'Age, looks, names, places and relationships agree everywhere' },
+    { k: 'roles', name: 'Roles & placeholders', hint: '{{char}} and {{user}} used correctly, nothing speaks for the player' },
+    { k: 'clean', name: 'Cleanliness', hint: 'No leftover notes, TODO or template text' },
+    { k: 'format', name: 'Dialogue format', hint: 'Greetings and examples are well formed' },
+    { k: 'complete', name: 'Completeness', hint: 'The key fields are filled in' }
+  ];
+  function ckCat(v) { v = String(v || '').toLowerCase(); return ['facts', 'roles', 'clean', 'format'].includes(v) ? v : 'facts'; }
   function ckJump(f) {
     showView('dati'); if (f.panel) selectTab('data', f.panel);
     const el = f.el && f.el();
     if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus({ preventScroll: true }); }
   }
+  /* Quali risultati sono ancora aperti: se un altro fix ha già cambiato il testo, questo è risolto */
+  const ckCan = it => !!(it.f && it.find && it.f.get().includes(it.find));
+  function ckPaint(items) {
+    let fixed = 0, fixable = 0;
+    items.forEach(it => {
+      if (!it.row) return;
+      if (it.fixable) {
+        fixable++;
+        if (it.done) { fixed++; it.row.classList.add('done'); it.btn.textContent = it.gone ? 'Already fixed' : 'Fixed'; it.btn.disabled = true; }
+        else if (!ckCan(it)) { it.done = it.gone = true; fixed++; it.row.classList.add('done'); it.btn.textContent = 'Already fixed'; it.btn.disabled = true; }
+      }
+    });
+    CKDONE = fixed;
+    const hand = items.length - fixable;
+    $('qsum').textContent = fixable ? fixed + ' of ' + fixable + ' fixed' + (hand ? ' · ' + hand + ' by hand' : '') : items.length + ' to check by hand';
+    const all = $('qall'); if (all) { const left = fixable - fixed; all.disabled = left < 1; all.textContent = left < 1 ? 'All fixed' : 'Fix all (' + left + ')'; }
+  }
+  function ckSetFoot(mode) {
+    CKST = mode;
+    $('qagain').hidden = mode === 'wait';
+    $('qclose').textContent = mode === 'wait' ? 'Cancel' : 'OK';
+  }
   function ckRender(items) {
+    CKITEMS = items;
     const box = $('qbody'); box.textContent = '';
-    $('qagain').hidden = false;
-    if (!items.length) {
-      const ok = mk('div', 'qok'); const b = mk('b'); b.textContent = 'No contradictions found'; const p = mk('span'); p.textContent = 'The model read every field and found nothing that disagrees. Checks are only as good as the model: a second pass with another model can still find something.';
-      ok.append(b, p); box.appendChild(ok); $('qsum').textContent = 'all clear'; return;
-    }
-    const fixable = items.filter(it => it.f && it.find && it.f.get().includes(it.find));
+    ckSetFoot('findings');
+    if (!items.length) { ckScoreShow(true); return; }
+    items.forEach(it => { it.fixable = ckCan(it); });
+    const fixable = items.filter(it => it.fixable);
+    const hand = items.length - fixable.length;
     const top = mk('div', 'qtop');
-    const cnt = mk('span'); cnt.textContent = items.length + ' finding' + (items.length > 1 ? 's' : '') + (fixable.length ? ' · ' + fixable.length + ' with a one-click fix' : '');
+    const cnt = mk('span');
+    cnt.textContent = items.length + ' finding' + (items.length > 1 ? 's' : '') + (fixable.length ? ' · ' + fixable.length + ' can be fixed with one click' : '') + (hand ? ' · ' + hand + ' to fix by hand' : '');
     top.appendChild(cnt);
-    if (fixable.length > 1) { const all = mk('button', 'btn'); all.type = 'button'; all.textContent = 'Fix all (' + fixable.length + ')'; all.addEventListener('click', () => { items.forEach(it => { if (it.fix && !it.done) it.fix(); }); }); top.appendChild(all); }
+    if (fixable.length > 1) { const all = mk('button', 'btn'); all.type = 'button'; all.id = 'qall'; all.textContent = 'Fix all (' + fixable.length + ')'; all.addEventListener('click', () => { items.forEach(it => { if (it.fixable && !it.done) it.fix(); }); }); top.appendChild(all); }
     box.appendChild(top);
-    $('qsum').textContent = items.length + ' finding' + (items.length > 1 ? 's' : '');
     items.forEach(it => {
       const row = mk('div', 'qi'); const sev = mk('span', 'sev ' + it.sev); sev.title = it.sev + ' severity';
       const body = mk('div');
@@ -3733,62 +3797,183 @@
       h.appendChild(chip); if (it.f) { const j = mk('a'); j.href = '#'; j.textContent = 'show field'; j.addEventListener('click', e => { e.preventDefault(); ckJump(it.f); }); h.appendChild(j); }
       const tx = mk('p', 'qtext'); tx.textContent = it.issue;
       body.append(h, tx);
-      const can = it.f && it.find && it.f.get().includes(it.find);
+      const fx = mk('div', 'qfix');
       if (it.find) {
-        const fx = mk('div', 'qfix');
         const dl = mk('del'); dl.textContent = it.find; fx.appendChild(dl);
         if (it.replace) { fx.appendChild(document.createTextNode('  →  ')); const ins = mk('ins'); ins.textContent = it.replace; fx.appendChild(ins); }
         else fx.appendChild(document.createTextNode('  →  (remove)'));
-        if (!can) { const n = mk('span', 'skip'); n.textContent = '  · text not found as written: fix it by hand'; fx.appendChild(n); }
-        body.appendChild(fx);
-      }
+        if (!it.fixable) { const n = mk('span', 'skip'); n.textContent = '  · text not found as written: fix it by hand'; fx.appendChild(n); }
+      } else fx.textContent = 'No automatic fix for this one: open the field and edit it by hand.';
+      body.appendChild(fx);
       const btns = mk('div', 'qbtns');
-      if (can) {
-        const b = mk('button', 'btn primary'); b.type = 'button'; b.textContent = 'Fix';
+      if (it.fixable) {
+        const b = mk('button', 'btn primary'); b.type = 'button'; b.textContent = 'Fix'; it.btn = b; it.row = row;
         it.fix = () => {
           if (it.done) return;
-          const prev = it.f.get(); if (!prev.includes(it.find)) return;
-          it.f.set(prev.replace(it.find, it.replace || '')); it.done = true; CKDONE++;
-          pushUndo('consistency fix · ' + it.f.label, () => { it.f.set(prev); it.done = false; afterModel(); });
-          afterModel(); row.classList.add('done'); b.textContent = 'Fixed'; b.disabled = true;
-          $('qsum').textContent = CKDONE + ' of ' + items.length + ' fixed';
+          const prev = it.f.get();
+          if (!prev.includes(it.find)) { ckPaint(items); return; }
+          it.f.set(prev.replace(it.find, it.replace || '')); it.done = true;
+          pushUndo('consistency fix · ' + it.f.label, () => { it.f.set(prev); it.done = false; it.gone = false; afterModel(); row.classList.remove('done'); b.textContent = 'Fix'; b.disabled = false; ckPaint(items); });
+          afterModel(); ckPaint(items);
         };
         b.addEventListener('click', it.fix); btns.appendChild(b);
       }
+      it.row = row;
       if (it.f) { const g = mk('button', 'btn quiet'); g.type = 'button'; g.textContent = 'Open the field'; g.addEventListener('click', () => ckJump(it.f)); btns.appendChild(g); }
       body.appendChild(btns);
       row.append(sev, body); box.appendChild(row);
     });
+    ckPaint(items);
+  }
+  /* ---------- Voti ---------- */
+  function ckLocal() {
+    const t = k => str(K[k]).trim(), r = {};
+    const dump = ckDump();
+    let clean = 100;
+    const left = new Set(); (dump.match(/\[\s*insert[^\]]*\]|\bTODO\b|\bFIXME\b|\bXXX\b|lorem ipsum|<\s*insert[^>]*>|\[\s*your name\s*\]/gi) || []).forEach(m => left.add(m.toLowerCase()));
+    clean -= Math.min(60, left.size * 20);
+    r.clean = clean;
+    let fmt = 100; const ex = t('mes_example');
+    if (!t('first_mes')) fmt -= 40;
+    if (!ex) fmt -= 15; else if (/\n\s*\S[^\n]{0,40}:/.test(ex) && ex.split('\n').filter(l => /^\s*\S[^\n]{0,40}:/.test(l)).length > 3 && !/<START>/i.test(ex)) fmt -= 25;
+    r.format = Math.max(0, fmt);
+    const need = [['name', 1, 10], ['description', 80, 25], ['personality', 30, 15], ['scenario', 30, 15], ['first_mes', 60, 20], ['mes_example', 40, 10]];
+    let comp = 0; need.forEach(([k, n, w]) => { const l = t(k).length; comp += l >= n ? w : l > 0 ? w / 2 : 0; });
+    if (K.tags.trim()) comp += 5;
+    r.complete = Math.round(comp);
+    return r;
+  }
+  function ckScoreCalc(items) {
+    const loc = ckLocal(), pen = { high: 30, medium: 15, low: 7 }, res = {};
+    CK_CATS.forEach(c => { res[c.k] = loc[c.k] === undefined ? 100 : loc[c.k]; });
+    items.forEach(it => { if (!it.done) { const c = it.cat || 'facts'; res[c] = Math.max(0, res[c] - pen[it.sev]); } });
+    const vals = CK_CATS.map(c => Math.round(res[c.k]));
+    return { cats: vals, total: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), left: items.filter(it => !it.done).length, name: str(K.name).trim() || 'Untitled card', hash: ckDump() };
+  }
+  const ckTone = v => v >= 85 ? '#4fbf82' : v >= 60 ? '#e0a63a' : '#e05a5a';
+  function ckThumb() {
+    try { const c = $('card'), o = document.createElement('canvas'); o.width = 200; o.height = 300; o.getContext('2d').drawImage(c, 0, 0, 200, 300); return o.toDataURL('image/jpeg', 0.85); } catch (e) { return ''; }
+  }
+  function ckRing(v, size) {
+    const r = mk('div', 'qring'); r.style.setProperty('--v', v); r.style.setProperty('--c', ckTone(v)); r.style.setProperty('--s', size + 'px');
+    const s = mk('span'); s.textContent = v + '%'; r.appendChild(s); return r;
+  }
+  function ckScoreShow(clean) {
+    if (CKCTL) { /* un controllo precedente non serve più */ }
+    CKSCORE = ckScoreCalc(CKITEMS);
+    CKSCORE.thumb = ckThumb();
+    ckScoreDraw(CKSCORE, clean);
+    ckBadge(CKSCORE);
+  }
+  function ckScoreDraw(sc, clean) {
+    const box = $('qbody'); box.textContent = '';
+    ckSetFoot('score');
+    $('qsum').textContent = 'card score';
+    const head = mk('div', 'qscore');
+    const th = mk('div', 'qthumb'); if (sc.thumb) { const im = mk('img'); im.src = sc.thumb; im.alt = ''; th.appendChild(im); }
+    const nm = mk('div', 'qname'); const b = mk('b'); b.textContent = sc.name;
+    const sub = mk('span'); sub.textContent = clean ? 'No contradictions found.' : sc.left ? sc.left + ' finding' + (sc.left > 1 ? 's' : '') + ' still open.' : 'Every finding is fixed.';
+    nm.append(b, sub);
+    head.append(th, nm, ckRing(sc.total, 96));
+    box.appendChild(head);
+    const list = mk('div', 'qcats');
+    CK_CATS.forEach((c, i) => {
+      const v = sc.cats[i], row = mk('div', 'qcat');
+      const l = mk('div', 'qcl'); const n = mk('b'); n.textContent = c.name; const h = mk('span'); h.textContent = c.hint; l.append(n, h);
+      const bar = mk('div', 'qbar'); const fill = mk('i'); fill.style.width = v + '%'; fill.style.background = ckTone(v); bar.appendChild(fill);
+      const pc = mk('span', 'qpc'); pc.textContent = v + '%'; pc.style.color = ckTone(v);
+      row.append(l, bar, pc); list.appendChild(row);
+    });
+    box.appendChild(list);
+    const note = mk('p', 'qnote'); note.textContent = 'The total is the average of the five categories (100% means everything is fine). Checks are only as good as the model: a second pass with another model can still find something. If you edit the card text the score disappears and the check has to be run again.';
+    box.appendChild(note);
+  }
+  /* Voto in un angolo sotto la carta: sparisce come una nuvola di fumo se il testo cambia */
+  function ckBadge(sc) {
+    const bd = $('qbadge'); if (!bd) return;
+    bd.classList.remove('smoke'); bd.querySelectorAll('.puff').forEach(p => p.remove());
+    bd.textContent = '';
+    bd.appendChild(ckRing(sc.total, 48));
+    const t = mk('span', 'qbt'); t.textContent = 'Card score'; bd.appendChild(t);
+    bd.title = 'Consistency check score. Click to see the details';
+    bd.hidden = false; bd.classList.add('pop');
+    clearInterval(CKBAR); CKBAR = setInterval(ckWatch, 700);
+  }
+  function ckWatch() {
+    if (!CKSCORE) { clearInterval(CKBAR); return; }
+    if (ckDump() !== CKSCORE.hash) ckSmoke();
+  }
+  function ckSmoke() {
+    clearInterval(CKBAR); CKSCORE = null;
+    const bd = $('qbadge'); if (!bd || bd.hidden) return;
+    const fin = () => { bd.hidden = true; bd.classList.remove('smoke', 'pop'); bd.querySelectorAll('.puff').forEach(p => p.remove()); };
+    if (!flyOk()) { fin(); return; }
+    for (let i = 0; i < 6; i++) {
+      const p = mk('i', 'puff'); p.style.setProperty('--dx', (Math.random() * 70 - 35).toFixed(0) + 'px'); p.style.setProperty('--dy', (-20 - Math.random() * 40).toFixed(0) + 'px');
+      p.style.setProperty('--d', (Math.random() * 0.25).toFixed(2) + 's'); p.style.left = (6 + Math.random() * 40).toFixed(0) + 'px'; p.style.top = (4 + Math.random() * 30).toFixed(0) + 'px';
+      bd.appendChild(p);
+    }
+    bd.classList.remove('pop'); bd.classList.add('smoke');
+    setTimeout(fin, 1300);
+  }
+  /* Attesa con barra a rettangolini */
+  const CKSEGS = 14;
+  function ckWaitUI(box) {
+    box.textContent = '';
+    const wrap = mk('div', 'qwaitbox');
+    const w = mk('div', 'qwait'); w.append(mk('i'), document.createTextNode('Reading the whole card and looking for contradictions…'));
+    const bar = mk('div', 'gbar qbarw'); bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-label', 'Check progress');
+    for (let i = 0; i < CKSEGS; i++) bar.appendChild(mk('span', 'seg'));
+    wrap.append(w, bar); box.appendChild(wrap);
+    const segs = bar.querySelectorAll('.seg'); let shown = 0; const t0 = Date.now();
+    const paintSegs = n => { segs.forEach((s, i) => { s.className = 'seg' + (i < n ? ' done' : i === n ? ' work' : ''); }); shown = n; };
+    paintSegs(0);
+    const iv = setInterval(() => {
+      if (!bar.isConnected) { clearInterval(iv); return; }
+      const n = Math.min(CKSEGS - 1, Math.floor(CKSEGS * (1 - Math.exp(-(Date.now() - t0) / 14000))));
+      if (n !== shown) paintSegs(n);
+    }, 400);
+    return { done: () => new Promise(res => { clearInterval(iv); let i = shown; const step = () => { if (!bar.isConnected || i >= CKSEGS) { res(); return; } i++; paintSegs(i); setTimeout(step, 45); }; step(); }), stop: () => clearInterval(iv) };
   }
   async function runCheck() {
     const d = $('qdlg'), box = $('qbody');
     if (!d.open) d.showModal();
-    $('qagain').hidden = true; CKDONE = 0;
-    box.textContent = ''; const w = mk('div', 'qwait'); w.append(mk('i'), document.createTextNode('Reading the whole card and looking for contradictions…')); box.appendChild(w);
+    ckSetFoot('wait'); CKDONE = 0; CKITEMS = [];
     $('qsum').textContent = '';
     if (CKCTL) CKCTL.abort(); CKCTL = new AbortController();
     const dump = ckDump();
-    if (!dump.trim()) { box.textContent = ''; const p = mk('p', 'qok'); p.textContent = 'The card is empty: nothing to check.'; box.appendChild(p); $('qagain').hidden = false; return; }
+    if (!dump.trim()) { box.textContent = ''; const p = mk('p', 'qok'); p.textContent = 'The card is empty: nothing to check.'; box.appendChild(p); ckSetFoot('score'); $('qclose').textContent = 'OK'; return; }
+    const wait = ckWaitUI(box);
     const sys = 'You are a meticulous continuity editor for roleplay character cards (SillyTavern format). You find contradictions and technical mistakes. You never rewrite style, never add content and never flag matters of taste. Output JSON only, no prose.';
     const usr = 'Check this character card for consistency.\n\nCARD (each section starts with "### id (label)"):\n\n' + dump +
       '\n\nLOOK FOR:\n- Facts that disagree between sections: age, appearance (hair, eyes, height, build), name spelling, relationships, job, places, species, timeline.\n- Placeholder misuse: {{char}} is the character, {{user}} is the player. Flag {{user}} used for the character, {{char}} used for the player, and any greeting that speaks, decides or acts for {{user}}.\n- Leftover placeholders or notes: things like [insert ...], TODO, XXX, lorem ipsum, "Name" used as a name.\n- Dialogue examples that mix speaker labels or lack <START> separators between examples.\n- Contradictions inside a single section.\n- Lorebook entries whose content contradicts the description or scenario.\n\nDO NOT FLAG: writing style, length, taste, missing optional sections, the proper name used instead of {{char}}, or the language of the text.' +
-      '\n\nReturn a JSON array with at most 12 items, the most serious first. Each item:\n{"id": "<section id exactly as given>", "severity": "high" | "medium" | "low", "issue": "<one or two sentences; name the sections that disagree>", "find": "<text copied verbatim from that section, at most 160 characters, or an empty string>", "replace": "<replacement for the found text that fixes the problem, same language and style, or an empty string>"}\nUse "find"/"replace" only when a small local edit really fixes the problem; otherwise leave both empty. If the card is consistent, return [].';
+      '\n\nReturn a JSON array with at most 12 items, the most serious first. Never report the same problem twice and never give two items the same "find" text. Each item:\n{"id": "<section id exactly as given>", "category": "facts" | "roles" | "clean" | "format", "severity": "high" | "medium" | "low", "issue": "<one or two sentences; name the sections that disagree>", "find": "<text copied verbatim from that section, at most 160 characters, or an empty string>", "replace": "<replacement for the found text that fixes the problem, same language and style, or an empty string>"}\nCategories: facts = facts that disagree; roles = {{char}}/{{user}} misuse or speaking for the player; clean = leftover notes or template text; format = broken greeting or dialogue example structure.\nUse "find"/"replace" only when a small local edit really fixes the problem; otherwise leave both empty. If the card is consistent, return [].';
     try {
-      const r = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: usr }], { signal: CKCTL.signal, maxTokens: 2200 });
+      const r = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: usr }], { signal: CKCTL.signal, maxTokens: 2400 });
       const arr = parseJSONArray(String((r && typeof r === 'object' ? r.text : r) || ''));
-      const items = arr.filter(x => x && typeof x === 'object' && str(x.issue).trim()).slice(0, 12).map(x => ({
-        id: str(x.id).trim(), f: ckField(x.id), sev: ckSev(x.severity), issue: str(x.issue).trim(), find: str(x.find), replace: str(x.replace), done: false
-      }));
+      const seen = new Set();
+      const items = arr.filter(x => x && typeof x === 'object' && str(x.issue).trim()).map(x => ({
+        id: str(x.id).trim(), f: ckField(x.id), cat: ckCat(x.category), sev: ckSev(x.severity), issue: str(x.issue).trim(), find: str(x.find), replace: str(x.replace), done: false
+      })).filter(it => { const key = it.find ? it.id + '|' + it.find : it.id + '|' + it.issue.toLowerCase().slice(0, 80); if (seen.has(key)) return false; seen.add(key); return true; }).slice(0, 12);
       const rank = { high: 0, medium: 1, low: 2 }; items.sort((a, b) => rank[a.sev] - rank[b.sev]);
+      await wait.done();
       ckRender(items);
     } catch (e) {
+      wait.stop();
       if (e && (e.name === 'AbortError' || e.code === 'abort')) return;
-      box.textContent = ''; const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'The check did not run'; const m = mk('span'); const ek = errKey(e); m.textContent = ek ? tr(ek[0], ek[1]) : (e && e.message) || 'The API did not answer.'; p.append(b, m); box.appendChild(p); $('qagain').hidden = false;
+      box.textContent = ''; const p = mk('p', 'qok'); const b = mk('b'); b.textContent = 'The check did not run'; const m = mk('span'); const ek = errKey(e); m.textContent = ek ? tr(ek[0], ek[1]) : (e && e.message) || 'The API did not answer.'; p.append(b, m); box.appendChild(p); ckSetFoot('score');
     }
   }
   $('ckbtn').addEventListener('click', runCheck);
   $('qagain').addEventListener('click', runCheck);
-  $('qclose').addEventListener('click', () => { if (CKCTL) CKCTL.abort(); $('qdlg').close(); });
+  $('qclose').addEventListener('click', () => {
+    if (CKST === 'wait') { if (CKCTL) CKCTL.abort(); $('qdlg').close(); return; }
+    if (CKST === 'findings') { ckScoreShow(false); return; }
+    $('qdlg').close();
+  });
+  /* Se si chiude con Esc dalla pagina dei risultati, il voto viene comunque calcolato */
+  $('qdlg').addEventListener('close', () => { if (CKST === 'findings' && CKITEMS.length) { CKSCORE = ckScoreCalc(CKITEMS); CKSCORE.thumb = ckThumb(); ckBadge(CKSCORE); } if (CKST === 'wait' && CKCTL) CKCTL.abort(); CKST = 'idle'; });
+  $('qbadge').addEventListener('click', () => { if (!CKSCORE) return; const d = $('qdlg'); if (!d.open) d.showModal(); ckScoreDraw(CKSCORE, false); });
   function syncCk() { const on = apiReady(); const b = $('ckbtn'); b.disabled = !on; b.title = on ? 'Ask the AI to read the whole card and point out contradictions' : 'Needs a configured API'; }
 
   /* Bozze salvate nel browser */
