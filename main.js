@@ -55,6 +55,25 @@ ipcMain.handle('st-request', async (e, req) => {
   }
 });
 
+// Copia di sicurezza di una carta di SillyTavern prima della prima modifica: Documenti\ST Card Creator backups
+ipcMain.handle('save-backup', async (e, o) => {
+  try {
+    if (!e.senderFrame || !String(e.senderFrame.url).startsWith('http://127.0.0.1:')) throw new Error('bad sender');
+    const data = Buffer.from(o && o.data ? o.data : []);
+    if (!data.length || data.length > 64 * 1024 * 1024) throw new Error('empty or too large');
+    const dir = path.join(app.getPath('documents'), 'ST Card Creator backups');
+    fs.mkdirSync(dir, { recursive: true });
+    const base = String((o && o.name) || 'card').replace(/\.png$/i, '').replace(/[^\p{L}\p{N}._ -]/gu, '_').trim().slice(0, 80) || 'card';
+    const d = new Date(), z = n => String(n).padStart(2, '0');
+    const stamp = d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()) + '_' + z(d.getHours()) + '-' + z(d.getMinutes()) + '-' + z(d.getSeconds());
+    const file = path.join(dir, base + '_' + stamp + '.png');
+    fs.writeFileSync(file, data, { flag: 'wx' });
+    return { ok: true, path: file };
+  } catch (err) {
+    return { ok: false, error: String((err && err.message) || err) };
+  }
+});
+
 // Download dei checkpoint (file grandi da huggingface.co) nella cartella scelta dall'utente.
 const DL = {};
 ipcMain.handle('pick-dir', async () => {

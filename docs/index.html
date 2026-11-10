@@ -1040,7 +1040,7 @@
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
-  <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
+  <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn" id="kalt" hidden></button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="xdlg" aria-label="Full screen editor"><div class="xin"><div class="xh"><b id="xtitle"></b><span class="tk" id="xtk"></span></div><textarea id="xta" spellcheck="false"></textarea><p class="sm">Click outside the box or press Esc to close. Your text is saved as you type.</p></div></dialog>
 </main>
@@ -4264,16 +4264,18 @@
     return a.filter(c => c && c.avatar && c.name);
   }
   const normName = n => String(n || '').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
-  function askConfirm(title, paras, okText) {
+  function askConfirm(title, paras, okText, alt) {
     return new Promise(res => {
-      const d = $('kdlg'), body = $('kbody');
+      const d = $('kdlg'), body = $('kbody'), ka = $('kalt');
       $('ktitle').textContent = title; $('kok').textContent = okText;
+      ka.hidden = !alt; ka.textContent = alt || '';
       body.textContent = '';
       paras.forEach(t => { const p = mk('p'); p.textContent = t; body.appendChild(p); });
       let done = false;
-      const fin = v => { if (done) return; done = true; $('kok').onclick = $('kno').onclick = d.onclick = d.oncancel = null; if (d.open) d.close(); res(v); };
+      const fin = v => { if (done) return; done = true; $('kok').onclick = $('kno').onclick = ka.onclick = d.onclick = d.oncancel = null; ka.hidden = true; if (d.open) d.close(); res(v); };
       $('kok').onclick = () => fin(true);
       $('kno').onclick = () => fin(false);
+      ka.onclick = () => fin('alt');
       d.oncancel = e => { e.preventDefault(); fin(false); };
       d.onclick = e => { if (e.target === d) fin(false); };
       d.showModal(); $('kno').focus();
@@ -4408,6 +4410,24 @@
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
   }
+  /* Backup dell'originale: solo la prima volta che una carta di SillyTavern viene toccata da qui, solo nell'exe */
+  const BKKEY = 'st-card-creator-st-backup-asked-v1';
+  const bkAsked = () => { try { const a = JSON.parse(localStorage.getItem(BKKEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+  const bkMark = av => { try { const a = bkAsked(); if (!a.includes(av)) a.push(av); localStorage.setItem(BKKEY, JSON.stringify(a.slice(-1000))); } catch (e) { /* ignora */ } };
+  async function stBackupFirst(av, name) {
+    if (bkAsked().includes(av) || !window.stBridge || !window.stBridge.saveBackup) return { ok: true };
+    const a = await askConfirm('Back up the original card first?', [
+      'This is the first time you change "' + name + '" from here. You can save a copy of the card exactly as it is now (a PNG with all its data) in your Documents folder, under "ST Card Creator backups". To restore it, import that PNG in SillyTavern or in this app.',
+      'This question is asked only once for each card.'], 'Back up and update', 'Update without backup');
+    if (!a) return { ok: false };
+    if (a === 'alt') { bkMark(av); return { ok: true }; }
+    say('status', 'Saving the backup…', null, false);
+    const im = await stReq('GET', '/characters/' + encodeURIComponent(av));
+    if (im.status !== 200 || !im.body.length) throw { message: 'Could not read the original card from SillyTavern, so no backup was made and nothing was changed.' };
+    const r = await window.stBridge.saveBackup({ name: name || av, data: im.body });
+    if (!r || !r.ok) throw { message: 'The backup could not be saved (' + ((r && r.error) || 'unknown error') + '), so nothing was changed.' };
+    bkMark(av); return { ok: true, path: r.path };
+  }
   async function stUpdate() {
     if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
     const av = STSRC.avatar;
@@ -4428,6 +4448,8 @@
       const ex = (cur.data && cur.data.extensions) || {};
       if (ex.world && K.entries.length) paras.push('This card is linked to the SillyTavern lorebook "' + ex.world + '": SillyTavern rebuilds the card\'s embedded lorebook from that file, so lorebook edits made here may be overwritten.');
       if (!(await askDiff(paras, cur))) { say('status', 'Update cancelled.', null, false); return; }
+      const bk = await stBackupFirst(av, curName);
+      if (!bk.ok) { say('status', 'Update cancelled.', null, false); return; }
       say('status', 'Updating the card on SillyTavern…', null, false);
       /* json_data conserva i campi che questa app non conosce (script regex, ecc.); il lorebook e i saluti di gruppo vengono dalla card di qui */
       let base = {}; try { base = JSON.parse(cur.json_data || '{}') || {}; } catch (e) { base = {}; }
@@ -4449,7 +4471,7 @@
       const f = await stForm(fields, new File([blob], av, { type: 'image/png' }));
       const r = await stReq('POST', '/api/characters/edit', f);
       if (r.status !== 200) throw { message: 'SillyTavern did not accept the update (' + r.status + '). Nothing was changed on the card.' };
-      say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.', { n: K.name.trim() }, false);
+      say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.' + (bk.path ? ' The original is saved at ' + bk.path : ''), { n: K.name.trim() }, false);
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }

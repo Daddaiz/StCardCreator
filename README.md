@@ -32,7 +32,7 @@
 - A notice tells you when a newer release is out.
 
 **SillyTavern**
-- **Add to SillyTavern** and **SillyTavern cards** (list, edit, update, with a review of every changed field). *Windows exe only; SillyTavern must be running, with your login in the API page if it asks. Reload SillyTavern (F5) afterwards.*
+- **Add to SillyTavern** and **SillyTavern cards** (list, edit, update, with a review of every changed field, and an offer to back up the original card the first time you change it). *Windows exe only; SillyTavern must be running, with your login in the API page if it asks. Reload SillyTavern (F5) afterwards.*
 
 Dark and light themes. The interface is in English; the AI writes the card text in English.
 
