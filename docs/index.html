@@ -2796,10 +2796,11 @@
       const del = mk('button', 'btn quiet'); del.type = 'button'; del.textContent = tr('Rimuovi');
       right.append(tk, del); head.append(b, right);
       const ta = mk('textarea'); ta.rows = 5; ta.value = txt; ta.spellcheck = false; ta.setAttribute('aria-label', tr(label) + ' ' + (i + 1));
-      right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => setVal(ta, v), () => b.textContent, { undo: v => { arr[i] = v; buildStrList(box, arr, prefix, label); afterEdit(); } }), tk);
+      right.insertBefore(makeWand(prefix === 'alt' ? 'alt' : 'group', () => ta.value, v => { setVal(ta, v); if (prefix === 'alt') imgAltSync(); }, () => b.textContent, { undo: v => { arr[i] = v; buildStrList(box, arr, prefix, label); afterEdit(); } }), tk);
       right.insertBefore(makeExpand(ta, () => b.textContent), tk);
       ta.addEventListener('input', () => { arr[i] = ta.value; afterEdit(); });
-      del.addEventListener('click', () => { arr.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); });
+      if (prefix === 'alt') ta.addEventListener('change', () => { drawImg(); imgAltSync(); });
+      del.addEventListener('click', () => { arr.splice(i, 1); if (prefix === 'alt' && IMGP && Array.isArray(IMGP.alts)) IMGP.alts.splice(i, 1); buildStrList(box, arr, prefix, label); afterEdit(); if (prefix === 'alt') drawImg(); });
       item.append(head, ta); box.appendChild(item);
     });
   }
@@ -2914,7 +2915,7 @@
         obj = JSON.parse(decodeB64(raw));
       }
       const isPng = !/\.json$/i.test(f.name);
-      K = fromCard(obj); DID = null; clearUndo(); coverTextReset(); setStSrc(null);
+      K = fromCard(obj); DID = null; clearUndo(); coverReset(); IMGP = null; drawImg(); setStSrc(null);
       syncData(); syncUI(); schedule(); saveDataSoon();
       if (isPng) setImage(f.type === 'image/png' ? f : new File([f], f.name, { type: 'image/png' }));
       say('dstatus', 'Importata: {n}. Le voci del lorebook sono chiuse, aprile per modificarle.', { n: K.name || f.name }, false);
@@ -2998,13 +2999,22 @@
     } finally { btn.disabled = false; render(); }
   });
   function coverTextReset() { S.name = ''; S.desc = ''; S.nameLink = false; S.rule = false; }
+  /* Nuova carta o carta importata: tutta la grafica della cover torna allo stato iniziale (restano solo i font aggiunti dall'utente) */
+  function coverReset() {
+    Object.assign(S, D, { custom: S.custom, stops: cloneStops() });
+    coverTextReset();
+    if (MASKURL) URL.revokeObjectURL(MASKURL);
+    MASKIMG = null; MASKURL = null; MASKBLOB = null; MASKNAME = '';
+    try { ensureFonts(); } catch (e) { /* ignora */ }
+    save();
+  }
   function newCard() {
     K = defaultData(); DID = null; clearUndo();
     if (IMGURL) URL.revokeObjectURL(IMGURL);
     if (MASKURL) URL.revokeObjectURL(MASKURL);
     IMG = null; IMGURL = null; MASKIMG = null; MASKURL = null;
     IMGBLOB = null; MASKBLOB = null; IMGNAME = ''; MASKNAME = ''; IMGDIRTY = false;
-    coverTextReset(); setStSrc(null); IMGP = null; drawImg(); S.zoom = 100; S.ox = 0; S.oy = 0;
+    coverReset(); setStSrc(null); IMGP = null; drawImg();
     initLive();
     syncData(); syncUI(); schedule();
     say('dstatus', 'Nuova carta pronta.', null, false);
@@ -3798,7 +3808,7 @@
   Object.assign(WF, {
     name: ['Character name', 'Only the name: one to four words, no quotes, no title, no explanation.'],
     tags: ['Tags', 'Five to eight short lowercase tags (genre, species, role, tone), comma-separated, no hashtags, no explanation.'],
-    tagline: ['Cover tagline', 'A short evocative tagline for the card cover: one or two short lines, at most 90 characters, no quotes, no hashtags.'],
+    tagline: ['Short description', 'A short evocative tagline for the card cover: one or two short lines, at most 90 characters, no quotes, no hashtags.'],
     keys: ['Lorebook keywords', 'A comma-separated list of 2 to 5 short trigger keywords, lowercase, that should activate this entry when they appear in the chat. Start with the proper name of the person or place, then at most two or three specific words that point to this exact subject. Never use pronouns or filler words (he, him, her, she, they, it, the), bare common words, or generic numbers and durations. The author text is the entry content: derive the keywords from it. Output ONLY the comma-separated list.']
   });
 
@@ -4712,7 +4722,7 @@
       const im = await stReq('GET', '/characters/' + encodeURIComponent(c.avatar));
       closeSt(); say('status', '', null, false);
       if (!$('start').hidden) hideStart();
-      K = fromCard(obj); DID = null; clearUndo(); coverTextReset(); setStSrc({ avatar: c.avatar });
+      K = fromCard(obj); DID = null; clearUndo(); coverReset(); IMGP = null; drawImg(); setStSrc({ avatar: c.avatar });
       syncData(); syncUI(); schedule();
       STBASE = stSig(); STIMG = im.status === 200 ? new File([im.body], c.avatar, { type: 'image/png' }) : null;
       if (STIMG) setImage(STIMG);
@@ -4747,7 +4757,7 @@
   stStart();
 
   /* Generazione dell'intera carta da un'idea */
-  const GEN = [['name', 'Name'], ['description', 'Description'], ['personality', 'Personality summary'], ['scenario', 'Scenario'], ['first_mes', 'First message'], ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['tagline', 'Cover tagline'], ['lore', 'Lorebook entries']];
+  const GEN = [['name', 'Name'], ['description', 'Description'], ['personality', 'Personality summary'], ['scenario', 'Scenario'], ['first_mes', 'First message'], ['mes_example', 'Dialogue examples'], ['notes', "Creator's notes"], ['tags', 'Tags'], ['lore', 'Lorebook entries'], ['tagline', 'Short description']];
   const GEN_SYS = ['You are an expert author of SillyTavern roleplay character cards.',
     'Write the requested field from scratch, from the author\'s idea, optimized for that field.',
     'Rules: output ONLY the final text for the field, with no preface, no explanation, no markdown fences and no surrounding quotes.',
@@ -4855,12 +4865,19 @@
     const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
     const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
       (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
-      '\n\nRULES:\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
+      '\n\nRULES:\n- NEVER make an entry about the main character' + (K.name.trim() ? ' (' + K.name.trim() + ')' : '') + ': the description is always sent to the model, so an entry that repeats it only wastes tokens. Entries are about OTHER people, places, objects, events, organizations and world rules. Do not copy or paraphrase sentences from the description: an entry must add information the description does not already give.\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
+    /* Scarta la voce sul personaggio principale e quelle che ricopiano la descrizione */
+    const nrm = s => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+    const cname = nrm(K.name), cfirst = cname.split(' ')[0] || '';
+    const isMain = t => { const x = nrm(t).replace(/^(?:the|about|character|profile|bio)\s+/, ''); return !!cname && (x === cname || (cfirst.length >= 3 && x === cfirst) || x === cname + ' profile' || x === cname + ' character'); };
+    const dw = nrm(bkSub(K.description)).split(' '), dset = new Set();
+    for (let i = 0; i + 4 <= dw.length; i++) dset.add(dw.slice(i, i + 4).join(' '));
+    const copied = c => { const w = nrm(bkSub(c)).split(' '); if (w.length < 8 || !dset.size) return false; let hit = 0, n = 0; for (let i = 0; i + 4 <= w.length; i++) { n++; if (dset.has(w.slice(i, i + 4).join(' '))) hit++; } return n > 0 && hit / n >= 0.5; };
     const toItems = t => parseJSONArray(t).map(x => ({
       title: str(x && x.title).trim().slice(0, 80),
       keys: mergeKeys(x),
       content: str(x && x.content).trim()
-    })).filter(x => x.title && x.keys && x.content.length >= 25 && !LORE_JUNK.test(x.content.replace(/[\s.…\-_*]+/g, ' ').trim()) && !/^(?:placeholder|tbd|todo|untitled|title|name|entry)\b/i.test(x.title) && x.content.toLowerCase().replace(/\W+/g, '') !== x.title.toLowerCase().replace(/\W+/g, '') && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title)).slice(0, 8);
+    })).filter(x => x.title && x.keys && x.content.length >= 25 && !LORE_JUNK.test(x.content.replace(/[\s.…\-_*]+/g, ' ').trim()) && !/^(?:placeholder|tbd|todo|untitled|title|name|entry)\b/i.test(x.title) && x.content.toLowerCase().replace(/\W+/g, '') !== x.title.toLowerCase().replace(/\W+/g, '') && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title) && !isMain(x.title) && !copied(x.content)).slice(0, 8);
     const r = await callChecked([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 },
       t => toItems(t).length ? null : 'it was not a valid JSON array of objects with title, keys and content (or every entry was unusable)');
     const items = toItems(r.text);
@@ -5195,7 +5212,7 @@
     'Be concrete and visual: only things that can be seen. Never include names of real people, living artists, or copyrighted characters. Do not ask for text, captions or logos in the image.',
     'Safety: if the character\'s age is not stated, depict an adult. Never sexualize anyone who is or looks like a minor or child; for such characters keep the image fully clothed, wholesome and safe-rated. Keep any rating tag consistent with the card content (default to safe).',
     'Output exactly this format and nothing else:\nPOSITIVE:\n<the prompt>\nNEGATIVE:\n<the negative prompt, or the single word none if this model has no negative prompt>'].join('\n');
-  function imgMessages(kind) {
+  function imgMessages(kind, altIdx) {
     const m = sdInfo(), sty = SDSTYLE[m[2]], nm = K.name.trim() || 'the character';
     const fix = s => str(s).replace(/\{\{char\}\}/gi, nm).replace(/\{\{user\}\}/gi, 'the user').trim();
     const ctx = ['Name: ' + nm];
@@ -5204,7 +5221,10 @@
     if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
     let task;
     if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, simple background that suits the character, no text.';
-    else {
+    else if (kind === 'alt') {
+      ctx.push('Alternate first message: ' + fix(K.alt[altIdx]).slice(0, 1600));
+      task = 'Write a prompt for an illustration of the opening scene in this alternate first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
+    } else {
       ctx.push('First message: ' + fix(K.first_mes).slice(0, 1600));
       task = 'Write a prompt for an illustration of the opening scene in the first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Do not depict the user; if the user is involved, show it from their point of view.';
     }
@@ -5221,14 +5241,38 @@
   }
   async function imgRun(signal) {
     const m = sdInfo();
-    const next = { model: m[0], style: ISTY, portrait: null, scene: null };
+    const next = { model: m[0], style: ISTY, portrait: null, scene: null, alts: [] };
     const r1 = await callLLM(imgMessages('portrait'), { signal, maxTokens: 700 });
     next.portrait = parseImg(r1.text);
     if (K.first_mes.trim()) {
       const r2 = await callLLM(imgMessages('scene'), { signal, maxTokens: 700 });
       next.scene = parseImg(r2.text);
     }
+    for (let i = 0; i < K.alt.length; i++) {
+      if (!str(K.alt[i]).trim()) continue;
+      const r3 = await callLLM(imgMessages('alt', i), { signal, maxTokens: 700 });
+      next.alts[i] = parseImg(r3.text);
+    }
     IMGP = next; saveDataSoon(); drawImg();
+  }
+  /* Ogni messaggio alternativo ha il suo prompt immagine: appena ne compare uno nuovo con del testo, il prompt viene scritto da solo.
+     Vale solo se i prompt immagine sono in uso (casella "Stable diffusion" attiva e prompt del personaggio già scritti). */
+  let IMG_ALT = -1, IMG_ALT_ERR = '';
+  const imgAltNeed = i => str(K.alt[i]).trim().length >= 40 && !(IMGP.alts && IMGP.alts[i] && IMGP.alts[i].pos);
+  async function imgAltSync(only) {
+    if (!SD.on || !IMGP || !IMGP.portrait || IMG_CTL || IMG_ALT >= 0 || !apiReady()) return;
+    const i = typeof only === 'number' ? only : K.alt.findIndex((x, n) => imgAltNeed(n));
+    if (i < 0 || !imgAltNeed(i)) return;
+    const txt = K.alt[i], ctl = new AbortController();
+    IMG_ALT = i; IMG_ALT_ERR = ''; IMG_CTL = ctl; drawImg();
+    try {
+      const r = await callLLM(imgMessages('alt', i), { signal: ctl.signal, maxTokens: 700 });
+      const at = K.alt.indexOf(txt);
+      if (IMGP && at >= 0) { if (!Array.isArray(IMGP.alts)) IMGP.alts = []; IMGP.alts[at] = parseImg(r.text); saveDataSoon(); }
+    } catch (e) { const k = errKey(e); IMG_ALT_ERR = tr(k[0], k[1] || null); }
+    if (IMG_CTL === ctl) IMG_CTL = null;
+    const failed = !!IMG_ALT_ERR; IMG_ALT = -1; drawImg();
+    if (!failed && typeof only !== 'number') imgAltSync();
   }
   async function copyText(t) {
     try { await navigator.clipboard.writeText(t); return true; } catch (e) { /* fallback */ }
@@ -5268,7 +5312,7 @@
         if (key === 'pos') {
           const wd = mk('button', 'wand'); wd.type = 'button'; wd.textContent = '🪄'; wd.className = 'wand imgwand';
           const off = !apiReady() || !K.description.trim() || !!IMG_CTL;
-          wd.disabled = off; wd.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : 'Write both image prompts again'); wd.setAttribute('aria-label', 'Write the image prompts again');
+          wd.disabled = off; wd.title = !apiReady() ? 'Needs an API' : (!K.description.trim() ? 'Write a description first' : 'Write all the image prompts again'); wd.setAttribute('aria-label', 'Write all the image prompts again');
           wd.addEventListener('click', () => imgRegen());
           xs.appendChild(wd);
         }
@@ -5285,6 +5329,22 @@
       if (IMGP.model !== m[0]) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for another model. Press the button below to write them again for ' + m[1] + '.'; box.appendChild(n); }
       block('Character image', IMGP.portrait, 'portrait 2:3');
       if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2');
+      K.alt.forEach((t, i) => {
+        if (!str(t).trim()) return;
+        const o = IMGP.alts && IMGP.alts[i];
+        if (o && o.pos !== undefined) { block('Alternate message ' + (i + 1) + ' image', o, 'scene 3:2'); return; }
+        const w = mk('div', 'item imgp'), hd = mk('div', 'dfh'), b = mk('b'), tk = mk('span', 'tk'), n = mk('p', 'sm');
+        b.textContent = 'Alternate message ' + (i + 1) + ' image'; tk.textContent = 'scene 3:2'; hd.append(b, tk); w.appendChild(hd);
+        if (IMG_ALT === i) n.textContent = 'Writing the prompt…';
+        else {
+          n.textContent = IMG_ALT_ERR || (str(t).trim().length < 40 ? 'The message is too short for a prompt yet.' : 'No prompt yet.');
+          if (IMG_ALT_ERR) n.classList.add('warn');
+          const go = mk('button', 'btn'); go.type = 'button'; go.textContent = 'Write this prompt';
+          go.disabled = !apiReady() || !!IMG_CTL || str(t).trim().length < 40; go.addEventListener('click', () => imgAltSync(i));
+          w.append(n, go); box.appendChild(w); return;
+        }
+        w.appendChild(n); box.appendChild(w);
+      });
     } else {
       const n = mk('p', 'sm'); n.textContent = 'No prompts yet. Write them here, or tick "Stable diffusion" when you generate a card.'; box.appendChild(n);
     }
@@ -5716,7 +5776,9 @@
     const box = $('genFields');
     GEN.forEach(([k, label]) => {
       const l = mk('label', 'chk'), c = mk('input');
-      c.type = 'checkbox'; c.id = 'gf-' + k; c.checked = k !== 'lore';
+      c.type = 'checkbox'; c.id = 'gf-' + k; c.checked = k !== 'lore' && k !== 'tagline';
+      if (k === 'lore') l.style.gridColumnStart = '1';
+      if (k === 'tagline') l.title = 'Writes the Short description shown on the cover';
       c.addEventListener('change', barSync);
       l.append(c, document.createTextNode(' ' + label)); box.appendChild(l);
     });

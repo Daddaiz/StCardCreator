@@ -23,7 +23,7 @@
 - **Edit your PNG**: decorate a ready image without writing data.
 
 **Images**
-- Ready-to-paste image prompts for the character and the first-message scene
+- Ready-to-paste image prompts for the character, the first-message scene and every alternate message
 - **Image generation** from inside the app *Needs an API.*
  
 **Import and export**
