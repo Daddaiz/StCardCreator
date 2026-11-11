@@ -28,4 +28,4 @@
  
 **Import and export**
 - Import a card PNG or JSON. Export a PNG with the data embedded (`chara` + `ccv3`), JSON V3 or V2, CHARX (RisuAI) or TavernAI V1.
-- **Cards**: a gallery of your saved cards, in the browser.
+- **Cards**: a gallery of your saved cards, in the browser. Cards that came from or went to SillyTavern are listed apart ("From SillyTavern") and marked "Needs updating" when they differ from the version in SillyTavern. *The comparison works in the .exe, with SillyTavern running.*

@@ -522,6 +522,15 @@
   .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
   .ccard { min-width: 0; display: grid; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); align-content: start; }
   .ccard.cur { border-color: var(--accent); }
+  .cgrp { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; margin: 6px 0 -2px; }
+  .cgrp:first-child { margin-top: 0; }
+  .cgrp b { font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
+  .cgrp .tk { white-space: normal; }
+  .cgrp .btn { margin-left: auto; }
+  .cst { font-size: 12px; line-height: 1.35; color: var(--muted); overflow-wrap: anywhere; }
+  .cst.need { padding: 6px 10px; border: 1px solid var(--gold); border-radius: 8px; background: var(--surface); color: var(--fg); font-weight: 600; }
+  .cst.need::before { content: ''; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--gold); }
+  .cst.warn { color: var(--warn); }
   .cimg { aspect-ratio: 2 / 3; border-radius: 6px; background: var(--surface); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 12px; }
   .cimg img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .ccard b { font-size: 13px; line-height: 1.3; overflow-wrap: anywhere; }
@@ -687,7 +696,7 @@
   <header class="bar">
     <h1 class="brand"><img class="logo" id="hlogo" width="145" height="124" alt="ST Card Creator"></h1>
     <div class="navgrp">
-      <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button><button type="button" class="btn" id="dcards">Cards</button><button type="button" class="btn" id="dst" disabled>SillyTavern cards</button></div>
+      <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button><button type="button" class="btn" id="dcards">Cards</button><button type="button" class="btn" id="dst">SillyTavern cards</button></div>
       <nav class="views" aria-label="Vista">
         <button type="button" data-view="dati" aria-pressed="true">Dati</button>
         <button type="button" data-view="cover" aria-pressed="false">Cover</button>
@@ -4300,7 +4309,8 @@
     const list = loadDrafts().list.slice().sort((x, y) => y.ts - x.ts);
     $('ccount').textContent = list.length + (list.length === 1 ? ' card' : ' cards') + ' · saved in this browser';
     if (!list.length) { const p = mk('p', 'sm'); p.textContent = 'Nothing saved yet. Your work is saved in this browser automatically after your first edit.'; box.appendChild(p); return; }
-    list.forEach(r => {
+    const linked = [];
+    const card = r => {
       const c = mk('div', 'ccard' + (r.id === DID ? ' cur' : '')), im = mk('div', 'cimg'), b = mk('b'), meta = mk('span', 'tk'), row = mk('div', 'cbtn');
       im.textContent = 'No image';
       idbGet(r.id).then(rec => {
@@ -4332,9 +4342,61 @@
         drawCards();
         if (!$('start').hidden) showStartInfo();
       });
-      row.append(edit, del); c.append(im, b, meta, row); box.appendChild(c);
-    });
+      row.append(edit, del); c.append(im, b, meta, row);
+      if (r.st && r.st.avatar) { const stx = mk('div', 'cst'); stx.textContent = 'Checking SillyTavern…'; c.appendChild(stx); linked.push({ rec: r, el: stx }); }
+      return c;
+    };
+    /* Due gruppi: quelle ancora in lavorazione (mai passate da SillyTavern) e quelle che vengono da o sono andate in SillyTavern */
+    const fromSt = list.filter(r => r.st && r.st.avatar), local = list.filter(r => !(r.st && r.st.avatar));
+    const head = (t, n) => { const g = mk('div', 'cgrp'), bb = mk('b'), tk = mk('span', 'tk'); bb.textContent = t; tk.textContent = n + (n === 1 ? ' card' : ' cards'); g.append(bb, tk); box.appendChild(g); return g; };
+    if (local.length) { head('Cards still in progress', local.length); local.forEach(r => box.appendChild(card(r))); }
+    if (fromSt.length) { const g = head('From SillyTavern', fromSt.length); fromSt.forEach(r => box.appendChild(card(r))); stCompare(seq, linked, g); }
   }
+  /* Confronto con SillyTavern: una richiesta veloce per carta, solo per quelle del gruppo "From SillyTavern".
+     Se SillyTavern risponde piano (per esempio su un altro computer) e le carte sono tante, prima si chiede. */
+  async function stCompare(seq, items, grp, force) {
+    const set = (it, t, cls) => { if (seq === CSEQ) { it.el.textContent = t; it.el.className = 'cst ' + (cls || ''); } };
+    const old = grp.querySelector('.btn'); if (old) old.remove();
+    items.forEach(it => set(it, 'Checking SillyTavern…'));
+    const on = await stCheck(true);
+    if (seq !== CSEQ) return;
+    if (!on) {
+      const why = ST.code === 'net' ? 'start SillyTavern first.' : ST.why;
+      items.forEach(it => set(it, "Can't tell if there are updates: " + why, 'warn'));
+      return;
+    }
+    const one = async it => {
+      try {
+        const g = await stJson('/api/characters/get', { avatar_url: it.rec.st.avatar });
+        if (seq !== CSEQ) return;
+        if (g.status === 404) { set(it, 'This card is not in SillyTavern anymore.', 'warn'); return; }
+        if (g.status === 401 || g.status === 403) throw { code: 'login' };
+        if (g.status !== 200) throw { message: 'SillyTavern answered with an error (' + g.status + ').' };
+        const d = stDiffers(it.rec.K || {}, g.json());
+        set(it, d ? 'Needs updating' : 'Up to date with SillyTavern', d ? 'need' : '');
+      } catch (e) { set(it, "Can't tell if there are updates: " + stMsg(e), 'warn'); }
+    };
+    const t0 = performance.now();
+    await one(items[0]);
+    const rest = items.slice(1);
+    if (!rest.length || seq !== CSEQ) return;
+    const est = (performance.now() - t0) * rest.length / 4;
+    if (!force && est > 6000) {
+      const go = await askConfirm('Check the other cards?', ['SillyTavern is answering slowly. Comparing the other ' + rest.length + ' cards with SillyTavern will take about ' + Math.ceil(est / 1000) + ' seconds.'], 'Check them', 'Skip');
+      if (seq !== CSEQ) return;
+      if (go !== true) {
+        rest.forEach(it => set(it, 'Not checked.'));
+        const bt = mk('button', 'btn'); bt.type = 'button'; bt.textContent = 'Check for updates';
+        bt.addEventListener('click', () => stCompare(seq, items, grp, true));
+        grp.appendChild(bt);
+        return;
+      }
+    }
+    const q = rest.slice();
+    const w = async () => { while (q.length && seq === CSEQ) await one(q.shift()); };
+    await Promise.all([w(), w(), w(), w()]);
+  }
+
   $('dcards').addEventListener('click', openCards);
   $('cclose').addEventListener('click', closeCards);
   $('cdlg').addEventListener('click', e => { if (e.target === $('cdlg')) closeCards(); });
@@ -4343,7 +4405,7 @@
 
   /* ---------- SillyTavern: elenco, aggiunta e aggiornamento delle carte ---------- */
   const STKEY = 'st-card-creator-st-url', ST_DEF = 'http://127.0.0.1:8000';
-  const ST = { online: false, why: '', ver: '', busy: false, timer: 0 };
+  const ST = { online: false, why: '', code: '', ver: '', busy: false, timer: 0 };
   function stUrl() {
     let u = '';
     try { u = localStorage.getItem(STKEY) || ''; } catch (e) { u = ''; }
@@ -4378,7 +4440,7 @@
   }
   function stMsg(e) {
     if (e && e.code === 'nobridge') return 'It only works in the .exe version.';
-    if (e && e.code === 'net') return 'SillyTavern needs to be running.';
+    if (e && e.code === 'net') return 'SillyTavern is not running.';
     if (e && e.code === 'login') return 'SillyTavern asks for a login. Enter your SillyTavern username and password in the API page, section SillyTavern.';
     if (e && e.code === 'badlogin') return 'SillyTavern refused the username or password. Use the login name (handle) of your SillyTavern account.';
     return (e && e.message) || 'Something went wrong while talking to SillyTavern.';
@@ -4386,33 +4448,34 @@
   function updStUi() {
     const on = ST.online;
     const tip = on ? 'After adding or updating, reload the SillyTavern page (F5) to see the change.' : ST.why;
-    const dst = $('dst'); dst.disabled = !on; dst.title = on ? '' : tip;
     const add = $('stadd'); add.disabled = !on || ST.busy; add.title = tip;
     add.textContent = STSRC ? 'Update the card on SillyTavern' : 'Add to SillyTavern';
     const n = $('sNote');
-    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (/needs to be running/.test(ST.why) ? ' Looking for it at ' + stUrl() + '. The buttons turn on by themselves once it is up.' : ''));
+    if (n) n.textContent = on ? 'Connected to SillyTavern' + (ST.ver ? ' ' + ST.ver : '') + ' at ' + stUrl() + '.' : (ST.why + (ST.code === 'net' ? ' Looking for it at ' + stUrl() + '. The buttons turn on by themselves once it is up.' : ''));
   }
   setStSrc = v => { STSRC = v; STBASE = null; updStUi(); };
-  async function stCheck() {
-    if (ST.busy) return;
+  /* Controllo fresco: dice se SillyTavern risponde adesso. Usato anche a ogni click su "SillyTavern cards" e all'apertura di Cards */
+  async function stCheck(force) {
+    if (ST.busy && !force) return ST.online;
     try {
       if (!window.stBridge) throw { code: 'nobridge' };
       const r = await stReq('GET', '/version');
       let v = null; try { v = r.json(); } catch (e) { v = null; }
       if ((r.status === 401 || r.status === 403 || r.status === 302) && !stAuth()) throw { code: 'login' };
       if (r.status !== 200 || !v || typeof v !== 'object') throw { code: 'net' };
-      ST.online = true; ST.why = ''; ST.ver = v.pkgVersion || '';
+      ST.online = true; ST.why = ''; ST.code = ''; ST.ver = v.pkgVersion || '';
     } catch (e) {
-      ST.online = false; ST.why = stMsg(e); ST.ver = '';
+      ST.online = false; ST.why = stMsg(e); ST.code = (e && e.code) || ''; ST.ver = '';
     }
     updStUi();
+    return ST.online;
   }
   function stStart() {
     stCheck();
     if (!window.stBridge) return;
     clearInterval(ST.timer);
-    ST.timer = setInterval(() => { if (!document.hidden && $('start').hidden) stCheck(); }, 8000);
-    window.addEventListener('focus', stCheck);
+    ST.timer = setInterval(() => { if (!document.hidden) stCheck(); }, 8000);
+    window.addEventListener('focus', () => stCheck());
   }
   async function stList() {
     const r = await stJson('/api/characters/all', {});
@@ -4465,12 +4528,19 @@
       creator: str(d.creator), version: str(d.character_version)
     };
   }
-  function mineNow() {
+  function mineOf(k) {
     return {
-      name: K.name.trim(), description: K.description, personality: K.personality, scenario: K.scenario, first_mes: K.first_mes, mes_example: K.mes_example,
-      alt: joinList(K.alt), group: joinList(K.group), system_prompt: K.system_prompt, post_history: K.post_history, dp_prompt: K.dp_prompt,
-      lore: loreText(K.entries.map(entryJSON)), notes: K.notes, tags: split(K.tags).join(', '), creator: K.creator.trim(), version: K.version
+      name: k.name.trim(), description: k.description, personality: k.personality, scenario: k.scenario, first_mes: k.first_mes, mes_example: k.mes_example,
+      alt: joinList(k.alt), group: joinList(k.group), system_prompt: k.system_prompt, post_history: k.post_history, dp_prompt: k.dp_prompt,
+      lore: loreText(k.entries.map(entryJSON)), notes: k.notes, tags: split(k.tags).join(', '), creator: k.creator.trim(), version: k.version
     };
+  }
+  const mineNow = () => mineOf(K);
+  /* Una carta salvata qui è diversa da quella in SillyTavern? Stessi campi e stesso confronto del riepilogo che appare prima di aggiornare */
+  const normT = s => String(s == null ? '' : s).replace(/\r\n?/g, '\n').trim();
+  function stDiffers(k, cur) {
+    const T = theirsOf(cur), M = mineOf(sanitize(k));
+    return DIFF_FIELDS.some(([f]) => normT(T[f]) !== normT(M[f]));
   }
   /* Differenze per parole: prefisso e suffisso comuni tolti prima, poi LCS sul tratto centrale */
   function wordDiff(a, b) {
@@ -4733,7 +4803,19 @@
       const p = mk('p', 'sm'); p.textContent = stMsg(e); p.style.color = 'var(--warn)'; $('sgrid').prepend(p);
     }
   }
-  $('dst').addEventListener('click', () => { const d = $('sdlg'); if (!d.open) d.showModal(); drawSt(); });
+  /* A ogni click si controlla se SillyTavern è in esecuzione: se sì si mostrano le carte, altrimenti un messaggio */
+  $('dst').addEventListener('click', async () => {
+    const d = $('sdlg'), box = $('sgrid'), seq = ++SSEQ;
+    if (!d.open) d.showModal();
+    SURLS.forEach(u => URL.revokeObjectURL(u)); SURLS = [];
+    box.textContent = ''; $('scount').textContent = '';
+    const msg = t => { const p = mk('p', 'sm'); p.textContent = t; box.textContent = ''; box.appendChild(p); };
+    msg('Looking for SillyTavern…');
+    const on = await stCheck(true);
+    if (seq !== SSEQ) return;
+    if (!on) { msg(ST.why + (ST.code === 'net' ? ' Start it, then press "SillyTavern cards" again.' : '')); return; }
+    drawSt();
+  });
   $('sclose').addEventListener('click', closeSt);
   $('sdlg').addEventListener('click', e => { if (e.target === $('sdlg')) closeSt(); });
   $('sdlg').addEventListener('cancel', () => { SSEQ++; SURLS.forEach(u => URL.revokeObjectURL(u)); SURLS = []; });
@@ -4751,8 +4833,8 @@
         if (rem.checked) localStorage.setItem(SPKEY, STPASS); else localStorage.removeItem(SPKEY);
       } catch (e) { /* ignora */ }
     };
-    [u, us, pw, rem].forEach(el => el.addEventListener('change', () => { save(); stCheck(); }));
-    $('sTest').addEventListener('click', () => { save(); $('sNote').textContent = 'Checking…'; stCheck(); });
+    [u, us, pw, rem].forEach(el => el.addEventListener('change', () => { save(); stCheck(true); }));
+    $('sTest').addEventListener('click', () => { save(); $('sNote').textContent = 'Checking…'; stCheck(true); });
   })();
   stStart();
 
