@@ -29,3 +29,14 @@
 **Import and export**
 - Import a card PNG or JSON. Export a PNG with the data embedded (`chara` + `ccv3`), JSON V3 or V2, CHARX (RisuAI) or TavernAI V1.
 - **Cards**: a gallery of your saved cards, in the browser. Cards that came from or went to SillyTavern are listed apart ("From SillyTavern") and marked "Needs updating" when they differ from the version in SillyTavern. *The comparison works in the .exe, with SillyTavern running.* After a successful Add or Update to SillyTavern, it asks if you want to remove the card from here, to avoid duplicates.
+
+## Versions and features
+
+| Feature | Exe | Html |
+|---|:---:|:---:|
+| Everything else (card editor, cover, import/export, AI tools, Test chat) | ✅ | ✅ |
+| **SillyTavern cards**: open a card from SillyTavern | ✅ | ❌ |
+| **Add / Update** a card in SillyTavern (including its linked lorebook) | ✅ | ❌ |
+| "Needs updating" comparison in Cards | ✅ | ❌ |
+| Backup of the original card before the first update | ✅ | ❌ |
+| Checkpoint download from the Images page | ✅ | ❌ (link opens the model page) |
