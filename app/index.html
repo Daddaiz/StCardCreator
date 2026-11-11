@@ -251,6 +251,10 @@
   .qwait { display: flex; align-items: center; gap: 12px; padding: 14px 4px; font-size: 14px; color: var(--muted); }
   .qwait i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--accent); animation: qspin 0.9s linear infinite; }
   @keyframes qspin { to { transform: rotate(360deg); } }
+  /* Finestra non in primo piano: tutto fermo, tranne gli indicatori di una generazione in corso */
+  html.bgwin *, html.bgwin *::before, html.bgwin *::after { animation-play-state: paused !important; }
+  html.bgwin dialog[open], html.bgwin dialog[open]::backdrop { animation: none !important; }
+  html.bgwin .qwait i, html.bgwin .wand.spin, html.bgwin .pdots i, html.bgwin .gbar .seg.work { animation-play-state: running !important; }
   .qok { display: grid; justify-items: center; gap: 6px; padding: 26px 12px; text-align: center; color: var(--muted); }
   .qok b { font: 600 18px var(--font-title); color: var(--fg); }
   .qi { display: grid; grid-template-columns: 10px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
@@ -1131,6 +1135,29 @@
   let THEME = 'dark';
   let GFX = true;
   try { GFX = localStorage.getItem('st-card-creator-gfx') !== '0'; } catch (e) { /* ignora */ }
+  /* Finestra non in primo piano: animazioni e sfondo in pausa (le generazioni in corso continuano, con i loro indicatori) */
+  let BGW = false;
+  const BGKEEP = '.qwait, .wand, .pdots, .gbar, .gdrop', BGPAUSED = new Set();
+  function bgSync() {
+    const bg = !!document.hidden || (typeof document.hasFocus === 'function' && !document.hasFocus());
+    if (bg === BGW) return;
+    BGW = bg; document.documentElement.classList.toggle('bgwin', bg);
+    try {
+      if (bg) {
+        document.getAnimations().forEach(a => {
+          if ('animationName' in a || 'transitionProperty' in a || a.playState !== 'running') return;   /* quelle CSS le ferma il foglio di stile */
+          const t = a.effect && a.effect.target; if (t && t.closest && t.closest(BGKEEP)) return;
+          a.pause(); BGPAUSED.add(a);
+        });
+      } else { BGPAUSED.forEach(a => { try { if (a.playState === 'paused') a.play(); } catch (e) { /* ignora */ } }); BGPAUSED.clear(); }
+    } catch (e) { /* ignora */ }
+  }
+  /* Un'animazione che parte mentre la finestra è in secondo piano e ha una fine (ingressi, comparse) salta direttamente alla fine: niente elementi fermi a metà */
+  document.addEventListener('animationstart', e => {
+    if (!BGW || !e.target || !e.target.getAnimations) return;
+    e.target.getAnimations().forEach(a => { try { if (a.animationName === e.animationName && a.effect.getTiming().iterations !== Infinity) a.finish(); } catch (x) { /* ignora */ } });
+  }, true);
+  window.addEventListener('blur', bgSync); window.addEventListener('focus', bgSync); document.addEventListener('visibilitychange', bgSync); bgSync();
   document.documentElement.classList.toggle('nogfx', !GFX);
   try { const st0 = localStorage.getItem(TKEY); if (st0 === 'light' || st0 === 'dark') THEME = st0; } catch (e) { /* ignora */ }
   function applyTheme() {
@@ -2741,7 +2768,7 @@
     fl.addEventListener('pointerenter', takeOver);
     fl.addEventListener('pointerleave', () => { PX = -1; PY = -1; release(); });
     const go = () => {
-      if (!GFX || document.hidden || !fl.offsetParent || held || over() || fl.matches(':hover')) return;
+      if (!GFX || document.hidden || BGW || !fl.offsetParent || held || over() || fl.matches(':hover')) return;
       dust();
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
@@ -3797,9 +3824,9 @@
     let lastPaint = 0;
     function frame(ts) {
       requestAnimationFrame(frame);
-      if (document.hidden) { last = ts; return; }
-      /* Meno fotogrammi quando non servono: 30 al secondo dentro l'app, 8 se la finestra non è in primo piano */
-      const gap = (typeof document.hasFocus === 'function' && !document.hasFocus()) ? 120 : $('start').hidden ? 30 : 0;
+      if (document.hidden || BGW) { last = ts; return; }
+      /* Meno fotogrammi quando non servono: 30 al secondo dentro l'app */
+      const gap = $('start').hidden ? 30 : 0;
       if (ts - lastPaint < gap) return;
       lastPaint = ts;
       const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
@@ -4157,15 +4184,22 @@
   }
   /* Attesa con barra a rettangolini */
   const CKSEGS = 14;
-  function ckWaitUI(box) {
+  function ckWaitUI(box, dump) {
     box.textContent = '';
+    const areas = []; String(dump || '').replace(/^### \S+ \((.*)\)$/gm, (m, l) => { areas.push(l.split(' · keywords')[0]); return m; });
     const wrap = mk('div', 'qwaitbox');
-    const w = mk('div', 'qwait'); w.append(mk('i'), document.createTextNode('Reading the whole card and looking for contradictions…'));
+    const wt = document.createTextNode('Checking the whole card.');
+    const w = mk('div', 'qwait'); w.append(mk('i'), wt);
     const bar = mk('div', 'gbar qbarw'); bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-label', 'Check progress');
     for (let i = 0; i < CKSEGS; i++) bar.appendChild(mk('span', 'seg'));
     wrap.append(w, bar); box.appendChild(wrap);
     const segs = bar.querySelectorAll('.seg'); let shown = 0; const t0 = Date.now();
-    const paintSegs = n => { segs.forEach((s, i) => { s.className = 'seg' + (i < n ? ' done' : i === n ? ' work' : ''); }); shown = n; };
+    const paintSegs = n => {
+      segs.forEach((s, i) => { s.className = 'seg' + (i < n ? ' done' : i === n ? ' work' : ''); }); shown = n;
+      /* Le aree della carta compaiono man mano che i rettangolini si completano */
+      const k = n <= 0 ? 0 : Math.min(areas.length, Math.max(1, Math.round(n * areas.length / CKSEGS)));
+      wt.nodeValue = k ? areas.slice(0, k).join(', ') : 'Checking the whole card.';
+    };
     paintSegs(0);
     const iv = setInterval(() => {
       if (!bar.isConnected) { clearInterval(iv); return; }
@@ -4183,7 +4217,7 @@
     if (CKCTL) CKCTL.abort(); CKCTL = new AbortController();
     const dump = ckDump();
     if (!dump.trim()) { box.textContent = ''; const p = mk('p', 'qok'); p.textContent = 'The card is empty: nothing to check.'; box.appendChild(p); ckSetFoot('score'); $('qclose').textContent = 'OK'; return; }
-    const wait = ckWaitUI(box);
+    const wait = ckWaitUI(box, dump);
     const sys = 'You are a meticulous continuity editor for roleplay character cards (SillyTavern format). You find accidental contradictions and technical mistakes, the kind an author would be embarrassed by. You understand that good characters are full of deliberate tension and you never treat it as an error. You never rewrite style, never add content and never flag matters of taste. Output JSON only, no prose.';
     const usr = 'Check this character card for consistency.\n\nCARD (each section starts with "### id (label)"):\n\n' + dump +
       '\n\nLOOK FOR:\n- Facts that disagree between sections by accident, where the same fact is stated two different ways: age, appearance (hair, eyes, height, build), name spelling, relationships, job, places, species, timeline.\n- Placeholder misuse: {{char}} is the character, {{user}} is the player. Flag {{user}} used for the character, {{char}} used for the player, and any greeting that speaks, decides or acts for {{user}}.\n- Leftover placeholders or notes: things like [insert ...], TODO, XXX, lorem ipsum, "Name" used as a name.\n- Dialogue examples that mix speaker labels or lack <START> separators between examples.\n- Contradictions inside a single section, where one sentence makes another one impossible and nothing suggests it is on purpose.\n- {{user}} described in the description, personality or scenario (looks, actions, feelings, decisions), which belongs to the persona of the player.\n- A greeting or example written in a clearly different narration style or tense from the first message (for example first person versus third person).\n- Lorebook entries whose content contradicts the description or scenario.\n\nINTENTIONAL TENSION IS NOT AN ERROR. Never flag a character who breaks, ignores or defies a rule, law, taboo or custom of the setting; a character who differs from everyone else; hypocrisy, secrets, vices, quirks, inner conflict, irony, rebellion, or opposite traits in one person (shy but craves attention); or a gap between what a character says and does. These make a card interesting. Flag a rule-breaking case only when the card itself states that it is literally impossible and then shows it happening with no explanation. When in doubt whether something is deliberate, do not flag it.\n\nDO NOT FLAG: writing style, length, taste, missing optional sections, the proper name used instead of {{char}}, or the language of the text.' +
@@ -4961,18 +4995,20 @@
   async function suggestLore(idea, signal) {
     const ctx = [];
     if (K.name.trim()) ctx.push('Name: ' + K.name.trim());
-    if (K.description.trim()) ctx.push('Description: ' + K.description.trim().slice(0, 1800));
-    if (K.scenario.trim()) ctx.push('Scenario: ' + K.scenario.trim().slice(0, 800));
+    if (K.description.trim()) ctx.push('Description: ' + K.description.trim().slice(0, 3000));
+    if (K.personality.trim()) ctx.push('Personality: ' + K.personality.trim().slice(0, 800));
+    if (K.scenario.trim()) ctx.push('Scenario: ' + K.scenario.trim().slice(0, 1200));
+    if (K.first_mes.trim()) ctx.push('First message: ' + K.first_mes.trim().slice(0, 1200));
     if (idea) ctx.push('Author idea: ' + idea.slice(0, 800));
     const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
     const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
       (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
-      '\n\nRULES:\n- NEVER make an entry about the main character' + (K.name.trim() ? ' (' + K.name.trim() + ')' : '') + ': the description is always sent to the model, so an entry that repeats it only wastes tokens. Entries are about OTHER people, places, objects, events, organizations and world rules. Do not copy or paraphrase sentences from the description: an entry must add information the description does not already give.\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
+      '\n\nRULES:\n- NEVER make an entry about the main character' + (K.name.trim() ? ' (' + K.name.trim() + ')' : '') + ': the description is always sent to the model, so an entry that repeats it only wastes tokens. Entries are about OTHER people, places, objects, events, organizations and world rules. Every entry must contain NEW information: never repeat, copy or paraphrase anything already stated in the description, personality, scenario, first message or another entry, and state each fact only once. Build on the card instead: add details that connect to it (a person\'s past, a place\'s history, a rule of the world, a secret, a rival, an object with a story), and now and then something unexpected that still fits the setting.\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
     /* Scarta la voce sul personaggio principale e quelle che ricopiano la descrizione */
     const nrm = s => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const cname = nrm(K.name), cfirst = cname.split(' ')[0] || '';
     const isMain = t => { const x = nrm(t).replace(/^(?:the|about|character|profile|bio)\s+/, ''); return !!cname && (x === cname || (cfirst.length >= 3 && x === cfirst) || x === cname + ' profile' || x === cname + ' character'); };
-    const dw = nrm(bkSub(K.description)).split(' '), dset = new Set();
+    const dw = nrm(bkSub([K.description, K.personality, K.scenario, K.first_mes].concat(K.entries.map(e => e.content)).join('\n'))).split(' '), dset = new Set();
     for (let i = 0; i + 4 <= dw.length; i++) dset.add(dw.slice(i, i + 4).join(' '));
     const copied = c => { const w = nrm(bkSub(c)).split(' '); if (w.length < 8 || !dset.size) return false; let hit = 0, n = 0; for (let i = 0; i + 4 <= w.length; i++) { n++; if (dset.has(w.slice(i, i + 4).join(' '))) hit++; } return n > 0 && hit / n >= 0.5; };
     const toItems = t => parseJSONArray(t).map(x => ({
@@ -6220,7 +6256,7 @@
     const u = 'url("' + fan.getAttribute('src') + '")';
     sh.style.webkitMaskImage = u; sh.style.maskImage = u;
     const next = () => setTimeout(() => {
-      if (!document.hidden) band.animate([{ transform: 'translateX(300%) skewX(-18deg)' }, { transform: 'translateX(-130%) skewX(-18deg)' }], { duration: 1000, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' });
+      if (!document.hidden && !BGW) band.animate([{ transform: 'translateX(300%) skewX(-18deg)' }, { transform: 'translateX(-130%) skewX(-18deg)' }], { duration: 1000, easing: 'cubic-bezier(0.45, 0, 0.25, 1)' });
       next();
     }, 60000 + Math.random() * 60000);
     next();
@@ -6231,7 +6267,7 @@
     const w = document.querySelector('.stlogow');
     if (!w || !w.animate || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     const burst = () => {
-      if (!$('start').hidden && !document.hidden) {
+      if (!$('start').hidden && !document.hidden && !BGW) {
         const n = 2 + Math.floor(Math.random() * 2);
         for (let i = 0; i < n; i++) setTimeout(() => {
           const u = (Math.random() * 2 - 1) * 0.96 + (Math.random() - 0.5) * 0.12, v = (Math.random() < 0.5 ? -1 : 1) * (1 - Math.abs(u)) + (Math.random() - 0.5) * 0.12;
