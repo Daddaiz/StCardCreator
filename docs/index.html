@@ -4486,10 +4486,10 @@
     return a.filter(c => c && c.avatar && c.name);
   }
   const normName = n => String(n || '').replace(/[\\/:*?"<>|]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
-  function askConfirm(title, paras, okText, alt) {
+  function askConfirm(title, paras, okText, alt, noText) {
     return new Promise(res => {
       const d = $('kdlg'), body = $('kbody'), ka = $('kalt');
-      $('ktitle').textContent = title; $('kok').textContent = okText;
+      $('ktitle').textContent = title; $('kok').textContent = okText; $('kno').textContent = noText || 'Cancel';
       ka.hidden = !alt; ka.textContent = alt || '';
       body.textContent = '';
       paras.forEach(t => { const p = mk('p'); p.textContent = t; body.appendChild(p); });
@@ -4618,8 +4618,23 @@
     });
   }
   function setBusy(b) { ST.busy = b; updStUi(); }
+  /* Dopo un invio riuscito a SillyTavern: la carta ora esiste là, quindi si offre di toglierla da qui per non averla doppia */
+  async function stOfferRemove(upd) {
+    saveDraft();
+    const id = DID;
+    if (!id) return;
+    const nm = K.name.trim() || 'this card';
+    const ok = await askConfirm('Remove the card from ST Card Creator?', [
+      '"' + nm + '" ' + (upd ? 'is now updated in SillyTavern.' : 'is now in SillyTavern.') + ' Keeping it here as well means you have two copies of the same card.',
+      'If you remove it, you can still open it any time from "SillyTavern cards". Only the copy saved in this app is removed; the card in SillyTavern is not touched.'], 'Remove it', null, 'Keep it');
+    if (!ok || DID !== id) return;
+    clearTimeout(DTIMER);
+    const dd = loadDrafts(); dd.list = dd.list.filter(x => x.id !== id); if (dd.cur === id) dd.cur = null; putDrafts(dd); idbDel(id);
+    DID = null; newCard(); closeCards(); showStart();
+  }
   async function stAdd() {
     if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
+    let ok = false;
     setBusy(true); say('status', 'Sending the card to SillyTavern…', null, false);
     try {
       const list = await stList();
@@ -4635,9 +4650,11 @@
       if (r.status !== 200 || !j || j.error || !j.file_name) throw { message: 'SillyTavern did not accept the card.' };
       setStSrc({ avatar: j.file_name + '.png' }); saveDraft();
       say('status', 'Added to SillyTavern as "{n}". Reload the SillyTavern page (F5) to see it. From now on this button updates that card.', { n: K.name.trim() }, false);
+      ok = true;
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
+    if (ok) await stOfferRemove(false);
   }
   /* Lorebook collegato: SillyTavern ricostruisce quello incorporato nella carta dal file del lorebook (world),
      quindi per cambiare o cancellare le voci bisogna aggiornare quel file, nel suo formato nativo */
@@ -4690,6 +4707,7 @@
   async function stUpdate() {
     if (!K.name.trim()) { say('status', 'Manca il nome della carta: scrivilo nella vista Dati.', null, true); return; }
     const av = STSRC.avatar;
+    let ok = false;
     setBusy(true); say('status', 'Checking the card on SillyTavern…', null, false);
     try {
       const g = await stJson('/api/characters/get', { avatar_url: av });
@@ -4733,9 +4751,11 @@
       const r = await stReq('POST', '/api/characters/edit', f);
       if (r.status !== 200) throw { message: 'SillyTavern did not accept the update (' + r.status + '). Nothing was changed on the card.' };
       say('status', 'Updated "{n}" on SillyTavern. Reload the SillyTavern page (F5) to see the change.' + (wsync ? ' The lorebook "' + wsync.name + '" was updated too (' + wsync.count + ' entries).' : '') + (bk.path ? ' The original is saved at ' + bk.path : ''), { n: K.name.trim() }, false);
+      ok = true;
     } catch (e) {
       say('status', e && e.code === 'noname' ? 'Manca il nome della carta: scrivilo nella vista Dati.' : stMsg(e), null, true);
     } finally { setBusy(false); render(); }
+    if (ok) await stOfferRemove(true);
   }
   $('stadd').addEventListener('click', () => { if (STSRC) stUpdate(); else stAdd(); });
 
