@@ -51,11 +51,13 @@ async function login(base, auth, force) {
   const st = state(base);
   const key = auth.user + '\n' + auth.pass;
   if (st.login === key && !force) return;
-  st.login = key; // anche se fallisce: in "basic auth" puro l'accesso ad account non esiste, e non lo richiediamo a ogni chiamata
   const t = await token(base, true).catch(() => '');
   const h = { 'Content-Type': 'application/json', Authorization: 'Basic ' + Buffer.from(auth.user + ':' + auth.pass).toString('base64') };
   if (t) h['X-CSRF-Token'] = t;
   await raw(base, 'POST', '/api/users/login', h, JSON.stringify({ handle: auth.user, password: auth.pass }));
+  /* Segnato solo dopo che SillyTavern ha risposto (anche con un errore: in "basic auth" puro l'accesso ad account non esiste, e non lo richiediamo a ogni chiamata).
+     Se SillyTavern era spento la richiesta lancia prima di arrivare qui, e il login si rifà alla prossima chiamata. */
+  st.login = key;
   st.token = ''; // la sessione può essere cambiata: nuovo token alla prossima richiesta
 }
 
