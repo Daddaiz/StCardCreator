@@ -38,7 +38,5 @@
 | Everything else (card editor, cover, import/export, AI tools, Test chat) | ✅ | ✅ |
 | **SillyTavern cards**: open a card from SillyTavern | ✅ | ❌ |
 | **Add / Update** a card in SillyTavern (including its linked lorebook) | ✅ | ❌ |
-| "Needs updating" comparison in Cards | ✅ | ❌ |
 | Backup of the original card before the first update | ✅ | ❌ |
 | Checkpoint download from the Images page | ✅ | ❌ (link opens the model page) |
-| Logo shown while the app starts | ✅ | ❌ |
