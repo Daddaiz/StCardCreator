@@ -543,14 +543,23 @@
   .cin { padding: 16px; display: grid; gap: 14px; }
   .chead { display: flex; align-items: center; gap: 12px; }
   .chead b { font: 700 20px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); }
-  .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
-  @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, .atitle.big { font-size: 30px; } }
+  .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, #gdlg .chead b, .atitle.big { font: 700 42px/1.1 var(--font-title); letter-spacing: 0.01em; color: var(--gold); }
+  @media (max-width: 560px) { .qdlg .chead b, #cdlg .chead b, #sdlg .chead b, #pdlg .chead b, #gdlg .chead b, .atitle.big { font-size: 30px; } }
   .chead .btn { margin-left: auto; }
   dialog.gdlg { width: min(820px, calc(100vw - 32px)); }
   .gdlg .chead { position: sticky; top: 0; z-index: 2; background: var(--surface); margin: -16px -16px 0; padding: 14px 16px; border-bottom: 1px solid var(--line); }
-  .gdlg .chead .tk { margin-left: auto; font-size: 13px; }
-  .gdlg .chead .wand { flex: none; }
-  .gbody { display: grid; gap: 16px; }
+  .gdlg .chead { flex-wrap: wrap; gap: 8px 14px; }
+  .gdlg .chead .tk { font-size: 13px; }
+  .gdlg .chead .gact { margin-left: auto; display: flex; gap: 8px; }
+  .gdlg .chead .gact .btn { margin-left: 0; }
+  .gbody { display: grid; gap: 8px; }
+  /* Fisarmonica: un campo aperto alla volta; da chiuso restano titolo, token e pulsante per aprirlo in grande */
+  .gbody .df > .dfh { cursor: pointer; user-select: none; }
+  .gbody .df > .dfh .dfl b::before { content: "\25B8"; display: inline-block; width: 1.1em; color: var(--gold); }
+  .gbody .df:not(.shut) > .dfh .dfl b::before { content: "\25BE"; }
+  .gbody .df > .dfh .gr { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .gbody .df.shut > :not(.dfh) { display: none; }
+  .gbody .df.shut > .dfh { border-radius: inherit; }
   .gbody textarea { width: 100%; resize: vertical; }
   .gbody .gkeys { font-size: 12px; color: var(--muted); padding: 4px 12px 0; }
   .gdlg .krow { justify-content: flex-start; padding-top: 4px; }
@@ -1150,7 +1159,7 @@
 </div><p class="hint" id="smallcap"></p></div></dialog>
   <dialog class="wdlg cdlg hdlg" id="hdlg" aria-label="Previous ideas"><div class="cin"><div class="chead"><b>Previous ideas</b><span class="tk" id="hcount"></span><button type="button" class="btn quiet" id="hclose">Close</button></div><div class="hlist" id="hlist"></div></div></dialog>
   <dialog class="wdlg cdlg pdlg" id="pdlg" aria-label="Test chat"><div class="cin"><div class="chead"><b>Test chat</b><span class="tk" id="psum"></span><button type="button" class="btn quiet" id="pclose">Close</button></div><div class="plog" id="plog" aria-live="polite"></div><p class="hint" id="pstat" role="status"></p><div class="pbar"><textarea id="pin" rows="1" spellcheck="false" placeholder="Type a message as User. Enter sends, Shift+Enter goes to a new line." aria-label="Your message"></textarea><button type="button" class="btn primary" id="psend">Send</button></div><div class="pfoot"><button type="button" class="btn" id="pregen">Regenerate</button><button type="button" class="btn" id="prestart">Restart</button><p class="hint">Nothing is saved, and SillyTavern is not touched.</p></div></div></dialog>
-  <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><button type="button" class="wand" id="gall" title="Regenerate everything" aria-label="Regenerate everything">🪄</button><span class="tk" id="gtk"></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div><div class="krow"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></div></div></dialog>
+  <dialog class="wdlg cdlg gdlg" id="gdlg" aria-label="Card generated" data-nocancel><div class="cin"><div class="chead"><b>Card Generated</b><span class="tk" id="gtk"></span><span class="gact"><button type="button" class="btn primary" id="gacc">Accept</button><button type="button" class="btn" id="gdisc">Discard</button></span></div><p class="sm" id="gstat" role="status"></p><div class="gbody" id="gbody"></div></div></dialog>
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
@@ -5280,7 +5289,8 @@
     const setV = (k, v) => { if (k === 'tagline') { S.desc = v.replace(/\n+/g, ' ').slice(0, 140); } else K[k] = v; };
     const items = [];
     const total = () => { let n = 0; items.forEach(it => { const t = nf(tok(it.ta.value)) + ' tokens'; if (it.tk.textContent !== t) it.tk.textContent = t; n += tok(it.ta.value); }); $('gtk').textContent = nf(n) + ' tokens'; };
-    const sync = () => { $('gacc').disabled = $('gdisc').disabled = $('gall').disabled = busy > 0; };
+    const sync = () => { $('gacc').disabled = $('gdisc').disabled = busy > 0; };
+    const openOnly = div => { body.querySelectorAll(':scope > .df').forEach(x => { const on = x === div; x.classList.toggle('shut', !on); x.firstChild.setAttribute('aria-expanded', String(on)); }); };
     const say2 = (t, warn) => { const e = $('gstat'); e.textContent = t || ''; e.classList.toggle('warn', !!warn); };
     let tm = null;
     const commit = () => { clearTimeout(tm); tm = setTimeout(() => { syncUI(); afterModel(); }, 250); };
@@ -5289,19 +5299,14 @@
       const ta = mk('textarea'); ta.rows = rows; ta.spellcheck = false; ta.value = get(); ta.setAttribute('aria-label', label);
       const tk = mk('span', 'tk');
       left.append(b);
-      let wb = null;
-      if (wandFn) {
-        wb = mk('button', 'wand'); wb.type = 'button'; wb.textContent = '🪄'; wb.title = 'Regenerate this field'; wb.setAttribute('aria-label', 'Regenerate ' + label); wb.hidden = !apiReady();
-        wb.addEventListener('click', async () => {
-          if (busy) return;
-          busy++; sync(); wb.classList.add('spin'); say2('');
-          try { await wandFn(ta); } catch (e) { if (!(e && e.code === 'abort')) { const k = errKey(e); say2(tr(k[0], k[1] || null), true); } }
-          wb.classList.remove('spin'); busy--; sync(); total();
-        });
-        left.append(wb);
-      }
-      left.append(makeExpand(ta, () => label));
-      head.append(left, tk);
+      const right = mk('span', 'gr'), xb = makeExpand(ta, () => label);
+      right.append(tk, xb);
+      head.append(left, right);
+      head.setAttribute('role', 'button'); head.tabIndex = 0; head.setAttribute('aria-expanded', 'false');
+      const tog = () => { if (div.classList.contains('shut')) openOnly(div); else { div.classList.add('shut'); head.setAttribute('aria-expanded', 'false'); } };
+      head.addEventListener('click', e => { if (!e.target.closest('button')) tog(); });
+      head.addEventListener('keydown', e => { if (e.target === head && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tog(); } });
+      div.classList.add('shut');
       div.append(head, ta);
       if (extra) div.append(extra);
       ta.addEventListener('input', () => { set(ta.value); total(); commit(); });
@@ -5335,8 +5340,9 @@
       });
     }
     function openGenResultKeep() { openGenResult(); }
+    /* All'apertura: solo la descrizione aperta (o il primo campo, se la descrizione non c'è) */
+    { const all = [...body.querySelectorAll(':scope > .df')], first = all.find(x => x.querySelector('textarea').getAttribute('aria-label') === (GEN.find(g => g[0] === 'description') || [])[1]) || all[0]; if (first) openOnly(first); }
     total(); sync(); say2('');
-    $('gall').onclick = () => { if (busy) return; d.close(); genRun({ regen: true }); };
     $('gacc').onclick = () => { d.close(); S.name = ''; S.nameLink = false; S.rule = false; if (!GENRES.keys.includes('tagline')) S.desc = ''; syncUI(); schedule(); save(); showView('dati'); selectTab('data', 'd-char'); };
     $('gdisc').onclick = () => {
       d.close();
