@@ -203,13 +203,20 @@
   .cinfo-t { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 8px; padding: 9px 14px 13px; font: 400 13px var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; }
   .cinfo-t > b { font: 700 17px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .cinfo-t > b.none { color: #8d939c; font-weight: 400; }
+  .cinfo .dsv { position: absolute; right: 12px; top: 11px; font: 400 11px var(--font-mono); color: #7d838c; }
+  @media (max-width: 900px) { .cinfo .dsv { position: static; display: block; text-align: center; padding-top: 6px; } }
+  /* Tema chiaro: striscia oro con testo nero */
+  :root[data-theme="light"] .cinfo { background: linear-gradient(180deg, #e3cd9c, #c9ad73); border-color: #9a7f4f; color: #141414; --cliq-bg: #a88c58; }
+  :root[data-theme="light"] .cinfo-t > b { color: #141414; } :root[data-theme="light"] .cinfo-t > b.none { color: #4a4233; }
+  :root[data-theme="light"] .cinfo-k, :root[data-theme="light"] .cinfo-s, :root[data-theme="light"] .cinfo .dsv { color: #3a3325; } :root[data-theme="light"] .cinfo-k b { color: #141414; }
+  :root[data-theme="light"] #ciPct { color: #45196e; }
   .cinfo-k { color: #9aa0a9; } .cinfo-k b { color: #e8e5de; font-weight: 500; } .cinfo-s { color: #6b717a; }
   #ciPct { color: #c9a8ee; font-weight: 600; }
-  .cliq { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: #15101c; }
+  .cliq { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: var(--cliq-bg, #15101c); }
   .cliq i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; min-width: 0; border-radius: 0 6px 6px 0; overflow: hidden; transition: width 0.7s cubic-bezier(.3,.9,.3,1);
     background: linear-gradient(90deg, #371654, #5b2a8a 20%, #8a4fc9 38%, #4a2173 55%, #7a41b6 72%, #371654 100%); background-size: 240px 100%; animation: cliqflow 5s linear infinite;
     box-shadow: 0 0 10px rgba(138,79,201,0.55); }
-  .cliq i::before, .cliq i::after { content: ""; position: absolute; left: 0; top: -5px; width: calc(100% + 60px); height: 9px; background: radial-gradient(ellipse 15px 5px at 15px 0, #15101c 98%, transparent 100%) 0 0 / 30px 9px repeat-x; opacity: 0.85; animation: cliqwave 2.6s linear infinite; }
+  .cliq i::before, .cliq i::after { content: ""; position: absolute; left: 0; top: -5px; width: calc(100% + 60px); height: 9px; background: radial-gradient(ellipse 15px 5px at 15px 0, var(--cliq-bg, #15101c) 98%, transparent 100%) 0 0 / 30px 9px repeat-x; opacity: 0.85; animation: cliqwave 2.6s linear infinite; }
   .cliq i::after { top: -6px; background-size: 46px 9px; opacity: 0.45; animation-duration: 4.1s; animation-direction: reverse; }
   @keyframes cliqflow { to { background-position: 240px 0; } }
   @keyframes cliqwave { to { transform: translateX(-60px); } }
@@ -384,7 +391,12 @@
   .kbody { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
   .kbody p { margin: 0; }
   .krow { display: flex; justify-content: flex-end; gap: 8px; }
-  .navgrp { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .navgrp { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; flex: 1 1 auto; }
+  /* Data / Cover: i due pulsanti principali, al centro tra i pulsanti di sinistra e le impostazioni */
+  .navgrp .views { margin-inline: auto; border-radius: 12px; border-width: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06); }
+  .navgrp .views button { font: 700 21px/1 var(--font-title); letter-spacing: 0.06em; padding: 0 44px; min-height: 80px; min-width: 150px; border-left-width: 2px; }
+  .navgrp .views button[aria-pressed="true"] { background: linear-gradient(180deg, #d9c18f, var(--accent) 55%, #9a7f4f); text-shadow: 0 1px 0 rgba(255,255,255,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+  @media (max-width: 700px) { .navgrp .views { margin-inline: 0; flex: 1 1 100%; } .navgrp .views button { flex: 1 1 0; min-height: 60px; min-width: 0; padding: 0 16px; font-size: 19px; } }
   .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--gold); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .apibtn:hover { border-color: #d9c18f; }
   .apibtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
@@ -728,9 +740,6 @@
         <button type="button" data-view="cover" aria-pressed="false">Cover</button>
       </nav>
     </div>
-    <div class="tot" aria-live="polite">
-      <span class="dsv" id="dsv"></span>
-    </div>
     <button type="button" class="apibtn" data-view="api" aria-pressed="false" title="API settings" aria-label="API settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:block"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="themes" role="group" aria-label="Aspetto">
       <button type="button" data-theme-set="light" aria-pressed="false" title="Modalità normale" aria-label="Modalità normale">
@@ -741,6 +750,7 @@
       </button>
     </div>
     <div class="cinfo" id="cinfo" aria-live="polite">
+      <span class="dsv" id="dsv"></span>
       <div class="cinfo-t"><b id="ciName"></b><span class="cinfo-s">-</span><span id="ciPct">0%</span><span class="cinfo-k">[Total <b id="totAll">≈ 0</b> tokens | Fixed <b id="totFix">≈ 0</b> tokens]</span></div>
       <div class="cliq" role="progressbar" aria-label="Card completion" aria-valuemin="0" aria-valuemax="100" id="ciProg"><i id="ciBar"></i></div>
     </div>
