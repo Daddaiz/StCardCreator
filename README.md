@@ -18,7 +18,8 @@
 - 💬 **Test chat**: talk to the card before exporting it, with the same prompt layout SillyTavern sends. Greetings to swipe, lorebook entries shown when they trigger, nothing saved. *Needs an API.*
 
 **Design**
-- Cover with image, name, tagline, fonts, frames, masks, and three palettes per color set taken from the image (with a shuffle button).
+- Cover with image, name, tagline, fonts, frames, masks, and three palettes per color set taken from the image (with a shuffle button). A **Presets** menu gives five starting points (Default, Classic, Minimal, Gallery, Noir).
+- Under the top buttons, a strip shows the card name, how complete the card is (%) and the token totals.
 - Your own transparent PNG/WebP frames, saved in the browser.
 - **Edit your PNG**: decorate a ready image without writing data.
 
@@ -40,3 +41,4 @@
 | "Needs updating" comparison in Cards | ✅ | ❌ |
 | Backup of the original card before the first update | ✅ | ❌ |
 | Checkpoint download from the Images page | ✅ | ❌ (link opens the model page) |
+| Logo shown while the app starts | ✅ | ❌ |

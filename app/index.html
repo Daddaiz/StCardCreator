@@ -155,7 +155,7 @@
   .cardwrap { background: var(--stage); border-radius: 12px; padding: 18px; display: grid; place-items: center; }
   .cardwrap.drop { outline: 2px dashed var(--accent); outline-offset: -6px; }
   .flip { width: min(100%, 340px); perspective: 1000px; cursor: pointer; position: relative; }
-  .dust { position: absolute; z-index: -1; bottom: 2%; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle, rgba(205,192,168,0.62) 0%, rgba(205,192,168,0.28) 45%, rgba(205,192,168,0) 72%); filter: blur(1.5px); }
+  .dust { position: fixed; z-index: 12; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(circle, rgba(205,192,168,0.62) 0%, rgba(205,192,168,0.28) 45%, rgba(205,192,168,0) 72%); filter: blur(1.5px); }
   .flip-in { position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
   .flip:hover .flip-in { transform: rotateY(180deg); }
   #card { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.14), 0 8px 18px rgba(0,0,0,0.2); backface-visibility: hidden; -webkit-backface-visibility: hidden; }
@@ -197,6 +197,24 @@
   .views button:first-child { border-left: 0; }
   [hidden] { display: none !important; }
   .dsv { color: var(--muted); font-size: 11px; min-height: 1em; }
+  /* Striscia sotto i pulsanti: nome della carta, completamento e token, con la barra "liquida" porpora */
+  .bar.noline { border-bottom: 0; padding-bottom: 4px; }
+  .cinfo { flex: 1 1 100%; position: relative; overflow: hidden; background: #07090c; border: 1px solid #4a505a; border-radius: 8px; color: #e8e5de; }
+  .cinfo-t { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 8px; padding: 9px 14px 13px; font: 400 13px var(--font-mono); font-variant-numeric: tabular-nums; text-align: center; }
+  .cinfo-t > b { font: 700 17px/1.2 var(--font-title); letter-spacing: 0.02em; color: var(--gold); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cinfo-t > b.none { color: #8d939c; font-weight: 400; }
+  .cinfo-k { color: #9aa0a9; } .cinfo-k b { color: #e8e5de; font-weight: 500; } .cinfo-s { color: #6b717a; }
+  #ciPct { color: #c9a8ee; font-weight: 600; }
+  .cliq { position: absolute; left: 0; right: 0; bottom: 0; height: 7px; background: #15101c; }
+  .cliq i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; min-width: 0; border-radius: 0 6px 6px 0; overflow: hidden; transition: width 0.7s cubic-bezier(.3,.9,.3,1);
+    background: linear-gradient(90deg, #371654, #5b2a8a 20%, #8a4fc9 38%, #4a2173 55%, #7a41b6 72%, #371654 100%); background-size: 240px 100%; animation: cliqflow 5s linear infinite;
+    box-shadow: 0 0 10px rgba(138,79,201,0.55); }
+  .cliq i::before, .cliq i::after { content: ""; position: absolute; left: 0; top: -5px; width: calc(100% + 60px); height: 9px; background: radial-gradient(ellipse 15px 5px at 15px 0, #15101c 98%, transparent 100%) 0 0 / 30px 9px repeat-x; opacity: 0.85; animation: cliqwave 2.6s linear infinite; }
+  .cliq i::after { top: -6px; background-size: 46px 9px; opacity: 0.45; animation-duration: 4.1s; animation-direction: reverse; }
+  @keyframes cliqflow { to { background-position: 240px 0; } }
+  @keyframes cliqwave { to { transform: translateX(-60px); } }
+  .cliq i::after { width: calc(100% + 92px); } .cliq i::after { animation-name: cliqwave2; } @keyframes cliqwave2 { to { transform: translateX(-92px); } }
+  @media (prefers-reduced-motion: reduce) { .cliq i, .cliq i::before, .cliq i::after { animation: none; } }
   .undo { position: fixed; left: 16px; bottom: 16px; z-index: 40; max-width: min(420px, calc(100vw - 32px)); font: 500 13px var(--font-ui); padding: 10px 16px; border-radius: 99px; border: 1px solid var(--accent); background: var(--surface); color: var(--fg); cursor: pointer; box-shadow: 0 8px 28px rgba(0,0,0,0.4); text-align: left; }
   .undo:hover { background: var(--sel); }
   .chkgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px 14px; }
@@ -223,6 +241,9 @@
   .dlwrap > .btn { width: 100%; }
   .dlmenu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; display: grid; background: var(--raised); border: 1px solid var(--gold); border-radius: 8px; box-shadow: 0 10px 28px rgba(0,0,0,0.35); overflow: hidden; }
   .dlmenu[hidden] { display: none; }
+  .prewrap { position: relative; margin-bottom: 16px; width: min(100%, 330px); }
+  .prewrap > .tab { width: 100%; position: relative; overflow: hidden; isolation: isolate; }
+  .prewrap .dlmenu { width: 100%; }
   .dlmenu { width: max(100%, 330px); }
   .dlmenu button { display: grid; gap: 2px; }
   .dlmenu button b { font-weight: 600; }
@@ -650,6 +671,7 @@
   .gbar { display: flex; gap: 3px; flex: 0 1 260px; min-width: 160px; margin-left: auto; }
   .gbar .seg { flex: 1 1 0; height: 8px; border-radius: 2px; background: var(--line); transition: background 0.25s; }
   .gbar .seg.done { background: var(--accent); }
+  .gbar .seg.off { background: transparent; box-shadow: inset 0 0 0 1px var(--line); opacity: 0.55; }
   .gbar .seg.warn { background: #d9a520; }
   .gbar .seg.work { background: linear-gradient(90deg, var(--line), color-mix(in srgb, var(--fg) 45%, var(--line)), var(--line)); background-size: 200% 100%; animation: segw 1.1s linear infinite; }
   .gbar { position: relative; }
@@ -707,8 +729,6 @@
       </nav>
     </div>
     <div class="tot" aria-live="polite">
-      <span>Totale <b id="totAll">0</b> token</span>
-      <span>Fissi <b id="totFix">0</b> token</span>
       <span class="dsv" id="dsv"></span>
     </div>
     <button type="button" class="apibtn" data-view="api" aria-pressed="false" title="API settings" aria-label="API settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:block"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -720,12 +740,20 @@
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
     </div>
+    <div class="cinfo" id="cinfo" aria-live="polite">
+      <div class="cinfo-t"><b id="ciName"></b><span class="cinfo-s">-</span><span id="ciPct">0%</span><span class="cinfo-k">[Total <b id="totAll">≈ 0</b> tokens | Fixed <b id="totFix">≈ 0</b> tokens]</span></div>
+      <div class="cliq" role="progressbar" aria-label="Card completion" aria-valuemin="0" aria-valuemax="100" id="ciProg"><i id="ciBar"></i></div>
+    </div>
   </header>
 
   <nav class="tabbar" id="tabs-cover" aria-label="Cover sections" hidden></nav>
   <div id="view-cover" hidden>
   <div class="layout">
     <div class="controls">
+      <div class="prewrap" id="prewrap">
+        <button type="button" class="tab" id="prebtn" aria-haspopup="true" aria-expanded="false">Presets <span aria-hidden="true">▾</span></button>
+        <div class="dlmenu" id="premenu" hidden role="menu"></div>
+      </div>
 
       <details class="drawer" data-group="cover"><summary><h2 id="h-img">Immagine</h2></summary><div class="dbody">
         <div class="filerow">
@@ -1850,6 +1878,32 @@
       schedule(); save();
     });
   });
+  /* Presets della Cover: punti di partenza sobri. Toccano solo font, stile del testo, cornice e maschera (non testo, immagine o dimensione di export) */
+  const CPRE = [
+    ['Default', 'Everything back to the start · no frame, no mask', {}],
+    ['Classic', 'Serif title on a dark band · thin double gold frame', { nameFont: 'Playfair Display', descFont: 'EB Garamond', descBold: false, template: 'fascia', align: 'center', panel: 84, outline: 0, rule: true, nameSize: 92, descSize: 50, nameColor: '#f4efe4', descColor: '#e6dfd0', accent: '#c9a45c', panelColor: '#0c0c0e', frameOn: true, frameInset: 22, frame1W: 3, frame2W: 1, frameGap: 8, frame1Color: '#c9a45c', frame2Color: '#c9a45c' }],
+    ['Minimal', 'Clean uppercase sans · soft veil, no frame', { nameFont: 'Montserrat', descFont: 'Raleway', descBold: false, upper: true, template: 'velo', align: 'left', panel: 60, outline: 0, nameSize: 80, descSize: 44, nameColor: '#ffffff', descColor: '#dcdcdc', accent: '#ffffff', panelColor: '#000000' }],
+    ['Gallery', 'Image in a window on a dark mat · fine line around it', { nameFont: 'Cormorant Garamond', descFont: 'Lora', descBold: false, template: 'contorno', align: 'center', panel: 0, outline: 0, nameSize: 84, descSize: 42, margin: 64, nameColor: '#efeae0', descColor: '#cfc9bd', accent: '#b9b3a6', maskType: 'rect', maskFit: true, maskL: 44, maskT: 44, maskB: 400, maskRadius: 0, maskBevel: 0, maskAlpha: 100, maskFill: 'solid', maskColor: '#111318', frameOn: true, frameTarget: 'hole', frameInset: 10, frame1W: 2, frame2W: 0, frameGap: 0, frame1Color: '#b9b3a6', frame2Color: '#b9b3a6' }],
+    ['Noir', 'High-contrast serif on a black panel · grey hairline frame', { nameFont: 'Bodoni Moda', descFont: 'Spectral', descBold: false, upper: true, template: 'pannello', align: 'left', panel: 82, outline: 0, nameSize: 88, descSize: 46, nameColor: '#f2efe8', descColor: '#c8c8c8', accent: '#8c8c8c', panelColor: '#000000', frameOn: true, frameInset: 28, frame1W: 2, frame2W: 1, frameGap: 7, frame1Color: '#8c8c8c', frame2Color: '#8c8c8c' }]
+  ];
+  function coverPreset(v) {
+    const keep = { name: S.name, desc: S.desc, nameLink: S.nameLink, zoom: S.zoom, ox: S.ox, oy: S.oy, exportW: S.exportW, custom: S.custom, frameImg: S.frameImg };
+    Object.assign(S, D, keep, { stops: cloneStops() }, v);
+    syncUI(); ensureFonts(); schedule(); save();
+  }
+  (function initPresets() {
+    const m = $('premenu'), b = $('prebtn');
+    const open = on => { m.hidden = !on; b.setAttribute('aria-expanded', String(on)); if (on && m.firstChild) m.firstChild.focus(); };
+    CPRE.forEach(([name, hint, v]) => {
+      const x = document.createElement('button'); x.type = 'button'; x.setAttribute('role', 'menuitem');
+      const t = document.createElement('b'); t.textContent = name; const h = document.createElement('span'); h.textContent = hint; x.append(t, h);
+      x.addEventListener('click', () => { open(false); coverPreset(v); });
+      m.appendChild(x);
+    });
+    b.addEventListener('click', () => open(m.hidden));
+    document.addEventListener('click', e => { if (!m.hidden && !e.target.closest('#prewrap')) open(false); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !m.hidden) { open(false); b.focus(); } });
+  })();
   $('reset').addEventListener('click', () => {
     const keep = { name: S.name, desc: S.desc, custom: S.custom };
     Object.assign(S, D, keep, { stops: cloneStops() });
@@ -2772,14 +2826,17 @@
       dust();
       fi.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(-16deg)', offset: 0.3 }, { transform: 'rotateY(8deg)', offset: 0.55 }, { transform: 'rotateY(-4deg)', offset: 0.78 }, { transform: 'rotateY(0deg)' }], { duration: 1100, easing: 'ease-in-out' });
     };
-    /* Sbuffo di polvere solo a sinistra, da sotto la carta, mentre trema (a destra allargava la pagina e faceva comparire la barra di scorrimento) */
+    /* Sbuffo di polvere solo a sinistra, da sotto la carta, mentre trema. Sta in un livello fisso sopra la pagina:
+       così esce dal riquadro della carta e si allarga libero verso sinistra, senza allargare la pagina */
     const dust = () => {
-      for (let i = 0; i < 5; i++) {
-        const side = -1, d = document.createElement('i'), sz = 14 + Math.random() * 20, dx = side * (20 + Math.random() * 34), dy = -(4 + Math.random() * 34), delay = 80 + Math.random() * 380;
+      const r = fl.getBoundingClientRect();
+      for (let i = 0; i < 6; i++) {
+        const d = document.createElement('i'), sz = 14 + Math.random() * 22, dx = -(34 + Math.random() * 70), dy = -(4 + Math.random() * 38), delay = 80 + Math.random() * 380;
         d.className = 'dust'; d.setAttribute('aria-hidden', 'true');
-        d.style.width = d.style.height = sz + 'px'; d.style.bottom = (Math.random() * 8 - 1) + '%'; d.style.left = (-sz * 0.35 + Math.random() * 8) + 'px';
-        fl.appendChild(d);
-        const a = d.animate([{ opacity: 0, transform: 'translate(0,0) scale(.4)' }, { opacity: 0.85, transform: 'translate(' + dx * 0.4 + 'px,' + dy * 0.3 + 'px) scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1.7)' }], { duration: 1100 + Math.random() * 500, delay, easing: 'ease-out', fill: 'both' });
+        d.style.width = d.style.height = sz + 'px';
+        d.style.left = (r.left - sz * 0.75 + Math.random() * 8) + 'px'; d.style.top = (r.bottom - sz - Math.random() * r.height * 0.07) + 'px';
+        document.body.appendChild(d);
+        const a = d.animate([{ opacity: 0, transform: 'translate(0,0) scale(.4)' }, { opacity: 0.85, transform: 'translate(' + dx * 0.4 + 'px,' + dy * 0.3 + 'px) scale(.9)', offset: 0.3 }, { opacity: 0, transform: 'translate(' + dx + 'px,' + dy + 'px) scale(1.8)' }], { duration: 1200 + Math.random() * 500, delay, easing: 'ease-out', fill: 'both' });
         a.onfinish = a.oncancel = () => d.remove();
       }
     };
@@ -2796,6 +2853,12 @@
     const loreOther = on.filter(e => !e.constant).reduce((a, e) => a + tok(e.content), 0);
     const fixed = fixedK.reduce((a, k) => a + t(k), 0) + loreFixed;
     const total = fixed + t('first_mes') + K.alt.reduce((a, s) => a + tok(s), 0) + K.group.reduce((a, s) => a + tok(s), 0) + loreOther;
+    /* Completamento: nome + le stesse undici voci elencate sul retro della carta */
+    const fl = [K.name, K.description, K.personality, K.scenario, K.first_mes, K.alt.some(x => String(x || '').trim()), K.mes_example, K.notes, K.system_prompt, K.post_history, on.some(e => String(e.content || '').trim()), String(K.tags || '').split(',').some(x => x.trim())];
+    const pct = Math.round(fl.filter(x => x === true || (typeof x === 'string' && x.trim())).length / fl.length * 100);
+    const cn = $('ciName'), nm = bkSub(K.name).trim();
+    cn.textContent = K.name.trim() ? nm : 'Untitled card'; cn.classList.toggle('none', !K.name.trim());
+    $('ciPct').textContent = pct + '%'; $('ciBar').style.width = pct + '%'; $('ciProg').setAttribute('aria-valuenow', String(pct));
     $('totAll').textContent = '≈ ' + nf(total);
     $('totFix').textContent = '≈ ' + nf(fixed);
     $('bookTk').textContent = nf(loreFixed + loreOther) + ' ' + tr('token attivi');
@@ -3682,6 +3745,7 @@
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
     $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
+    { const ed = v === 'dati' || v === 'cover'; $('cinfo').hidden = !ed; document.querySelector('header.bar').classList.toggle('noline', ed); }
     if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} setTimeout(() => { try { window.__wiggle && window.__wiggle(); } catch (e) {} }, 900); }
     if (v === 'dati') { render(); try { updBack(); } catch (e) {} }
     if (v === 'api') { apiRender(); }
@@ -3790,10 +3854,12 @@
         if (!k.live || k.delay > 0) return;
         const sx = Math.cos(k.ry), a = Math.max(Math.abs(sx), 0.1) * Math.sign(sx || 1);
         c.save();
-        c.translate(k.x, k.y); c.rotate(k.rot); c.scale(a, 1);
+        const isFront = sx >= 0 && !!k.front;
+        /* il retro non va specchiato: la scala negativa serve solo alla faccia davanti */
+        c.translate(k.x, k.y); c.rotate(k.rot); c.scale(isFront ? a : Math.abs(a), 1);
         c.shadowColor = 'rgba(0,0,0,0.4)'; c.shadowBlur = 14; c.shadowOffsetY = 6;
         c.globalAlpha = 0.55 + 0.4 * Math.abs(sx);
-        c.drawImage(sx >= 0 && k.front ? k.front : backSpr, -w / 2, -h / 2, w, h);
+        c.drawImage(isFront ? k.front : backSpr, -w / 2, -h / 2, w, h);
         c.restore();
       });
     }
@@ -5042,7 +5108,7 @@
     if (box.children.length !== SEGS().length) { barBuild(); return; }
     box.querySelectorAll('.seg').forEach(s => {
       const k = s.dataset.k, on = k === 'sd' ? SD.on : $('gf-' + k).checked;
-      s.className = 'seg' + (on ? '' : ' done');
+      s.className = 'seg' + (on ? '' : ' off');
     });
     barNote();
   }
@@ -5348,7 +5414,7 @@
   const IMG_SYS = ['You write prompts for AI image generators, for fictional roleplay characters.',
     'Always write the prompt in English, whatever language the card is in.',
     'Be concrete and visual: only things that can be seen. Never include names of real people, living artists, or copyrighted characters. Do not ask for text, captions or logos in the image.',
-    'Safety: if the character\'s age is not stated, depict an adult. Never sexualize anyone who is or looks like a minor or child; for such characters keep the image fully clothed, wholesome and safe-rated. Keep any rating tag consistent with the card content (default to safe).',
+    'Safety: if the character\'s age is not stated, depict an adult. Never sexualize anyone who is or looks like a minor or child; for such characters keep the image fully clothed, wholesome and safe-rated. Tone: match the card. If the card or the message is explicit (adult sexual content, nudity, gore, violence between adult characters), the prompt must be just as explicit: name plainly what is seen, with the matching rating tag on tag-based models, and do not soften, censor or fade to black. If the card is not explicit, keep the image safe.',
     'Output exactly this format and nothing else:\nPOSITIVE:\n<the prompt>\nNEGATIVE:\n<the negative prompt, or the single word none if this model has no negative prompt>'].join('\n');
   function imgMessages(kind, altIdx) {
     const m = sdInfo(), sty = SDSTYLE[m[2]], nm = K.name.trim() || 'the character';
@@ -5357,14 +5423,16 @@
     ['description', 'personality', 'scenario'].forEach(k => { if (K[k].trim()) ctx.push(WF[k][0] + ': ' + fix(K[k]).slice(0, 1800)); });
     let rules = sty.rules.replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
     if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
+    const LAST = 'Illustrate ONE precise moment: the LAST thing that happens in the message (its final lines). Read the message to the end; what comes earlier is only context. Put ' + nm + ' in the exact pose, action, gesture, expression and place of that final moment (for example sitting, lying, kneeling, leaning, walking away, reaching for something, seen from behind), with the framing and camera angle that show it best. Do NOT use a neutral standing or portrait pose, and do not repeat the pose of the character portrait, unless the final moment really is that. Then the setting, atmosphere and lighting of that moment.';
+    const ends = t => { t = fix(t); return t.length <= 2200 ? t : t.slice(0, 600) + '\n[...]\n' + t.slice(-1600); };
     let task;
-    if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, simple background that suits the character, no text.';
+    if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, with a pose, expression and simple background taken from the description and personality, no text.';
     else if (kind === 'alt') {
-      ctx.push('Alternate first message: ' + fix(K.alt[altIdx]).slice(0, 1600));
-      task = 'Write a prompt for an illustration of the opening scene in this alternate first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
+      ctx.push('Alternate first message: ' + ends(K.alt[altIdx]));
+      task = 'Write a prompt for an illustration of this alternate first message, in a wide 3:2 composition. ' + LAST + ' Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
     } else {
-      ctx.push('First message: ' + fix(K.first_mes).slice(0, 1600));
-      task = 'Write a prompt for an illustration of the opening scene in the first message, in a wide 3:2 composition: the setting, atmosphere, lighting, and ' + nm + ' in the pose and action it describes. Do not depict the user; if the user is involved, show it from their point of view.';
+      ctx.push('First message: ' + ends(K.first_mes));
+      task = 'Write a prompt for an illustration of the first message, in a wide 3:2 composition. ' + LAST + ' Do not depict the user; if the user is involved, show it from their point of view.';
     }
     const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\nIMAGE STYLE: ' + ISTY + ' - ' + istyDesc() + '. The prompt must clearly ask for this style, expressed the way the target model understands it: plain words for natural-language models, matching tags for tag-based models. Do not let the model rules or default habits override this style (for example, no anime tags for a photorealistic image, and no photo terms for an anime image).\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
     return [{ role: 'system', content: IMG_SYS }, { role: 'user', content: u }];

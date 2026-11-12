@@ -118,10 +118,36 @@ ipcMain.handle('dl-start', (e, o) => {
   return true;
 });
 
+// Logo trasparente mostrato appena l'app parte, mentre la finestra vera si carica: sparisce in dissolvenza quando questa compare.
+let splash = null;
+function showSplash(b) {
+  try {
+    const d = (b && typeof b.x === 'number' ? screen.getDisplayMatching({ x: b.x, y: b.y, width: b.width, height: b.height }) : screen.getPrimaryDisplay()).workArea;
+    const w = 374, h = 320;
+    splash = new BrowserWindow({
+      width: w, height: h, x: Math.round(d.x + (d.width - w) / 2), y: Math.round(d.y + (d.height - h) / 2),
+      frame: false, transparent: true, resizable: false, movable: false, minimizable: false, maximizable: false, fullscreenable: false,
+      alwaysOnTop: true, skipTaskbar: true, focusable: false, hasShadow: false, show: false, backgroundColor: '#00000000'
+    });
+    splash.setIgnoreMouseEvents(true);
+    splash.once('ready-to-show', () => { if (splash && !splash.isDestroyed()) splash.showInactive(); });
+    splash.on('closed', () => { splash = null; });
+    splash.loadFile(path.join(__dirname, 'splash.html'));
+    setTimeout(hideSplash, 20000); // rete di sicurezza: non resta mai sullo schermo
+  } catch (e) { splash = null; }
+}
+function hideSplash() {
+  const s = splash; if (!s || s.isDestroyed()) return;
+  splash = null;
+  s.webContents.executeJavaScript("document.body.classList.add('out')").catch(() => {});
+  setTimeout(() => { try { if (!s.isDestroyed()) s.destroy(); } catch (e) { /* ignora */ } }, 550);
+}
+
 function start() { app.whenReady().then(async () => {
+  const saved = loadBounds();
+  showSplash(saved);
   const port = await startServer();
   Menu.setApplicationMenu(null);
-  const saved = loadBounds();
   win = new BrowserWindow({
     width: 1280, height: Math.min(1075, screen.getPrimaryDisplay().workAreaSize.height), minWidth: 420, minHeight: 600,
     ...(saved ? { x: saved.x, y: saved.y, width: saved.width, height: saved.height } : {}),
@@ -132,7 +158,7 @@ function start() { app.whenReady().then(async () => {
     webPreferences: { webSecurity: false, backgroundThrottling: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.webContents.setWindowOpenHandler(({ url }) => { shell.openExternal(url); return { action: 'deny' }; });
-  win.once('ready-to-show', () => { if (saved && saved.maximized) win.maximize(); win.show(); });
+  win.once('ready-to-show', () => { if (saved && saved.maximized) win.maximize(); win.show(); hideSplash(); });
   let bt = null;
   const remember = () => { clearTimeout(bt); bt = setTimeout(saveBounds, 400); };
   win.on('resize', remember); win.on('move', remember); win.on('maximize', remember); win.on('unmaximize', remember);
