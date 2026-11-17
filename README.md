@@ -1,4 +1,3 @@
-<p align="center"><img src="app/logo.webp" width="150" alt="ST Card Creator logo"></p>
 <p align="center"><img src="app/wordmark.webp" width="260" alt="ST Card Creator"></p>
 
 <p align="center">Another <a href="https://docs.sillytavern.app">SillyTavern</a> cards Creator</p>
