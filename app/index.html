@@ -395,8 +395,12 @@
   /* Data / Cover: i due pulsanti principali, al centro tra i pulsanti di sinistra e le impostazioni */
   .navgrp .views { margin-inline: auto; border-radius: 12px; border-width: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35), 0 6px 18px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06); }
   .navgrp .views button { font: 700 21px/1 var(--font-title); letter-spacing: 0.06em; padding: 0 44px; min-height: 80px; min-width: 150px; border-left-width: 2px; }
+  .navgrp .views button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 0 26px 0 16px; min-width: 0; }
+  #hlogo { height: 112px; }
+  :root:not([data-theme="light"]) #hlogo { filter: drop-shadow(0 0 1px rgba(255, 236, 200, 0.55)) drop-shadow(0 0 6px rgba(255, 220, 170, 0.18)); }
+  .vico { width: 55px; height: 64px; flex: none; pointer-events: none; filter: drop-shadow(3px 4px 3px rgba(0,0,0,0.45)); }
   .navgrp .views button[aria-pressed="true"] { background: linear-gradient(180deg, #d9c18f, var(--accent) 55%, #9a7f4f); text-shadow: 0 1px 0 rgba(255,255,255,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
-  @media (max-width: 700px) { .navgrp .views { margin-inline: 0; flex: 1 1 100%; } .navgrp .views button { flex: 1 1 0; min-height: 60px; min-width: 0; padding: 0 16px; font-size: 19px; } }
+  @media (max-width: 700px) { .vico { width: 40px; height: 46px; } .navgrp .views { margin-inline: 0; flex: 1 1 100%; } .navgrp .views button { flex: 1 1 0; min-height: 60px; min-width: 0; padding: 0 16px; font-size: 19px; } }
   .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--gold); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .apibtn:hover { border-color: #d9c18f; }
   .apibtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
@@ -741,12 +745,12 @@
 <canvas id="magic" aria-hidden="true"></canvas>
 <main class="app">
   <header class="bar">
-    <h1 class="brand"><img class="logo" id="hlogo" width="145" height="124" alt="ST Card Creator"></h1>
+    <h1 class="brand"><img class="logo" id="hlogo" src="brand.webp" width="266" height="124" alt="ST Card Creator"></h1>
     <div class="navgrp">
       <div class="navcol"><button type="button" class="btn" id="dnew">Nuova carta</button><button type="button" class="apibtn" data-view="gen" aria-pressed="false">AI-assisted generation</button><button type="button" class="btn" id="dcards">Cards</button><button type="button" class="btn" id="dst">SillyTavern cards</button></div>
       <nav class="views" aria-label="Vista">
-        <button type="button" data-view="dati" aria-pressed="true">Dati</button>
-        <button type="button" data-view="cover" aria-pressed="false">Cover</button>
+        <button type="button" data-view="dati" aria-pressed="true"><img class="vico" src="icon-data.webp" width="55" height="64" alt="">Dati</button>
+        <button type="button" data-view="cover" aria-pressed="false"><img class="vico" src="icon-cover.webp" width="55" height="64" alt="">Cover</button>
       </nav>
     </div>
     <button type="button" class="apibtn" data-view="api" aria-pressed="false" title="API settings" aria-label="API settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:block"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
@@ -5382,7 +5386,7 @@
   const SDSTYLE = {
     nl: { neg: false, rules: 'This model understands plain natural language. Write as if briefing an art director: 2 to 4 flowing, complete sentences, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting, lighting and mood, camera framing, and the visual style or medium. Describe what should be present rather than what to avoid. No weights, no quality-tag spam, no negative prompt.' },
     flux: { neg: false, rules: 'This is a FLUX model (Black Forest Labs). Write descriptive phrases separated by commas, like the description of an illustrated poster: subject first, then appearance, clothing, pose, setting, lighting, colors, style and composition. Concrete visual language, 40 to 90 words, no prompt weights, no quality-tag spam like "masterpiece", and no negative prompt (FLUX ignores it).' },
-    fluxedit: { neg: false, rules: 'This is a FLUX editing model (Kontext / Edit) that works from reference images. For the character portrait, write a full natural-language text-to-image description (subject, appearance, clothing, pose, setting, lighting, style) so the first image can be created and then used as the reference. For the scene, write an instruction-style edit prompt applied to that reference image, such as "Keep the character\'s face, hair and outfit exactly the same, and place them in ...", then describe the setting, pose, lighting and mood. No weights, no negative prompt.' },
+    fluxedit: { neg: false, rules: 'This is a FLUX editing model (Kontext / Edit) that works from reference images. For the character image, write a full natural-language text-to-image description (subject, appearance, clothing, pose, lighting, style; full body, standing, on a plain black background) so the first image can be created and then used as the reference. For the scene, write an instruction-style edit prompt applied to that reference image, such as "Keep the character\'s face, hair and outfit exactly the same, and place them in ...", then describe the setting, pose, lighting and mood. No weights, no negative prompt.' },
     sdxl: { neg: true, rules: 'This is an SDXL-family model. Start with quality tags ("masterpiece, best quality, highly detailed"), then the subject, then comma-separated descriptive phrases ordered by importance: appearance, clothing, pose, expression, setting, lighting, style. Keyword order matters, so put the most important things first. Keep the positive prompt under about 75 tokens per chunk. Provide a negative prompt.' },
     sd3: { neg: true, rules: 'This is a Stable Diffusion 3 / 3.5 model. It reads short natural-language sentences well: write 2 to 3 clear sentences describing subject, appearance, clothing, pose, setting, lighting and style, optionally followed by a few quality tags. Provide a brief negative prompt (a short list of things to avoid).' },
     pony: { neg: true, rules: 'This is a Pony Diffusion XL derivative. The positive prompt must start with the score tags "score_9, score_8_up, score_7_up", then a source tag ("source_anime", "source_cartoon", "source_furry" or "source_pony" as fits; default source_anime for anime-style art), then a rating tag that matches the card content ("rating_safe" by default), then booru-style tags: subject count (1girl, 1boy...), hair, eyes, clothing, expression, pose, setting, lighting. Lowercase tags separated by commas. The negative prompt should start with "score_6, score_5, score_4".' },
@@ -5436,13 +5440,13 @@
     const m = sdInfo(), sty = SDSTYLE[m[2]], nm = K.name.trim() || 'the character';
     const fix = s => str(s).replace(/\{\{char\}\}/gi, nm).replace(/\{\{user\}\}/gi, 'the user').trim();
     const ctx = ['Name: ' + nm];
-    ['description', 'personality', 'scenario'].forEach(k => { if (K[k].trim()) ctx.push(WF[k][0] + ': ' + fix(K[k]).slice(0, 1800)); });
+    (kind === 'portrait' ? ['description', 'personality'] : ['description', 'personality', 'scenario']).forEach(k => { if (K[k].trim()) ctx.push(WF[k][0] + ': ' + fix(K[k]).slice(0, 1800)); });
     let rules = sty.rules.replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
     if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
     const LAST = 'Illustrate ONE precise moment: the LAST thing that happens in the message (its final lines). Read the message to the end; what comes earlier is only context. Put ' + nm + ' in the exact pose, action, gesture, expression and place of that final moment (for example sitting, lying, kneeling, leaning, walking away, reaching for something, seen from behind), with the framing and camera angle that show it best. Do NOT use a neutral standing or portrait pose, and do not repeat the pose of the character portrait, unless the final moment really is that. Then the setting, atmosphere and lighting of that moment.';
     const ends = t => { t = fix(t); return t.length <= 2200 ? t : t.slice(0, 600) + '\n[...]\n' + t.slice(-1600); };
     let task;
-    if (kind === 'portrait') task = 'Write a prompt for a vertical character portrait (waist-up or bust, 2:3) of ' + nm + ': a clear view of face, hair, outfit and signature details, with a pose, expression and simple background taken from the description and personality, no text.';
+    if (kind === 'portrait') task = 'Write a prompt for a vertical character image (2:3) of ' + nm + ': FULL BODY, head to feet all in frame, standing upright in a relaxed neutral idle pose, facing the viewer, on a plain solid BLACK background with nothing else in the image (no setting, no props, no other characters, no scenery). Describe only how ' + nm + ' looks: body, face, hair, eyes, skin, outfit, accessories and signature details, plus an expression that suits their personality. Ignore events, places and actions from the card; this is the idle reference image of the character. If the model has a negative prompt, include background scenery, cropped, close-up, partial body, sitting. No text.';
     else if (kind === 'alt') {
       ctx.push('Alternate first message: ' + ends(K.alt[altIdx]));
       task = 'Write a prompt for an illustration of this alternate first message, in a wide 3:2 composition. ' + LAST + ' Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
@@ -6391,7 +6395,6 @@
   render();
   DREADY = true;
   $('stVer').textContent = APP_VERSION === 'dev' ? 'dev build' : 'v' + APP_VERSION;
-  $('hlogo').src = document.querySelector('.stlogo').getAttribute('src');
   initStart();
   initShine();
   initGem();
