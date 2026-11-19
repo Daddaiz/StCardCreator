@@ -5881,8 +5881,8 @@
   /* Errore di download in parole semplici: EACCES, ECONNREFUSED… vogliono dire connessione bloccata sul PC */
   function qErr(key, e) {
     const what = key === 'sdcli' ? 'the engine' : qLabel(key);
-    const m = /^(E[A-Z]+)\s+(\S+)/.exec(String(e || ''));
-    if (m && /EACCES|EPERM|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/.test(m[1])) {
+    const m = /^((?:ERR_|E)[A-Z_]+)\s+(\S+)/.exec(String(e || ''));
+    if (m && /EACCES|EPERM|ECONN|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|ERR_(CONNECTION|NAME_NOT|INTERNET|NETWORK|PROXY|TIMED_OUT|BLOCKED|ADDRESS|TUNNEL|ACCESS_DENIED|SOCKET)/.test(m[1])) {
       return what + ': the connection to ' + m[2] + ' was blocked (' + m[1] + '). Usually it is the Windows firewall or an antivirus: allow ST Card Creator to use the internet, then press the button again.' + (key === 'sdcli' ? ' Or press "Use my sd-cli.exe…" if you already have stable-diffusion.cpp.' : '');
     }
     return what + ': ' + e;

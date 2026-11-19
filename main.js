@@ -1,5 +1,4 @@
-const { app, BrowserWindow, Menu, shell, screen, ipcMain, dialog } = require('electron');
-const https = require('https');
+const { app, BrowserWindow, Menu, shell, screen, ipcMain, dialog, net } = require('electron');
 const stClient = require('./st-client.js');
 const http = require('http');
 const fs = require('fs');
@@ -86,7 +85,7 @@ ipcMain.handle('pick-dir', async () => {
   const r = await dialog.showOpenDialog(win, { title: 'Folder for the checkpoint (models\\Stable-diffusion of your WebUI)', properties: ['openDirectory', 'createDirectory'] });
   return r.canceled || !r.filePaths.length ? null : r.filePaths[0];
 });
-ipcMain.handle('dl-cancel', (e, id) => { const d = DL[id]; if (d) { d.cancelled = true; if (d.req) d.req.destroy(); } return true; });
+ipcMain.handle('dl-cancel', (e, id) => { const d = DL[id]; if (d) { d.cancelled = true; try { if (d.req) d.req.abort(); } catch (err) { /* niente */ } } return true; });
 ipcMain.handle('dl-start', (e, o) => {
   const url = String(o && o.url || '');
   if (!/^https:\/\/huggingface\.co\//.test(url)) return false;
@@ -101,26 +100,32 @@ function dlRun(id, url, dir, file) {
   const st = DL[id] = { cancelled: false, req: null };
   let received = 0, total = 0, last = 0;
   const fail = msg => { try { fs.unlinkSync(part); } catch (err) { /* niente */ } delete DL[id]; send({ error: msg }); };
-  const get = (u, hops) => {
+  /* Rete di Chromium (net di Electron), come il browser: usa le impostazioni di rete di Windows (proxy, filtri
+     dell'antivirus). Il modulo https di Node apre connessioni dirette, che alcuni PC bloccano subito (EACCES). */
+  const get = u => {
     if (st.cancelled) return fail('cancelled');
-    st.req = https.get(u, { headers: { 'User-Agent': 'ST-Card-Creator' } }, res => {
-      if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && hops < 6) { res.resume(); return get(new URL(res.headers.location, u).toString(), hops + 1); }
-      if (res.statusCode !== 200) { res.resume(); return fail('HTTP ' + res.statusCode); }
-      total = +res.headers['content-length'] || 0;
+    const req = st.req = net.request({ url: u, redirect: 'follow' });
+    req.setHeader('User-Agent', 'ST-Card-Creator');
+    req.on('response', res => {
+      if (res.statusCode !== 200) { res.on('data', () => {}); return fail('HTTP ' + res.statusCode); }
+      const cl = res.headers['content-length']; total = +(Array.isArray(cl) ? cl[0] : cl) || 0;
       const out = fs.createWriteStream(part);
-      res.on('data', c => { received += c.length; const now = Date.now(); if (now - last > 400) { last = now; send({ received, total }); } });
-      res.on('error', err => fail(String(err && err.message || err)));
+      res.on('data', c => { received += c.length; if (!out.write(c)) { res.pause(); out.once('drain', () => res.resume()); } const now = Date.now(); if (now - last > 400) { last = now; send({ received, total }); } });
+      res.on('error', err => { out.destroy(); fail(String(err && err.message || err)); });
+      res.on('aborted', () => { out.destroy(); fail(st.cancelled ? 'cancelled' : 'connection interrupted'); });
+      res.on('end', () => out.end());
       out.on('error', err => fail(String(err && err.message || err)));
       out.on('finish', () => {
         if (st.cancelled) return fail('cancelled');
         try { fs.renameSync(part, dest); } catch (err) { return fail(String(err && err.message || err)); }
         delete DL[id]; send({ received, total, done: true });
       });
-      res.pipe(out);
     });
-    st.req.on('error', err => fail(st.cancelled ? 'cancelled' : (err && err.code ? err.code + ' ' + new URL(u).host + ' · ' : '') + String(err && err.message || err)));
+    req.on('abort', () => fail('cancelled'));
+    req.on('error', err => fail(st.cancelled ? 'cancelled' : netErr(err, u)));
+    req.end();
   };
-  get(url, 0);
+  get(url);
   return true;
 }
 
@@ -175,11 +180,21 @@ ipcMain.handle('qwen-dl', (e, o) => {
 // sd-cli: ultima release ufficiale di stable-diffusion.cpp, versione CUDA 12 (schede NVIDIA) con le sue librerie, altrimenti Vulkan
 function getJson(u) {
   return new Promise((res, rej) => {
-    https.get(u, { headers: { 'User-Agent': 'ST-Card-Creator', Accept: 'application/vnd.github+json' } }, r => {
-      let b = ''; r.setEncoding('utf8'); r.on('data', c => { b += c; });
+    const req = net.request({ url: u, redirect: 'follow' });
+    req.setHeader('User-Agent', 'ST-Card-Creator'); req.setHeader('Accept', 'application/vnd.github+json');
+    req.on('response', r => {
+      let b = ''; r.on('data', c => { b += c.toString('utf8'); });
       r.on('end', () => { if (r.statusCode !== 200) return rej(new Error('GitHub HTTP ' + r.statusCode)); try { res(JSON.parse(b)); } catch (err) { rej(err); } });
-    }).on('error', err => rej(new Error((err.code || 'ERR') + ' ' + new URL(u).host + ' · ' + (err.message || err))));
+    });
+    req.on('error', err => rej(new Error(netErr(err, u))));
+    req.end();
   });
+}
+/* Errore di rete leggibile, con il sito: "ERR_CONNECTION_REFUSED github.com · ..." */
+function netErr(err, u) {
+  const msg = String(err && err.message || err), m = /net::(ERR_[A-Z_]+)/.exec(msg);
+  let host = ''; try { host = new URL(u).host; } catch (e) { /* niente */ }
+  return (m ? m[1] : err && err.code ? err.code : 'ERR') + ' ' + host + ' · ' + msg;
 }
 const hasNvidia = () => new Promise(res => execFile('nvidia-smi', ['-L'], { windowsHide: true, timeout: 8000 }, (err, out) => res(!err && /GPU/i.test(String(out || '')))));
 function dlWait(id, url, dir, file) {
