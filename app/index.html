@@ -395,6 +395,19 @@
   dialog.cdlg.tdlg { width: min(460px, calc(100vw - 32px)); }
   .tdlg .minis { padding: 8px 4px 4px; justify-content: center; gap: 36px; }
   dialog.kdlg { width: min(460px, calc(100vw - 32px)); }
+  /* Novità: logo, riassunto conciso; un click ovunque la chiude */
+  dialog.ndlg { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); padding: 0; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); color: var(--fg); cursor: pointer; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+  dialog.ndlg::backdrop { background: rgba(0,0,0,0.6); }
+  dialog.ndlg.all { width: min(680px, calc(100vw - 32px)); }
+  .nin { display: flex; flex-direction: column; align-items: center; padding: 22px 28px 16px; max-height: calc(100vh - 50px); box-sizing: border-box; }
+  .nlogo { height: 96px; width: auto; flex: none; }
+  .nbody { width: 100%; overflow-y: auto; margin-top: 10px; }
+  .nbody h3 { font: 700 20px/1.2 var(--font-title); color: var(--gold); margin: 14px 0 6px; text-align: center; }
+  dialog.ndlg.all .nbody h3 { text-align: left; font-size: 17px; }
+  .nbody h3 small { font: 400 12px var(--font-mono); color: var(--muted); margin-left: 8px; }
+  .nbody ul { margin: 0 0 4px; padding-left: 20px; } .nbody li { margin: 4px 0; line-height: 1.45; }
+  .nhint { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+  :root:not([data-theme="light"]) .nlogo { filter: drop-shadow(0 0 1px rgba(255, 236, 200, 0.55)) drop-shadow(0 0 6px rgba(255, 220, 170, 0.18)); }
   .kbody { display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
   .kbody p { margin: 0; }
   .krow { display: flex; justify-content: flex-end; gap: 8px; }
@@ -1082,6 +1095,10 @@
       <h2 class="atitle">Graphic Enhancements</h2>
       <label class="chk"><input type="checkbox" id="gfxOn" checked> Graphic Enhancements</label>
     </section>
+    <section class="apibox">
+      <h2 class="atitle">What's new</h2>
+      <div class="ctl"><button type="button" class="btn" id="newsAll">See the changes in each version</button></div>
+    </section>
   </div>
   <div id="view-gen" class="apiview" hidden>
     <section class="apibox">
@@ -1200,6 +1217,7 @@
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
+  <dialog class="ndlg" id="ndlg" aria-label="What's new"><div class="nin"><img class="nlogo" src="brand.webp" alt="ST Card Creator" width="266" height="124"><div class="nbody" id="nbody"></div><p class="nhint">Click anywhere to close</p></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn" id="kalt" hidden></button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="fdlg" aria-label="Edit field"><div class="xin fin"><div class="df"><span class="dfh"><b id="ftitle"></b><span class="tk" id="ftk"></span></span><textarea id="fta" spellcheck="false"></textarea></div><div class="frow"><span class="sm">Click outside the box to go back without changes.</span><button type="button" class="btn primary" id="fok">OK</button></div></div></dialog>
@@ -6605,6 +6623,44 @@
   }
 
   /* Avviso nuova versione: solo un messaggio con link alla pagina della release, non scarica né sostituisce nulla */
+
+  /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
+  const NEWS = [
+    ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
+    ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
+    ["1.0.39", ["Character image: full body, standing, idle, on a black background.", "New logo and icons on the Data and Cover buttons; chat language from a list of flags."]],
+    ["1.0.37 \u2013 1.0.38", ["The first message image shows the last moment of the message; prompts follow the tone of the card.", "Info strip with name, completion and tokens; bigger Data and Cover buttons; cover presets.", "Card Generated window with one field open at a time."]],
+    ["1.0.34 \u2013 1.0.36", ["Saved cards split into 'Cards still in progress' and 'From SillyTavern', with a 'Needs updating' check.", "More reliable SillyTavern connection and login; offer to remove the local copy after sending a card.", "Lorebook entries bring only new information; animations pause in the background."]],
+    ["1.0.31 \u2013 1.0.33", ["New Test chat: talk to the card before exporting it.", "Cleaner lorebook, cover reset on new cards, image prompts for alternate messages."]],
+    ["1.0.25 \u2013 1.0.30", ["Consistency check with letter grades, explanations, Ignore and quick editing.", "Image style menu; SillyTavern updates also the linked lorebook, with a backup of the original card."]],
+    ["1.0.24", ["New image generation: OpenAI, OpenRouter, Nano-GPT, Stable Diffusion WebUI/Forge or custom.", "Export as V3/V2/V1/CHARX, your own PNG frames, color palettes from the image."]],
+    ["1.0.18 \u2013 1.0.23", ["New look: card fountain on the start screen, page transitions, footer, Graphic Enhancements switch.", "Card Generated window, font categories, color presets, thumbnails."]],
+    ["1.0.14 \u2013 1.0.17", ["SillyTavern connection (exe): browse, add and update cards, with login.", "Card back with a completeness checklist, gold theme, previous ideas list."]],
+    ["1.0.9 \u2013 1.0.13", ["Cards gallery for saved cards, tab bars in Data and Cover, new logo, single instance of the exe."]],
+    ["1.0.3 \u2013 1.0.8", ["Images saved with drafts, full-screen text editor, better lorebook and keywords in your chat languages.", "AI answers checked and retried; prompts following card-writing best practices."]],
+    ["1.0.0 \u2013 1.0.2", ["First version: SillyTavern character cards as PNG with a cover and the data inside."]]
+  ];
+  const NEWSKEY = 'st-card-creator-news-seen';
+  function newsShow(all) {
+    const d = $('ndlg'), body = $('nbody');
+    body.textContent = '';
+    (all ? NEWS : NEWS.slice(0, 1)).forEach(([v, items]) => {
+      const h = document.createElement('h3'); h.textContent = all ? 'v' + v : 'What\'s new in v' + v; body.appendChild(h);
+      const ul = document.createElement('ul'); items.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); body.appendChild(ul);
+    });
+    d.classList.toggle('all', !!all);
+    if (!d.open) d.showModal();
+    body.scrollTop = 0;
+  }
+  $('ndlg').addEventListener('click', () => $('ndlg').close());
+  $('newsAll').addEventListener('click', () => newsShow(true));
+  /* Al primo avvio di una versione nuova, una volta sola */
+  try {
+    if (localStorage.getItem(NEWSKEY) !== NEWS[0][0]) {
+      localStorage.setItem(NEWSKEY, NEWS[0][0]);
+      setTimeout(() => newsShow(false), 900);
+    }
+  } catch (e) { /* senza memoria locale non si mostra */ }
   const APP_VERSION = 'dev';
   async function checkUpdate() {
     if (APP_VERSION === 'dev') return;
