@@ -421,6 +421,8 @@
   :root:not([data-theme="light"]) #hlogo { filter: drop-shadow(0 0 1px rgba(255, 236, 200, 0.55)) drop-shadow(0 0 6px rgba(255, 220, 170, 0.18)); }
   .vico { width: 55px; height: 64px; flex: none; pointer-events: none; filter: drop-shadow(3px 4px 3px rgba(0,0,0,0.45)); }
   .navgrp .views button[aria-pressed="true"] { background: linear-gradient(180deg, #d9c18f, var(--accent) 55%, #9a7f4f); text-shadow: 0 1px 0 rgba(255,255,255,0.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18); }
+  /* Finestre medie: intestazione più compatta, così tutto resta su una riga */
+  @media (max-width: 1120px) and (min-width: 701px) { #hlogo { height: 84px; } .bar { gap: 10px 14px; } .navgrp .views button { font-size: 18px; min-height: 66px; padding: 0 16px 0 10px; gap: 8px; } .vico { width: 42px; height: 49px; } .navcol .btn, .navcol .apibtn { padding-inline: 10px; } }
   @media (max-width: 700px) { .vico { width: 40px; height: 46px; } .navgrp .views { margin-inline: 0; flex: 1 1 100%; } .navgrp .views button { flex: 1 1 0; min-height: 60px; min-width: 0; padding: 0 16px; font-size: 19px; } }
   .apibtn { font: 500 14px var(--font-ui); padding: 8px 20px; border: 1px solid var(--gold); border-radius: 8px; background: var(--raised); color: var(--fg); cursor: pointer; }
   .apibtn:hover { border-color: #d9c18f; }
@@ -506,6 +508,8 @@
     .dside canvas { height: 170px; }
   }
   @media (prefers-reduced-motion: reduce) { .drawer > summary::after { transition: none; } }
+  /* Ingranaggio e tema chiaro/scuro restano sempre insieme */
+  .hright { display: flex; align-items: center; gap: 10px; flex: none; }
   .themes { display: flex; border: 1px solid var(--gold); border-radius: 8px; overflow: hidden; background: var(--raised); }
   .themes button { border: 0; border-left: 1px solid var(--gold); background: none; color: var(--muted); width: 38px; height: 30px; display: grid; place-items: center; cursor: pointer; padding: 0; }
   .themes button:first-child { border-left: 0; }
@@ -789,6 +793,7 @@
         <button type="button" data-view="cover" aria-pressed="false"><img class="vico" src="icon-cover.webp" width="55" height="64" alt="">Cover</button>
       </nav>
     </div>
+    <div class="hright">
     <button type="button" class="apibtn" data-view="api" aria-pressed="false" title="API settings" aria-label="API settings"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="display:block"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
     <div class="themes" role="group" aria-label="Aspetto">
       <button type="button" data-theme-set="light" aria-pressed="false" title="Modalità normale" aria-label="Modalità normale">
@@ -797,6 +802,7 @@
       <button type="button" data-theme-set="dark" aria-pressed="true" title="Modalità scura" aria-label="Modalità scura">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
+    </div>
     </div>
     <div class="cinfo" id="cinfo" aria-live="polite">
       <span class="dsv" id="dsv"></span>
@@ -3240,7 +3246,8 @@
       selectTab(g, panelsOf(g)[0] && panelId(panelsOf(g)[0]));
     });
     const bar = document.querySelector('.bar');
-    const setH = () => document.documentElement.style.setProperty('--barh', Math.round(bar.getBoundingClientRect().height) + 'px');
+    /* offsetHeight ignora le animazioni (transform): misurata durante una transizione, l'altezza resterebbe sbagliata */
+    const setH = () => { if (bar.offsetHeight) document.documentElement.style.setProperty('--barh', bar.offsetHeight + 'px'); };
     setH(); window.addEventListener('resize', setH);
     if (window.ResizeObserver) new ResizeObserver(setH).observe(bar);
   }
@@ -6113,6 +6120,12 @@
     on('iclose', 'click', () => { if (IACTL) IACTL.abort(); $('idlg').close(); });
     on('iaPick', 'click', () => iaRun());
     iaRender(); if (QB()) qRefresh();
+    /* Quando la finestra torna in primo piano o la rete ritorna, lo stato dei pulsanti si ricontrolla da solo
+       (per esempio dopo aver sbloccato l'app nel firewall o copiato a mano dei file nella cartella qwen-image) */
+    let rcT = 0;
+    const recheck = () => { clearTimeout(rcT); rcT = setTimeout(() => { try { readyDot(); refreshWands(); syncIaBtns(); if (QB() && !QDL) qRefresh(); } catch (e) { /* ignora */ } }, 300); };
+    window.addEventListener('focus', recheck); window.addEventListener('online', recheck);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
   }
   const qProgText = d => d.total ? 'Drawing… step ' + d.step + ' of ' + d.total : d.phase ? 'Preparing: ' + d.phase.replace(/^\[[A-Z]+\]\s*/, '').slice(0, 90) : 'Drawing…';
   /* Finestra del risultato */
@@ -6657,6 +6670,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
+    ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns."]],
     ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
     ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
     ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
