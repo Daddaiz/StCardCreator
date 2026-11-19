@@ -381,6 +381,7 @@
   #qFiles { margin: 6px 0 12px; }
   .scrow { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
   .scrow .ctl { margin: 0; } .scrow .sm { margin: 0; }
+  .scimg.cvimg { max-width: 300px; }
   .scimg { width: 100%; max-width: 560px; border-radius: 8px; border: 1px solid var(--line); display: block; }
   .dlrow .sm { margin: 0; }
   .dlrow progress { grid-column: 1 / -1; width: 100%; height: 6px; accent-color: var(--accent); }
@@ -5620,6 +5621,43 @@
     if (st.err) msg.classList.add('warn');
     row.append(ctl, msg); w.appendChild(row);
   }
+  /* Riga sotto il prompt del Character image: crea l'immagine e la mette subito come copertina */
+  const openImgSettings = () => { showView('api'); const a = $('acc3'); if (a) { a.open = true; a.scrollIntoView({ block: 'start', behavior: 'smooth' }); } };
+  function coverRow(w) {
+    const st = SCENE.cover || {}, row = mk('div', 'scrow'), ctl = mk('div', 'ctl'), msg = mk('p', 'sm');
+    if (st.busy) {
+      const q = mk('div', 'qwait'); q.append(mk('i'), document.createTextNode(st.prog || 'Drawing…')); st.el = q; row.appendChild(q);
+      const x = mk('button', 'btn'); x.type = 'button'; x.textContent = 'Stop'; x.addEventListener('click', () => { if (st.ctl) st.ctl.abort(); }); ctl.appendChild(x);
+    } else {
+      const g = mk('button', 'btn primary'); g.type = 'button'; g.id = 'iaGo'; g.textContent = st.url ? 'Create it again' : 'Create the cover';
+      g.addEventListener('click', () => coverRun());
+      ctl.appendChild(g);
+      if (st.url) {
+        const im = mk('img', 'scimg cvimg'); im.src = st.url; im.alt = 'Character image'; row.appendChild(im);
+        const d = mk('button', 'btn'); d.type = 'button'; d.textContent = 'Save PNG'; d.addEventListener('click', () => saveBlob(st.file, slug(K.name || 'character') + '-ai.png').catch(() => { /* annullato */ })); ctl.appendChild(d);
+      }
+    }
+    const o = mk('button', 'btn quiet'); o.type = 'button'; o.textContent = 'Image settings'; o.addEventListener('click', openImgSettings); ctl.appendChild(o);
+    msg.textContent = st.err ? st.err : st.url ? 'This image is now the cover. Adjust zoom, text and frame in Cover.' : iaReady() ? '' : 'Choose an image service in Image settings to draw the cover here.';
+    if (st.err) msg.classList.add('warn');
+    row.append(ctl); if (msg.textContent) row.appendChild(msg);
+    w.appendChild(row);
+  }
+  async function coverRun() {
+    if (IACTL) return;
+    const st = SCENE.cover = { busy: true, ctl: new AbortController(), prog: 'Drawing with ' + IPROVS[IA.prov].name + '…' };
+    IACTL = st.ctl; drawImg(); syncIaBtns();
+    QPROG = d => { st.prog = qProgText(d); if (st.el && st.el.lastChild) st.el.lastChild.nodeValue = st.prog; };
+    try {
+      const file = await iaGenerate(IMGP.portrait.pos, IMGP.portrait.neg || '', st.ctl.signal);
+      if (IAURL) URL.revokeObjectURL(IAURL);
+      IAFILE = file; IAURL = URL.createObjectURL(file);
+      st.file = file; st.url = IAURL;
+      setImage(file);
+    } catch (e) {
+      if (!(e && (e.code === 'abort' || e.name === 'AbortError'))) { const k = errKey(e); st.err = tr(k[0], k[1] || null); }
+    } finally { QPROG = null; st.busy = false; st.ctl = null; IACTL = null; drawImg(); syncIaBtns(); }
+  }
   const sceneName = key => slug(K.name || 'character') + '-' + (key === 'scene' ? 'first-message' : 'alternate-' + (+key.slice(3) + 1));
   async function sceneRun(key, o, title) {
     const st = SCENE[key] = { busy: true, ctl: new AbortController(), prog: 'Drawing with ' + IPROVS[IA.prov].name + '…' };
@@ -5673,12 +5711,12 @@
       field('Prompt', 'pos');
       if (sty.neg) field('Negative prompt', 'neg');
       else { const n = mk('p', 'sm'); n.textContent = 'This model has no negative prompt.'; w.appendChild(n); }
-      if (sceneKey) sceneRow(w, sceneKey, o, title);
+      if (sceneKey === 'cover') coverRow(w); else if (sceneKey) sceneRow(w, sceneKey, o, title);
       box.appendChild(w);
     };
     if (IMGP && IMGP.portrait) {
       if (IMGP.model !== m[0]) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for another model. Press the button below to write them again for ' + m[1] + '.'; box.appendChild(n); }
-      block('Character image', IMGP.portrait, 'portrait 2:3');
+      block('Character image', IMGP.portrait, 'portrait 2:3', 'cover');
       if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2', 'scene');
       K.alt.forEach((t, i) => {
         if (!str(t).trim()) return;
@@ -5711,14 +5749,7 @@
       ctl.appendChild(go);
     }
     ctl.appendChild(stat); box.appendChild(ctl);
-    {
-      const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b'); b.textContent = 'Create the image'; h.appendChild(b); w.appendChild(h);
-      const p = mk('p', 'sm'); p.textContent = iaReady() ? 'Draws the character image from the prompt above with ' + IPROVS[IA.prov].name + ', then you can use it as the cover.' : 'Choose an image service in the API page (OpenAI, OpenRouter, Nano-GPT, a local Stable Diffusion WebUI, or a custom server) to draw the character here.'; w.appendChild(p);
-      const r = mk('div', 'ctl'), g = mk('button', 'btn primary iabtn'); g.type = 'button'; g.id = 'iaGo'; g.innerHTML = '<span aria-hidden="true">🪄</span> Create the image'; g.addEventListener('click', () => iaRun());
-      const o = mk('button', 'btn quiet'); o.type = 'button'; o.textContent = 'Image settings'; o.addEventListener('click', () => { showView('api'); const a = $('acc3'); if (a) { a.open = true; a.scrollIntoView({ block: 'start', behavior: 'smooth' }); } });
-      r.append(g, o); w.appendChild(r); box.appendChild(w);
-      syncIaBtns();
-    }
+    syncIaBtns();
     const u = mk('div', 'item imgp'), uh = mk('div', 'dfh'), ub = mk('b');
     ub.textContent = 'Put the finished image in the first message'; uh.appendChild(ub); u.appendChild(uh);
     const ur = mk('div', 'mrow'), ui = mk('input'), ua = mk('button', 'btn');
@@ -6626,6 +6657,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
+    ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt and puts the result straight on the cover.", "The old \"Create the image\" box is gone."]],
     ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
     ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
     ["1.0.39", ["Character image: full body, standing, idle, on a black background.", "New logo and icons on the Data and Cover buttons; chat language from a list of flags."]],
