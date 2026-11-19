@@ -474,6 +474,8 @@
   .dview { max-width: 1080px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; align-items: start; }
   .dmain { min-width: 0; }
   .dview > .stage { position: sticky; top: calc(var(--barh, 110px) + 72px); max-height: calc(100vh - var(--barh, 110px) - 90px); }
+  /* La carta si rimpicciolisce quanto serve per stare nella colonna, invece di farla scorrere */
+  .dview > .stage .flip { width: min(100%, 340px, max(220px, calc((100vh - var(--barh, 110px) - 352px) * 0.6667))); }
   .dside { position: sticky; top: calc(var(--barh, 110px) + 72px); display: grid; gap: 12px; justify-items: center; }
   .dside canvas { display: block; height: min(420px, calc(100vh - 260px)); min-height: 160px; border-radius: 8px; width: auto; max-width: 100%; box-shadow: 0 1px 2px rgba(0,0,0,0.25), 0 14px 34px rgba(0,0,0,0.32); }
   @media (max-width: 899px) {
@@ -3777,6 +3779,7 @@
   }
   function showView(v) {
     if (!VIEWS[v]) v = 'dati';
+    const ed0 = !VIEWS.dati.hidden || !VIEWS.cover.hidden, y0 = window.scrollY;
     if (v === 'dati' || v === 'cover') placeStage(v);
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
@@ -3790,6 +3793,12 @@
       try { history.replaceState(null, '', '#' + v); } catch (e) { try { location.hash = v; } catch (e2) { /* ignora */ } }
     }
     window.scrollTo(0, 0);
+    /* Tra Data e Cover il menu delle sezioni resta dove era: se era agganciato sotto l'intestazione non deve scendere */
+    if (ed0 && y0 > 0 && (v === 'dati' || v === 'cover')) {
+      const tb = $(v === 'dati' ? 'tabs-data' : 'tabs-cover'), bh = document.querySelector('header.bar').getBoundingClientRect().height;
+      const stick = Math.max(0, Math.round(tb.getBoundingClientRect().top - bh));
+      window.scrollTo(0, Math.min(y0, stick));
+    }
   }
   document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
   window.addEventListener('hashchange', () => { const v = location.hash.slice(1); if (VIEWS[v]) showView(v); });
