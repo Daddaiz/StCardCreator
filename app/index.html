@@ -376,7 +376,7 @@
   .dlrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
   .dlrow b { font-weight: 600; }
   .dlrow .qst { white-space: nowrap; font-weight: 600; } .dlrow .qst.ok { color: var(--ok, #6fbf73); }
-  .dlrow progress, .dlrow .dlst { grid-column: 1 / -1; }
+  .dlrow progress, .dlrow .dlst, .dlrow .qown { grid-column: 1 / -1; } .dlrow .qown { margin: 0; }
   .qgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; } @media (max-width: 640px) { .qgrid { grid-template-columns: 1fr; } }
   #qFiles { margin: 6px 0 12px; }
   .scrow { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
@@ -5805,7 +5805,7 @@
   const QMODELS = [['qwen-image-2.1-step90000-Q6_K.gguf', 'Q6_K · best quality', 6.0, 10], ['qwen-image-2.1-step90000-Q5_K_M.gguf', 'Q5_K_M · balanced', 5.2, 8], ['qwen-image-2.1-step90000-Q4_K_M.gguf', 'Q4_K_M · lightest', 4.5, 8]];
   const QLLMS = [['Qwen3-VL-8B-Instruct-IQ4_XS.gguf', 'IQ4_XS · lighter', 4.6, 6], ['Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf', 'UD-Q4_K_XL · a bit more accurate', 5.1, 7]];
   const QVAE = 'qwen_image_2.1_vae_bf16.safetensors', QVIS = 'mmproj-F16.gguf';
-  let QI = null, QDL = null;   /* QI: stato della cartella; QDL: download in corso */
+  let QI = null, QDL = null, QERR = '';   /* QI: stato della cartella; QDL: download in corso */
   const qHave = f => !!(QI && QI.files && QI.files[f] > 0);
   /* Cosa manca per generare: motore, modello, encoder, VAE e (per i riferimenti) la parte "vision" */
   function qMissing() {
@@ -5836,7 +5836,7 @@
     if (!QB()) { $('qNote').textContent = 'Qwen Image 2.1 runs on your PC, so it works only in the ST Card Creator exe, not in the browser version.'; $('qGet').hidden = $('qDir').hidden = true; return; }
     $('qGet').hidden = $('qDir').hidden = false;
     const rows = [
-      ['sdcli', 'Engine · stable-diffusion.cpp', 'sd-cli, latest official release (CUDA 12 for NVIDIA cards, otherwise Vulkan) · a few hundred MB', !!(QI && QI.sdcli)],
+      ['sdcli', 'Engine · stable-diffusion.cpp', QI && QI.sdcliPath ? 'Your sd-cli: ' + QI.sdcliPath : 'sd-cli, latest official release (CUDA 12 for NVIDIA cards, otherwise Vulkan) · a few hundred MB', !!(QI && QI.sdcli)],
       [IA.q.model, 'Model · ' + qLabel(IA.q.model), 'Draws the image · ' + qReq(QMODELS, IA.q.model), qHave(IA.q.model)],
       [IA.q.llm, 'Text encoder · ' + qLabel(IA.q.llm), 'Reads the prompt (Qwen3-VL 8B) · ' + qReq(QLLMS, IA.q.llm), qHave(IA.q.llm)],
       [QVAE, 'VAE', 'Turns the result into pixels · 0.7 GB', qHave(QVAE)],
@@ -5848,6 +5848,14 @@
       const cur = QDL && QDL.key === key;
       st.textContent = ok ? '✓ Ready' : cur ? '' : 'Missing'; st.classList.toggle('ok', ok); st.classList.toggle('warn', !ok && !cur);
       row.append(left, st);
+      if (key === 'sdcli' && !cur) {
+        const own = mk('div', 'ctl qown'), b1 = mk('button', 'btn quiet');
+        b1.type = 'button'; b1.textContent = 'Use my sd-cli.exe…'; b1.title = 'If you already have stable-diffusion.cpp, pick its sd-cli.exe instead of downloading it';
+        b1.addEventListener('click', async () => { const r = await QB().qwenPickSdCli(); if (r && r.error) say('istatus', r.error, null, true); await qRefresh(); });
+        own.appendChild(b1);
+        if (QI && QI.sdcliPath) { const b2 = mk('button', 'btn quiet'); b2.type = 'button'; b2.textContent = 'Use the downloaded one'; b2.addEventListener('click', async () => { await QB().qwenForgetSdCli(); await qRefresh(); }); own.appendChild(b2); }
+        row.appendChild(own);
+      }
       if (cur) {
         const pr = mk('progress'); pr.max = 1000; if (QDL.total) pr.value = Math.round(QDL.received / QDL.total * 1000);
         const tx = mk('p', 'sm dlst'); tx.textContent = QDL.phase || (fmtGB(QDL.received || 0) + (QDL.total ? ' of ' + fmtGB(QDL.total) : '') + (QDL.speed ? ' · ' + (QDL.speed / 1048576).toFixed(1) + ' MB/s' : ''));
@@ -5858,7 +5866,8 @@
     const miss = qMissing();
     $('qGet').textContent = QDL ? 'Stop the download' : 'Download what is missing';
     $('qGet').disabled = !QDL && !miss.length;
-    $('qNote').textContent = (QDL && QDL.error ? 'Download failed: ' + QDL.error + '. ' : '') + (miss.length ? 'Files go into the folder "qwen-image" next to ST Card Creator' + (QI ? ' (' + QI.dir + ')' : '') + '. A download can be stopped and started again later.' : 'Everything is ready. Each image starts the engine again, so the first seconds are spent loading the model.');
+    $('qNote').classList.toggle('warn', !!QERR && !QDL);
+    $('qNote').textContent = (QERR && !QDL ? QERR + ' ' : '') + (miss.length ? 'Files go into the folder "qwen-image" next to ST Card Creator' + (QI ? ' (' + QI.dir + ')' : '') + '. A download can be stopped and started again later.' : 'Everything is ready. Each image starts the engine again, so the first seconds are spent loading the model.');
   }
   const QWAIT = {};
   if (QB() && window.stBridge.onDownload) window.stBridge.onDownload(d => {
@@ -5869,18 +5878,31 @@
     qRender();
   });
   const qStep = (key, start) => new Promise(res => { const id = 'q' + Date.now().toString(36); QDL = { id, key, received: 0, total: 0, t0: Date.now(), phase: '' }; QWAIT[id] = d => { delete QWAIT[id]; res(d); }; qRender(); start(id); });
+  /* Errore di download in parole semplici: EACCES, ECONNREFUSED… vogliono dire connessione bloccata sul PC */
+  function qErr(key, e) {
+    const what = key === 'sdcli' ? 'the engine' : qLabel(key);
+    const m = /^(E[A-Z]+)\s+(\S+)/.exec(String(e || ''));
+    if (m && /EACCES|EPERM|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN/.test(m[1])) {
+      return what + ': the connection to ' + m[2] + ' was blocked (' + m[1] + '). Usually it is the Windows firewall or an antivirus: allow ST Card Creator to use the internet, then press the button again.' + (key === 'sdcli' ? ' Or press "Use my sd-cli.exe…" if you already have stable-diffusion.cpp.' : '');
+    }
+    return what + ': ' + e;
+  }
   async function qGetMissing() {
     if (QDL) { QDL.stop = true; try { window.stBridge.cancelDownload(QDL.id); } catch (e) { /* ignora */ } return; }
     await qRefresh();
+    const errs = [];
     for (const key of qMissing()) {
       if (key === '?') break;
       const d = await qStep(key, id => key === 'sdcli' ? QB().qwenInstall({ id }) : QB().qwenDownload({ id, file: key }));
-      const stop = QDL && QDL.stop;
-      if (d.error || stop) { QDL = { error: stop ? 'stopped' : d.error }; await qRefresh(); QDL.error && say('istatus', 'Download failed: {m}', { m: QDL.error }, true); QDL = null; qRender(); return; }
+      if (QDL && QDL.stop) { errs.length = 0; errs.push('Download stopped.'); break; }
+      if (d.error) errs.push(qErr(key, d.error));   /* gli altri file si scaricano lo stesso */
       await qRefresh();
     }
     QDL = null; await qRefresh();
-    say('istatus', qMissing().length ? 'Some files are still missing.' : 'Qwen Image 2.1 is ready.', null, !!qMissing().length);
+    QERR = errs.join(' ');
+    qRender();
+    if (errs.length) say('istatus', 'Some files could not be downloaded: see the note under the list.', null, true);
+    else say('istatus', qMissing().length ? 'Some files are still missing.' : 'Qwen Image 2.1 is ready.', null, !!qMissing().length);
   }
   /* Immagine in PNG come data URL (per il riferimento) */
   const toPngData = blob => new Promise((res, rej) => {

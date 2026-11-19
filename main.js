@@ -118,7 +118,7 @@ function dlRun(id, url, dir, file) {
       });
       res.pipe(out);
     });
-    st.req.on('error', err => fail(st.cancelled ? 'cancelled' : String(err && err.message || err)));
+    st.req.on('error', err => fail(st.cancelled ? 'cancelled' : (err && err.code ? err.code + ' ' + new URL(u).host + ' · ' : '') + String(err && err.message || err)));
   };
   get(url, 0);
   return true;
@@ -147,11 +147,23 @@ function findSdCli(dir, depth) {
   if (depth > 0) for (const d of list) if (d.isDirectory()) { const f = findSdCli(path.join(dir, d.name), depth - 1); if (f) return f; }
   return null;
 }
-const sdCli = () => findSdCli(path.join(QDIR(), 'sdcpp'), 3);
+// sd-cli scelto dall'utente (per esempio una copia che ha già): il percorso resta in qwen-image\sdcli-path.txt
+const SDPATH = () => path.join(QDIR(), 'sdcli-path.txt');
+const mySdCli = () => { try { const f = fs.readFileSync(SDPATH(), 'utf8').trim(); return f && fs.existsSync(f) ? f : null; } catch (e) { return null; } };
+const sdCli = () => mySdCli() || findSdCli(path.join(QDIR(), 'sdcpp'), 3);
+ipcMain.handle('qwen-pick-sdcli', async () => {
+  const r = await dialog.showOpenDialog(win, { title: 'Choose sd-cli.exe (stable-diffusion.cpp)', properties: ['openFile'], filters: [{ name: 'sd-cli', extensions: ['exe'] }] });
+  if (r.canceled || !r.filePaths.length) return null;
+  const f = r.filePaths[0];
+  if (!/^sd(-cli)?\.exe$/i.test(path.basename(f))) return { error: 'This is not sd-cli.exe' };
+  try { fs.mkdirSync(QDIR(), { recursive: true }); fs.writeFileSync(SDPATH(), f, 'utf8'); } catch (e) { return { error: String(e.message || e) }; }
+  return { path: f };
+});
+ipcMain.handle('qwen-forget-sdcli', () => { try { fs.unlinkSync(SDPATH()); } catch (e) { /* niente */ } return true; });
 ipcMain.handle('qwen-info', () => {
   const dir = QDIR(), files = {};
   Object.keys(QFILES).forEach(n => { try { files[n] = fs.statSync(path.join(dir, n)).size; } catch (e) { files[n] = 0; } });
-  return { dir, sdcli: !!sdCli(), files, win: process.platform === 'win32' };
+  return { dir, sdcli: !!sdCli(), sdcliPath: mySdCli() || '', files, win: process.platform === 'win32' };
 });
 ipcMain.handle('qwen-open-dir', () => { try { fs.mkdirSync(QDIR(), { recursive: true }); } catch (e) { /* niente */ } shell.openPath(QDIR()); return true; });
 ipcMain.handle('qwen-dl', (e, o) => {
@@ -166,7 +178,7 @@ function getJson(u) {
     https.get(u, { headers: { 'User-Agent': 'ST-Card-Creator', Accept: 'application/vnd.github+json' } }, r => {
       let b = ''; r.setEncoding('utf8'); r.on('data', c => { b += c; });
       r.on('end', () => { if (r.statusCode !== 200) return rej(new Error('GitHub HTTP ' + r.statusCode)); try { res(JSON.parse(b)); } catch (err) { rej(err); } });
-    }).on('error', rej);
+    }).on('error', err => rej(new Error((err.code || 'ERR') + ' ' + new URL(u).host + ' · ' + (err.message || err))));
   });
 }
 const hasNvidia = () => new Promise(res => execFile('nvidia-smi', ['-L'], { windowsHide: true, timeout: 8000 }, (err, out) => res(!err && /GPU/i.test(String(out || '')))));

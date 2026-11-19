@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('stBridge', {
   qwenOpenDir: () => ipcRenderer.invoke('qwen-open-dir'),
   qwenDownload: o => ipcRenderer.invoke('qwen-dl', o),
   qwenInstall: o => ipcRenderer.invoke('qwen-sdcli', o),
+  qwenPickSdCli: () => ipcRenderer.invoke('qwen-pick-sdcli'),
+  qwenForgetSdCli: () => ipcRenderer.invoke('qwen-forget-sdcli'),
   qwenGenerate: o => ipcRenderer.invoke('qwen-gen', o),
   qwenCancel: id => ipcRenderer.invoke('qwen-cancel', id),
   saveImage: o => ipcRenderer.invoke('save-image', o),
