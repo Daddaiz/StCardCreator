@@ -752,7 +752,8 @@
   .sdrow label.sty span, .imgst label.sty span { white-space: nowrap; }
   .imgst label.sty { display: flex; align-items: center; gap: 14px; }
   .imgst { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-  .imgst select { width: auto; flex: 0 1 260px; min-width: 180px; }
+  .imgst select { width: auto; flex: 0 1 220px; min-width: 160px; }
+  .ctl.imgst { flex-direction: row; } .imgst label.sty { flex: 0 1 auto; margin: 0; width: auto; }
   .imgh .imgx { display: flex; align-items: center; gap: 6px; }
   .imgbody { display: grid; gap: 14px; }
   .imgp { display: grid; gap: 10px; }
@@ -5474,6 +5475,7 @@
   const SDSAVE = () => { try { localStorage.setItem(SDKEY, JSON.stringify(SD)); } catch (e) { /* ignora */ } };
   const NEG_BASE = 'lowres, worst quality, low quality, bad anatomy, bad hands, extra fingers, missing fingers, cropped, text, watermark, signature, username, blurry, jpeg artifacts';
   const SDSTYLE = {
+    qwen: { neg: true, rules: 'This is Qwen Image 2.1, run locally. It understands long, plain natural language very well: write 3 to 5 flowing, complete sentences in English, like a detailed brief to an illustrator, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting or background, lighting, colors, style and framing. Be specific and literal; avoid quality tags and weights. Provide a short negative prompt of things to avoid (for example: blurry, extra fingers, deformed hands, text, watermark, cropped).' },
     nl: { neg: false, rules: 'This model understands plain natural language. Write as if briefing an art director: 2 to 4 flowing, complete sentences, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting, lighting and mood, camera framing, and the visual style or medium. Describe what should be present rather than what to avoid. No weights, no quality-tag spam, no negative prompt.' },
     flux: { neg: false, rules: 'This is a FLUX model (Black Forest Labs). Write descriptive phrases separated by commas, like the description of an illustrated poster: subject first, then appearance, clothing, pose, setting, lighting, colors, style and composition. Concrete visual language, 40 to 90 words, no prompt weights, no quality-tag spam like "masterpiece", and no negative prompt (FLUX ignores it).' },
     fluxedit: { neg: false, rules: 'This is a FLUX editing model (Kontext / Edit) that works from reference images. For the character image, write a full natural-language text-to-image description (subject, appearance, clothing, pose, lighting, style; full body, standing, on a plain black background) so the first image can be created and then used as the reference. For the scene, write an instruction-style edit prompt applied to that reference image, such as "Keep the character\'s face, hair and outfit exactly the same, and place them in ...", then describe the setting, pose, lighting and mood. No weights, no negative prompt.' },
@@ -5483,6 +5485,7 @@
     anime: { neg: true, rules: 'This is an anime-style tag model. Use Danbooru-style tags only: lowercase, comma-separated, ordered by importance: subject count (1girl, 1boy...), character traits, hair, eyes, clothing, expression, pose, setting, lighting. Add a rating tag only if needed (default safe content). Quality tags: {Q}. Keep it under about 75 tokens. Provide a negative prompt.' }
   };
   const SDM = [
+    ['Local · inside ST Card Creator', [['qwen-image-2.1', 'Qwen Image 2.1', 'qwen']]],
     ['A · Natural language', [['gpt-image-1', 'OpenAI GPT-Image-1', 'nl'], ['chatgpt-image', 'ChatGPT Image Generation', 'nl'], ['copilot', 'Microsoft Copilot Image Creator', 'nl'], ['designer', 'Microsoft Designer', 'nl'], ['imagen3', 'Google Imagen 3', 'nl'], ['grok-imagine', 'xAI Grok Imagine', 'nl'], ['grok-image', 'Grok Image Generation', 'nl'], ['qwen-image', 'Alibaba Qwen-Image', 'nl'], ['photon', 'Luma Photon', 'nl'], ['photon-flash', 'Luma Photon Flash', 'nl'], ['seedream', 'ByteDance Seedream', 'nl']]],
     ['B · FLUX (Black Forest Labs)', [['flux-pro', 'FLUX.1 Pro', 'flux'], ['flux-dev', 'FLUX.1 Dev', 'flux'], ['flux-schnell', 'FLUX.1 Schnell', 'flux'], ['flux-kontext', 'FLUX Kontext', 'fluxedit'], ['flux-edit', 'FLUX Edit', 'fluxedit']]],
     ['C · Stable Diffusion (Stability AI)', [['sdxl', 'SDXL', 'sdxl'], ['sd3', 'SD 3', 'sd3'], ['sd35', 'SD 3.5', 'sd3']]],
@@ -5490,6 +5493,25 @@
     ['C · Anime tag models', [['animagine', 'Animagine XL', 'anime', 'put "masterpiece, best quality, very aesthetic, absurdres" at the END of the positive prompt, after the character tags'], ['hassaku', 'Hassaku', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['counterfeit', 'Counterfeit', 'anime', 'start the positive prompt with "masterpiece, best quality"'], ['anything', 'Anything', 'anime', 'start the positive prompt with "masterpiece, best quality"']]]
   ];
   const sdInfo = () => { for (const [, list] of SDM) for (const m of list) if (m[0] === SD.model) return m; return SDM[0][1][0]; };
+  /* Modello per cui si scrivono i prompt immagine: tendina condivisa (AI-assisted generation e Image prompts) */
+  const SDSELS = [];
+  function sdSelect(id) {
+    const sel = mk('select'); sel.id = id; sel.setAttribute('aria-label', 'Image prompt model');
+    SDM.forEach(([g, list]) => {
+      const og = document.createElement('optgroup'); og.label = g;
+      list.forEach(m => { const o = document.createElement('option'); o.value = m[0]; o.textContent = m[1]; og.appendChild(o); });
+      sel.appendChild(og);
+    });
+    sel.value = sdInfo()[0]; SDSELS.push(sel);
+    sel.addEventListener('change', () => sdSetModel(sel.value));
+    return sel;
+  }
+  function sdSetModel(v) {
+    if (!SDM.some(([, l]) => l.some(m => m[0] === v))) return;
+    SD.model = v; SDSAVE();
+    for (let i = SDSELS.length - 1; i >= 0; i--) { if (!SDSELS[i].isConnected && SDSELS[i].id !== 'sdModel') SDSELS.splice(i, 1); else SDSELS[i].value = v; }
+    drawImg();
+  }
   /* Stile dell'immagine: influenza solo i prompt per creare le immagini */
   const ISTYKEY = 'st-card-creator-imgstyle';
   const ISTYLES = [
@@ -5691,8 +5713,6 @@
     for (let i = ISTYSELS.length - 1; i >= 0; i--) if (!ISTYSELS[i].isConnected && ISTYSELS[i].id === 'imgStyleBox') ISTYSELS.splice(i, 1);
     box.textContent = '';
     const m = sdInfo(), sty = SDSTYLE[m[2]];
-    const p0 = mk('p', 'sm'); p0.textContent = 'These prompts are not part of the card. Copy them into your image generator. Prompts are always written in English. Model: ' + m[1] + '. Change it in AI-assisted generation.';
-    box.appendChild(p0);
     const block = (title, o, hint, sceneKey) => {
       const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b');
       b.textContent = title; h.appendChild(b);
@@ -5742,12 +5762,13 @@
         w.appendChild(n); box.appendChild(w);
       });
     } else {
-      const n = mk('p', 'sm'); n.textContent = 'No prompts yet. Write them here, or tick "Stable diffusion" when you generate a card.'; box.appendChild(n);
+      const n = mk('p', 'sm'); n.textContent = 'No prompts yet. Write them here, or tick "Image prompt" when you generate a card.'; box.appendChild(n);
     }
     const ctl = mk('div', 'ctl imgst'), stat = mk('span', 'sm'); stat.id = 'imgStatus'; stat.setAttribute('role', 'status');
     if (IMGP && IMGP.portrait && IMGP.style && IMGP.style !== ISTY) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for the style "' + IMGP.style + '". Press the wand to write them again as ' + ISTY + '.'; box.appendChild(n); }
     const sl = mk('label', 'chk sty'), st = mk('span'); st.textContent = 'Image style'; sl.append(st, istySelect('imgStyleBox'));
-    ctl.appendChild(sl);
+    const pl = mk('label', 'chk sty'), pt = mk('span'); pt.textContent = 'Image prompt'; pl.append(pt, sdSelect('sdModelBox'));
+    ctl.append(sl, pl);
     if (!(IMGP && IMGP.portrait)) {
       const go = mk('button', 'btn primary'); go.type = 'button'; go.id = 'imgGo'; go.textContent = 'Write image prompts';
       go.disabled = !apiReady() || !K.description.trim() || !!IMG_CTL;
@@ -6085,7 +6106,7 @@
   function iaInit() {
     iaLoad();
     const box = $('iprovs'); box.textContent = '';
-    Object.keys(IPROVS).forEach(k => { const b = mk('button'); b.type = 'button'; b.dataset.prov = k; b.textContent = IPROVS[k].name; b.addEventListener('click', () => { IA.prov = k; iaSave(); iaRender(); say('istatus', '', null, false); }); box.appendChild(b); });
+    Object.keys(IPROVS).forEach(k => { const b = mk('button'); b.type = 'button'; b.dataset.prov = k; b.textContent = IPROVS[k].name; b.addEventListener('click', () => { IA.prov = k; iaSave(); iaRender(); say('istatus', '', null, false); if (IPROVS[k].kind === 'qwen') sdSetModel('qwen-image-2.1'); }); box.appendChild(b); });
     const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
     on('iUrl', 'input', e => { IA.url[IA.prov] = e.target.value; iaSave(); syncIaBtns(); });
     on('iKey', 'input', e => { IAKEYS[IA.prov] = e.target.value; iaSave(); syncIaBtns(); });
@@ -6120,6 +6141,7 @@
     on('iclose', 'click', () => { if (IACTL) IACTL.abort(); $('idlg').close(); });
     on('iaPick', 'click', () => iaRun());
     iaRender(); if (QB()) qRefresh();
+    if (IPROVS[IA.prov] && IPROVS[IA.prov].kind === 'qwen' && SD.model !== 'qwen-image-2.1') sdSetModel('qwen-image-2.1');
     /* Quando la finestra torna in primo piano o la rete ritorna, lo stato dei pulsanti si ricontrolla da solo
        (per esempio dopo aver sbloccato l'app nel firewall o copiato a mano dei file nella cartella qwen-image) */
     let rcT = 0;
@@ -6368,18 +6390,11 @@
       });
       paint(); mark();
     })();
-    const row = mk('div', 'sdrow'), sl = mk('label', 'chk'), sc = mk('input'), sel = mk('select');
+    const row = mk('div', 'sdrow'), sl = mk('label', 'chk'), sc = mk('input'), sel = sdSelect('sdModel');
     sc.type = 'checkbox'; sc.id = 'gf-sd'; sc.checked = SD.on;
-    sl.append(sc, document.createTextNode(' Stable diffusion'));
-    sel.id = 'sdModel'; sel.setAttribute('aria-label', 'Image model');
-    SDM.forEach(([g, list]) => {
-      const og = document.createElement('optgroup'); og.label = g;
-      list.forEach(m => { const o = document.createElement('option'); o.value = m[0]; o.textContent = m[1]; og.appendChild(o); });
-      sel.appendChild(og);
-    });
-    sel.value = sdInfo()[0]; sel.disabled = !SD.on;
+    sl.append(sc, document.createTextNode(' Image prompt'));
+    sel.disabled = !SD.on;
     sc.addEventListener('change', () => { SD.on = sc.checked; sel.disabled = !SD.on; SDSAVE(); barSync(); drawImg(); });
-    sel.addEventListener('change', () => { SD.model = sel.value; SDSAVE(); drawImg(); });
     row.append(sl, sel); box.appendChild(row);
     { const r2 = mk('div', 'sdrow'), l2 = mk('label', 'chk sty'), t2 = mk('span'); t2.textContent = 'Image style'; const s2 = istySelect('imgStyleGen'); l2.append(t2, s2); r2.appendChild(l2); box.appendChild(r2); }
     $('d-img').closest('details').addEventListener('toggle', ev => { if (ev.target.open) drawImg(); });
@@ -6670,7 +6685,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
-    ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns."]],
+    ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns.", "\"Stable diffusion\" is now \"Image prompt\", also in Image prompts next to the image style, with Qwen Image 2.1 in the list (picked by itself when Qwen draws your images)."]],
     ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
     ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
     ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
