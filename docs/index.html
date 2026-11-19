@@ -1354,7 +1354,7 @@
  "Dati": "Data",
  "Cover": "Cover",
  "Nuova carta": "New card",
- "Conferma: svuota tutto": "Confirm: clear everything",
+ "Conferma: svuota tutto": "Confirm",
  "Totale": "Total",
  "token": "tokens",
  "token attivi": "active tokens",
@@ -5475,7 +5475,7 @@
   const SDSAVE = () => { try { localStorage.setItem(SDKEY, JSON.stringify(SD)); } catch (e) { /* ignora */ } };
   const NEG_BASE = 'lowres, worst quality, low quality, bad anatomy, bad hands, extra fingers, missing fingers, cropped, text, watermark, signature, username, blurry, jpeg artifacts';
   const SDSTYLE = {
-    qwen: { neg: true, rules: 'This is Qwen Image 2.1, run locally. It understands long, plain natural language very well: write 3 to 5 flowing, complete sentences in English, like a detailed brief to an illustrator, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting or background, lighting, colors, style and framing. Be specific and literal; avoid quality tags and weights. Provide a short negative prompt of things to avoid (for example: blurry, extra fingers, deformed hands, text, watermark, cropped).' },
+    qwen: { neg: false, rules: 'This is Qwen Image 2.1, run locally. It understands long, plain natural language very well: write 3 to 5 flowing, complete sentences in English, like a detailed brief to an illustrator, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting or background, lighting, colors, style and framing. Be specific and literal; avoid quality tags, weights and lists of things to avoid. This model takes no negative prompt.' },
     nl: { neg: false, rules: 'This model understands plain natural language. Write as if briefing an art director: 2 to 4 flowing, complete sentences, not a keyword list. Cover subject and appearance (hair, eyes, face, build, age impression), clothing and accessories, pose and expression, setting, lighting and mood, camera framing, and the visual style or medium. Describe what should be present rather than what to avoid. No weights, no quality-tag spam, no negative prompt.' },
     flux: { neg: false, rules: 'This is a FLUX model (Black Forest Labs). Write descriptive phrases separated by commas, like the description of an illustrated poster: subject first, then appearance, clothing, pose, setting, lighting, colors, style and composition. Concrete visual language, 40 to 90 words, no prompt weights, no quality-tag spam like "masterpiece", and no negative prompt (FLUX ignores it).' },
     fluxedit: { neg: false, rules: 'This is a FLUX editing model (Kontext / Edit) that works from reference images. For the character image, write a full natural-language text-to-image description (subject, appearance, clothing, pose, lighting, style; full body, standing, on a plain black background) so the first image can be created and then used as the reference. For the scene, write an instruction-style edit prompt applied to that reference image, such as "Keep the character\'s face, hair and outfit exactly the same, and place them in ...", then describe the setting, pose, lighting and mood. No weights, no negative prompt.' },
@@ -5996,7 +5996,7 @@
     if (signal) { if (signal.aborted) throw { code: 'abort' }; signal.addEventListener('abort', ab, { once: true }); }
     const [w, h] = opts.wide ? [1152, 768] : [768, 1152];
     const ref = opts.ref ? await toPngData(opts.ref) : null;
-    const r = await QB().qwenGenerate({ id, prompt: pos, neg, w, h, steps: IA.q.steps, cfg: IA.q.cfg, seed: -1, model: IA.q.model, llm: IA.q.llm, ref });
+    const r = await QB().qwenGenerate({ id, prompt: pos, neg: '', w, h, steps: IA.q.steps, cfg: IA.q.cfg, seed: -1, model: IA.q.model, llm: IA.q.llm, ref });
     if (signal) signal.removeEventListener('abort', ab);
     if (r && r.error) {
       if (r.error === 'cancelled') throw { code: 'abort' };
@@ -6685,7 +6685,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
-    ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns.", "\"Stable diffusion\" is now \"Image prompt\", also in Image prompts next to the image style, with Qwen Image 2.1 in the list (picked by itself when Qwen draws your images)."]],
+    ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns.", "\"Stable diffusion\" is now \"Image prompt\", also in Image prompts next to the image style, with Qwen Image 2.1 in the list (picked by itself when Qwen draws your images). Qwen gets no negative prompt."]],
     ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
     ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
     ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
