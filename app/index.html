@@ -5634,11 +5634,12 @@
       ctl.appendChild(g);
       if (st.url) {
         const im = mk('img', 'scimg cvimg'); im.src = st.url; im.alt = 'Character image'; row.appendChild(im);
+        if (!st.used) { const u = mk('button', 'btn primary'); u.type = 'button'; u.textContent = 'Use as cover'; u.addEventListener('click', () => { setImage(st.file); st.used = true; drawImg(); }); ctl.insertBefore(u, g); g.className = 'btn'; }
         const d = mk('button', 'btn'); d.type = 'button'; d.textContent = 'Save PNG'; d.addEventListener('click', () => saveBlob(st.file, slug(K.name || 'character') + '-ai.png').catch(() => { /* annullato */ })); ctl.appendChild(d);
       }
     }
     const o = mk('button', 'btn quiet'); o.type = 'button'; o.textContent = 'Image settings'; o.addEventListener('click', openImgSettings); ctl.appendChild(o);
-    msg.textContent = st.err ? st.err : st.url ? 'This image is now the cover. Adjust zoom, text and frame in Cover.' : iaReady() ? '' : 'Choose an image service in Image settings to draw the cover here.';
+    msg.textContent = st.err ? st.err : st.url ? (st.used ? 'This image is now the cover. Adjust zoom, text and frame in Cover.' : 'Press "Use as cover" to put it on the card; until then the cover does not change.') : iaReady() ? '' : 'Choose an image service in Image settings to draw the cover here.';
     if (st.err) msg.classList.add('warn');
     row.append(ctl); if (msg.textContent) row.appendChild(msg);
     w.appendChild(row);
@@ -5652,8 +5653,7 @@
       const file = await iaGenerate(IMGP.portrait.pos, IMGP.portrait.neg || '', st.ctl.signal);
       if (IAURL) URL.revokeObjectURL(IAURL);
       IAFILE = file; IAURL = URL.createObjectURL(file);
-      st.file = file; st.url = IAURL;
-      setImage(file);
+      st.file = file; st.url = IAURL; st.used = false;   /* la copertina cambia solo con "Use as cover" */
     } catch (e) {
       if (!(e && (e.code === 'abort' || e.name === 'AbortError'))) { const k = errKey(e); st.err = tr(k[0], k[1] || null); }
     } finally { QPROG = null; st.busy = false; st.ctl = null; IACTL = null; drawImg(); syncIaBtns(); }
@@ -6657,7 +6657,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
-    ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt and puts the result straight on the cover.", "The old \"Create the image\" box is gone."]],
+    ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
     ["1.0.41", ["Downloads use the same connection as the rest of the app: fixes the instant 'connect EACCES' error on some PCs.", "Qwen Image 2.1: 'Use my sd-cli.exe…' if you already have stable-diffusion.cpp.", "This 'What's new' window, with the full history under the API settings."]],
     ["1.0.40", ["New: Qwen Image 2.1 runs locally on your graphics card, with every file downloaded by the app (exe only).", "The first message image can be created in Image prompts, using the character image as reference.", "Small layout fixes in Data and Cover."]],
     ["1.0.39", ["Character image: full body, standing, idle, on a black background.", "New logo and icons on the Data and Cover buttons; chat language from a list of flags."]],
