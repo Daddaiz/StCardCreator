@@ -1217,7 +1217,7 @@
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
-  <dialog class="ndlg" id="ndlg" aria-label="What's new"><div class="nin"><img class="nlogo" src="brand.webp" alt="ST Card Creator" width="266" height="124"><div class="nbody" id="nbody"></div><p class="nhint">Click anywhere to close</p></div></dialog>
+  <dialog class="ndlg" id="ndlg" aria-label="What's new"><div class="nin"><img class="nlogo" id="nlogo" alt="ST Card Creator" width="266" height="124"><div class="nbody" id="nbody"></div><p class="nhint">Click anywhere to close</p></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn" id="kalt" hidden></button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
   <dialog class="xdlg" id="fdlg" aria-label="Edit field"><div class="xin fin"><div class="df"><span class="dfh"><b id="ftitle"></b><span class="tk" id="ftk"></span></span><textarea id="fta" spellcheck="false"></textarea></div><div class="frow"><span class="sm">Click outside the box to go back without changes.</span><button type="button" class="btn primary" id="fok">OK</button></div></div></dialog>
@@ -6643,6 +6643,7 @@
   const NEWSKEY = 'st-card-creator-news-seen';
   function newsShow(all) {
     const d = $('ndlg'), body = $('nbody');
+    if (!$('nlogo').src) $('nlogo').src = $('hlogo').src;   /* stessa immagine del logo in alto: incorporata una volta sola */
     body.textContent = '';
     (all ? NEWS : NEWS.slice(0, 1)).forEach(([v, items]) => {
       const h = document.createElement('h3'); h.textContent = all ? 'v' + v : 'What\'s new in v' + v; body.appendChild(h);
