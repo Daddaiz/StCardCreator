@@ -25,6 +25,7 @@
 **Images**
 - Ready-to-paste image prompts for the character, the first-message scene and every alternate message
 - **Image generation** from inside the app *Needs an API.*
+- **Qwen Image 2.1, local and all-in-one** (exe only): pick it in API → Image generation and press "Download what is missing". ST Card Creator downloads the engine (stable-diffusion.cpp), the model and the text encoder into the folder `qwen-image` next to the exe, then draws on your own graphics card. The first message image uses the character image as reference and is saved in the folder `images` next to the exe.
  
 **Import and export**
 - Import a card PNG or JSON. Export a PNG with the data embedded (`chara` + `ccv3`), JSON V3 or V2, CHARX (RisuAI) or TavernAI V1.
@@ -43,3 +44,4 @@
 ## Credits
 
 Flag images for the added chat languages: [flag-icons](https://github.com/lipis/flag-icons) (MIT).
+Local image generation: [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp) (MIT), downloaded from its official releases; Qwen Image 2.1 weights from Hugging Face (see each model page for its license).

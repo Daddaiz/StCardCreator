@@ -375,6 +375,13 @@
   .dlgrid { display: grid; gap: 8px; }
   .dlrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); }
   .dlrow b { font-weight: 600; }
+  .dlrow .qst { white-space: nowrap; font-weight: 600; } .dlrow .qst.ok { color: var(--ok, #6fbf73); }
+  .dlrow progress, .dlrow .dlst { grid-column: 1 / -1; }
+  .qgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 14px; } @media (max-width: 640px) { .qgrid { grid-template-columns: 1fr; } }
+  #qFiles { margin: 6px 0 12px; }
+  .scrow { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
+  .scrow .ctl { margin: 0; } .scrow .sm { margin: 0; }
+  .scimg { width: 100%; max-width: 560px; border-radius: 8px; border: 1px solid var(--line); display: block; }
   .dlrow .sm { margin: 0; }
   .dlrow progress { grid-column: 1 / -1; width: 100%; height: 6px; accent-color: var(--accent); }
   .dlrow .dlst { grid-column: 1 / -1; }
@@ -1030,7 +1037,18 @@
       <div class="df" id="iUrlRow"><span class="dfh"><b>Server address (base URL)</b></span><input type="text" id="iUrl" autocomplete="off" spellcheck="false" aria-label="Server address (base URL)"></div>
       <label class="df" id="iKeyRow"><span class="dfh"><b>API key</b></span><input type="password" id="iKey" autocomplete="off" spellcheck="false"></label>
       <label class="chk" id="iRemRow"><input type="checkbox" id="iRem"> Remember the key on this device</label>
-      <div class="df"><span class="dfh"><b id="iModelLbl">Model</b></span><div class="mrow"><input type="text" id="iModel" list="imlist" autocomplete="off" spellcheck="false" placeholder="Model name" aria-label="Model"><datalist id="imlist"></datalist><button type="button" class="btn" id="iModels">Load models</button></div></div>
+      <div class="df" id="iModelRow"><span class="dfh"><b id="iModelLbl">Model</b></span><div class="mrow"><input type="text" id="iModel" list="imlist" autocomplete="off" spellcheck="false" placeholder="Model name" aria-label="Model"><datalist id="imlist"></datalist><button type="button" class="btn" id="iModels">Load models</button></div></div>
+      <div id="iQwen" hidden>
+        <div class="qgrid">
+          <label class="df"><span class="dfh"><b>Model</b></span><select id="qModel"></select></label>
+          <label class="df"><span class="dfh"><b>Text encoder</b></span><select id="qLlm"></select></label>
+          <label class="df"><span class="dfh"><b>Steps</b></span><input type="number" id="qSteps" min="1" max="100" step="1"></label>
+          <label class="df"><span class="dfh"><b>CFG scale</b></span><input type="number" id="qCfg" min="1" max="20" step="0.5"></label>
+        </div>
+        <div class="dlgrid" id="qFiles"></div>
+        <div class="ctl"><button type="button" class="btn primary" id="qGet">Download what is missing</button><button type="button" class="btn quiet" id="qDir">Open the folder</button></div>
+        <p class="sm" id="qNote"></p>
+      </div>
       <div class="grid2" id="iSdRow">
         <label class="df"><span class="dfh"><b>Size</b></span><select id="iSize"><option value="512x768">512 × 768 · SD 1.5</option><option value="832x1248">832 × 1248 · SDXL</option><option value="1024x1536">1024 × 1536 · SDXL, slow</option></select></label>
         <label class="df"><span class="dfh"><b>Steps</b></span><input type="number" id="iSteps" min="1" max="150" step="1"></label>
@@ -3396,6 +3414,9 @@
     if (c === 'nourl') return ['Inserisci l\'indirizzo del server.'];
     if (c === 'noprompt') return ['There is no image prompt yet, and writing one needs the text API: set it up in the API page, or write the prompt yourself in the Image prompts tab.'];
     if (c === 'nodesc') return ['Write the character description first: the image prompt comes from it.'];
+    if (c === 'qwenexe') return ['Qwen Image 2.1 runs on your PC, so it works only in the ST Card Creator exe.'];
+    if (c === 'qwenfiles') return ['Qwen Image 2.1 is not ready yet: in the API page, Image generation, press "Download what is missing".'];
+    if (c === 'qwen') return ['The image engine stopped with an error: {m}', { m: String(e.msg || '').slice(0, 400) }];
     if (c === 'nolocal') return ['Non trovo server locali sulle porte più comuni. Avvia il server e riprova, oppure scrivi l\'indirizzo.'];
     return ['Errore del servizio: {m}', { m: String(e && e.msg || e && e.message || e).slice(0, 240) }];
   }
@@ -5557,6 +5578,48 @@
     try { await imgRun(IMG_CTL.signal); IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) s.textContent = 'Done.'; }
     catch (e) { IMG_CTL = null; drawImg(); const s = $('imgStatus'); if (s) { const k = errKey(e); s.textContent = tr(k[0], k[1] || null); s.classList.add('warn'); } }
   }
+  /* Immagini delle scene (first message e alternativi): create qui, con l'immagine del personaggio come riferimento quando il servizio lo permette */
+  const SCENE = {};
+  function sceneRow(w, key, o, title) {
+    const st = SCENE[key] || {}, row = mk('div', 'scrow'), ctl = mk('div', 'ctl'), msg = mk('p', 'sm');
+    const ref = iaRefOk() && iaRefImg();
+    if (st.busy) {
+      const q = mk('div', 'qwait'); q.append(mk('i'), document.createTextNode(st.prog || 'Drawing…')); st.el = q; row.appendChild(q);
+      const x = mk('button', 'btn'); x.type = 'button'; x.textContent = 'Stop'; x.addEventListener('click', () => { if (st.ctl) st.ctl.abort(); }); ctl.appendChild(x);
+    } else {
+      const g = mk('button', 'btn primary'); g.type = 'button'; g.textContent = st.url ? 'Create it again' : 'Create this image';
+      g.disabled = !iaReady() || !o.pos || Object.values(SCENE).some(x => x.busy) || !!IACTL;
+      g.title = !iaReady() ? 'Set up Image generation in the API page first' : '';
+      g.addEventListener('click', () => sceneRun(key, o, title));
+      ctl.appendChild(g);
+      if (st.url) {
+        const im = mk('img', 'scimg'); im.src = st.url; im.alt = title; row.appendChild(im);
+        if (st.path && window.stBridge && window.stBridge.showImage) { const f = mk('button', 'btn'); f.type = 'button'; f.textContent = 'Show in folder'; f.addEventListener('click', () => window.stBridge.showImage(st.path)); ctl.appendChild(f); }
+        else { const d = mk('button', 'btn'); d.type = 'button'; d.textContent = 'Save PNG'; d.addEventListener('click', () => saveBlob(st.file, sceneName(key) + '.png').catch(() => { /* annullato */ })); ctl.appendChild(d); }
+      }
+    }
+    msg.textContent = st.err ? st.err : st.path ? 'Saved in ' + st.path : !iaReady() ? 'To create it here, set up Image generation in the API page.' : ref ? 'The character image is used as reference, so the character keeps the same look.' : iaRefOk() ? 'No character image yet: create it first (or put one on the cover) so it can be used as reference.' : IPROVS[IA.prov].name + ' cannot take a reference image, so the character may look different.';
+    if (st.err) msg.classList.add('warn');
+    row.append(ctl, msg); w.appendChild(row);
+  }
+  const sceneName = key => slug(K.name || 'character') + '-' + (key === 'scene' ? 'first-message' : 'alternate-' + (+key.slice(3) + 1));
+  async function sceneRun(key, o, title) {
+    const st = SCENE[key] = { busy: true, ctl: new AbortController(), prog: 'Drawing with ' + IPROVS[IA.prov].name + '…' };
+    drawImg(); syncIaBtns();
+    QPROG = d => { st.prog = qProgText(d); if (st.el && st.el.lastChild) st.el.lastChild.nodeValue = st.prog; };
+    try {
+      const ref = iaRefOk() ? iaRefImg() : null;
+      const file = await iaGenerate(o.pos, o.neg || '', st.ctl.signal, { wide: true, ref });
+      st.file = file; st.url = URL.createObjectURL(file);
+      if (window.stBridge && window.stBridge.saveImage) {
+        const b64 = await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(file); });
+        const r = await window.stBridge.saveImage({ name: sceneName(key), png: b64 });
+        if (r && r.path) st.path = r.path; else st.err = 'Created, but not saved: ' + (r && r.error || '?');
+      } else await saveBlob(file, sceneName(key) + '.png').catch(() => { /* annullato */ });
+    } catch (e) {
+      if (!(e && (e.code === 'abort' || e.name === 'AbortError'))) { const k = errKey(e); st.err = tr(k[0], k[1] || null); }
+    } finally { QPROG = null; st.busy = false; st.ctl = null; drawImg(); syncIaBtns(); }
+  }
   function drawImg() {
     const d = $('d-img'); if (!d) return;
     d.closest('details').hidden = !SD.on;
@@ -5567,7 +5630,7 @@
     const m = sdInfo(), sty = SDSTYLE[m[2]];
     const p0 = mk('p', 'sm'); p0.textContent = 'These prompts are not part of the card. Copy them into your image generator. Prompts are always written in English. Model: ' + m[1] + '. Change it in AI-assisted generation.';
     box.appendChild(p0);
-    const block = (title, o, hint) => {
+    const block = (title, o, hint, sceneKey) => {
       const w = mk('div', 'item imgp'), h = mk('div', 'dfh'), b = mk('b');
       b.textContent = title; h.appendChild(b);
       const t = mk('span', 'tk'); t.textContent = hint; h.appendChild(t); w.appendChild(h);
@@ -5592,16 +5655,17 @@
       field('Prompt', 'pos');
       if (sty.neg) field('Negative prompt', 'neg');
       else { const n = mk('p', 'sm'); n.textContent = 'This model has no negative prompt.'; w.appendChild(n); }
+      if (sceneKey) sceneRow(w, sceneKey, o, title);
       box.appendChild(w);
     };
     if (IMGP && IMGP.portrait) {
       if (IMGP.model !== m[0]) { const n = mk('p', 'sm warn'); n.textContent = 'These prompts were written for another model. Press the button below to write them again for ' + m[1] + '.'; box.appendChild(n); }
       block('Character image', IMGP.portrait, 'portrait 2:3');
-      if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2');
+      if (IMGP.scene && K.first_mes.trim()) block('First message image', IMGP.scene, 'scene 3:2', 'scene');
       K.alt.forEach((t, i) => {
         if (!str(t).trim()) return;
         const o = IMGP.alts && IMGP.alts[i];
-        if (o && o.pos !== undefined) { block('Alternate message ' + (i + 1) + ' image', o, 'scene 3:2'); return; }
+        if (o && o.pos !== undefined) { block('Alternate message ' + (i + 1) + ' image', o, 'scene 3:2', 'alt' + i); return; }
         const w = mk('div', 'item imgp'), hd = mk('div', 'dfh'), b = mk('b'), tk = mk('span', 'tk'), n = mk('p', 'sm');
         b.textContent = 'Alternate message ' + (i + 1) + ' image'; tk.textContent = 'scene 3:2'; hd.append(b, tk); w.appendChild(hd);
         if (IMG_ALT === i) n.textContent = 'Writing the prompt…';
@@ -5667,6 +5731,8 @@
       note: 'OpenAI-compatible image endpoint, paid per image. If a model refuses the size, the request is sent again without it.' },
     sd: { name: 'Stable Diffusion WebUI / Forge', base: 'http://127.0.0.1:7860', doc: 'https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/API', key: false, kind: 'sd', model: '',
       note: 'Free and local: your own GPU draws it. Start WebUI or Forge with --api (in the browser version also --cors-allow-origins=*). "Load models" lists the checkpoints it has; leave the model empty to use the one selected there.' },
+    qwen: { name: 'Qwen Image 2.1', base: 'local', doc: 'https://github.com/leejet/stable-diffusion.cpp/blob/master/docs/models/qwen_image_2.1.md', key: false, kind: 'qwen', model: '',
+      note: 'Free and local, all inside ST Card Creator: your own GPU draws with Qwen Image 2.1 through stable-diffusion.cpp. The first time, download the engine, a model and a text encoder below (about 10 GB in all). The first message image uses the character image as reference. Exe only.' },
     custom: { name: 'Custom', base: '', doc: '', key: false, kind: 'oai', model: '',
       note: 'Any server with an OpenAI-compatible /images/generations endpoint (LocalAI, SD.Next with --api, a proxy, …). The server must accept requests from the browser (CORS).' }
   };
@@ -5676,13 +5742,13 @@
     { name: 'Animagine XL 3.1', kind: 'SDXL · anime, Danbooru tags', size: '6.9 GB', file: 'animagine-xl-3.1.safetensors', url: 'https://huggingface.co/cagliostrolab/animagine-xl-3.1/resolve/main/animagine-xl-3.1.safetensors', page: 'https://huggingface.co/cagliostrolab/animagine-xl-3.1', lic: 'OpenRAIL++' },
     { name: 'SDXL Turbo', kind: 'SDXL · 1 to 4 steps, very fast, lower detail', size: '6.9 GB', file: 'sd_xl_turbo_1.0_fp16.safetensors', url: 'https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors', page: 'https://huggingface.co/stabilityai/sdxl-turbo', lic: 'Stability AI, non-commercial' }
   ];
-  const IA0 = () => ({ prov: 'openai', url: {}, model: {}, remember: false, size: '832x1248', steps: 25, cfg: 6, sampler: '' });
+  const IA0 = () => ({ prov: 'openai', url: {}, model: {}, remember: false, size: '832x1248', steps: 25, cfg: 6, sampler: '', q: { model: 'qwen-image-2.1-step90000-Q4_K_M.gguf', llm: 'Qwen3-VL-8B-Instruct-IQ4_XS.gguf', steps: 30, cfg: 5 } });
   let IA = IA0(), IAKEYS = {}, IACTL = null, IAFILE = null, IAURL = null;
   function iaLoad() {
     try {
       const o = JSON.parse(localStorage.getItem(IAKEY) || 'null');
       if (!o || typeof o !== 'object') return;
-      IA = Object.assign(IA0(), o, { url: o.url || {}, model: o.model || {} });
+      IA = Object.assign(IA0(), o, { url: o.url || {}, model: o.model || {}, q: Object.assign(IA0().q, o.q && typeof o.q === 'object' ? o.q : {}) });
       if (o.keys && IA.remember) IAKEYS = o.keys;
       if (!IPROVS[IA.prov]) IA.prov = 'openai';
       delete IA.keys;
@@ -5693,6 +5759,7 @@
   const iaModel = () => String(IA.model[IA.prov] !== undefined ? IA.model[IA.prov] : IPROVS[IA.prov].model).trim();
   function iaWhy() {
     const P = IPROVS[IA.prov];
+    if (P.kind === 'qwen') return !QB() ? 'qwenexe' : qMissing().length ? 'qwenfiles' : '';
     if (!iaUrl()) return 'nourl';
     if (P.key && !String(IAKEYS[IA.prov] || '').trim()) return 'nokey';
     if (P.kind !== 'sd' && !iaModel()) return 'nomodel';
@@ -5715,15 +5782,16 @@
   }
   const b64blob = (b64, mime) => { const bin = atob(b64.replace(/\s+/g, '')); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return new Blob([u], { type: mime || 'image/png' }); };
   /* Ritaglia al centro in 2:3 (la carta) e restituisce un File PNG */
-  function fit23(blob) {
+  const fit23 = blob => fitR(blob, 2 / 3);
+  function fitR(blob, R) {
     return new Promise((res, rej) => {
       const url = URL.createObjectURL(blob), im = new Image();
       im.onload = () => {
         URL.revokeObjectURL(url);
         const w = im.naturalWidth, h = im.naturalHeight;
         if (!w || !h) return rej({ code: 'empty' });
-        let cw = w, ch = Math.round(w * 1.5); if (ch > h) { ch = h; cw = Math.round(h / 1.5); }
-        if (Math.abs(w / h - 2 / 3) < 0.01 && blob.type === 'image/png') return res(new File([blob], 'ai-image.png', { type: 'image/png' }));
+        let cw = w, ch = Math.round(w / R); if (ch > h) { ch = h; cw = Math.round(h * R); }
+        if (Math.abs(w / h - R) < 0.01 && blob.type === 'image/png') return res(new File([blob], 'ai-image.png', { type: 'image/png' }));
         const cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
         cv.getContext('2d').drawImage(im, Math.round((w - cw) / 2), Math.round((h - ch) / 2), cw, ch, 0, 0, cw, ch);
         cv.toBlob(b => b ? res(new File([b], 'ai-image.png', { type: 'image/png' })) : rej({ code: 'empty' }), 'image/png');
@@ -5732,12 +5800,138 @@
       im.src = url;
     });
   }
-  async function iaGenerate(pos, neg, signal) {
+  /* ---------- Qwen Image 2.1 in locale (solo exe) ---------- */
+  const QB = () => (window.stBridge && window.stBridge.qwenGenerate) ? window.stBridge : null;
+  const QMODELS = [['qwen-image-2.1-step90000-Q6_K.gguf', 'Q6_K · best quality', 6.0, 10], ['qwen-image-2.1-step90000-Q5_K_M.gguf', 'Q5_K_M · balanced', 5.2, 8], ['qwen-image-2.1-step90000-Q4_K_M.gguf', 'Q4_K_M · lightest', 4.5, 8]];
+  const QLLMS = [['Qwen3-VL-8B-Instruct-IQ4_XS.gguf', 'IQ4_XS · lighter', 4.6, 6], ['Qwen3-VL-8B-Instruct-UD-Q4_K_XL.gguf', 'UD-Q4_K_XL · a bit more accurate', 5.1, 7]];
+  const QVAE = 'qwen_image_2.1_vae_bf16.safetensors', QVIS = 'mmproj-F16.gguf';
+  let QI = null, QDL = null;   /* QI: stato della cartella; QDL: download in corso */
+  const qHave = f => !!(QI && QI.files && QI.files[f] > 0);
+  /* Cosa manca per generare: motore, modello, encoder, VAE e (per i riferimenti) la parte "vision" */
+  function qMissing() {
+    if (!QI) return ['?'];
+    const m = [];
+    if (!QI.sdcli) m.push('sdcli');
+    [IA.q.model, IA.q.llm, QVAE, QVIS].forEach(f => { if (!qHave(f)) m.push(f); });
+    return m;
+  }
+  async function qRefresh() {
+    if (!QB()) return;
+    try { QI = await QB().qwenInfo(); } catch (e) { QI = null; }
+    if (IPROVS[IA.prov].kind === 'qwen') { qRender(); syncIaBtns(); }
+    try { drawImg(); } catch (e) { /* ignora */ }
+  }
+  /* Requisiti stimati dalla dimensione dei file (non sono misure ufficiali): il modello e l'encoder vengono caricati sulla scheda uno alla volta */
+  const qReq = (list, f) => { const x = list.find(r => r[0] === f); return x ? x[2].toFixed(1) + ' GB on disk · graphics card with ' + x[3] + ' GB of VRAM or more' : ''; };
+  const qRam = () => { const g = f => (QMODELS.concat(QLLMS).find(r => r[0] === f) || [0, 0, 0])[2]; const t = g(IA.q.model) + g(IA.q.llm) + 0.7 + 1.2; return { disk: t, ram: t + 4 > 16 ? 32 : 16 }; };
+  const qLabel = f => { const x = QMODELS.concat(QLLMS).find(r => r[0] === f); return x ? x[1] : f; };
+  function qRender() {
+    const box = $('qFiles'); if (!box) return;
+    const fill = (id, list, cur) => { const el = $(id); el.textContent = ''; list.forEach(([f, l, gb, vr]) => { const o = document.createElement('option'); o.value = f; o.textContent = l + ' · VRAM ' + vr + ' GB+' + (qHave(f) ? '' : ' ⬇'); el.appendChild(o); }); el.value = cur; };
+    fill('qModel', QMODELS, IA.q.model); fill('qLlm', QLLMS, IA.q.llm);
+    if (document.activeElement !== $('qSteps')) $('qSteps').value = IA.q.steps;
+    if (document.activeElement !== $('qCfg')) $('qCfg').value = IA.q.cfg;
+    box.textContent = '';
+    { const r = qRam(), q = mk('p', 'sm qreq'); q.textContent = 'Requirements with this choice (estimates): Windows 10/11 64-bit · NVIDIA graphics card with an up-to-date driver (other cards work through Vulkan, more slowly) · ' + r.ram + ' GB of RAM or more · about ' + r.disk.toFixed(1) + ' GB of free disk space. A 1152 × 768 image takes from under a minute to a few minutes, depending on the card.'; box.appendChild(q); }
+    if (!QB()) { $('qNote').textContent = 'Qwen Image 2.1 runs on your PC, so it works only in the ST Card Creator exe, not in the browser version.'; $('qGet').hidden = $('qDir').hidden = true; return; }
+    $('qGet').hidden = $('qDir').hidden = false;
+    const rows = [
+      ['sdcli', 'Engine · stable-diffusion.cpp', 'sd-cli, latest official release (CUDA 12 for NVIDIA cards, otherwise Vulkan) · a few hundred MB', !!(QI && QI.sdcli)],
+      [IA.q.model, 'Model · ' + qLabel(IA.q.model), 'Draws the image · ' + qReq(QMODELS, IA.q.model), qHave(IA.q.model)],
+      [IA.q.llm, 'Text encoder · ' + qLabel(IA.q.llm), 'Reads the prompt (Qwen3-VL 8B) · ' + qReq(QLLMS, IA.q.llm), qHave(IA.q.llm)],
+      [QVAE, 'VAE', 'Turns the result into pixels · 0.7 GB', qHave(QVAE)],
+      [QVIS, 'Vision', 'Lets the model look at the character image for the first message · 1.2 GB', qHave(QVIS)]
+    ];
+    rows.forEach(([key, name, desc, ok]) => {
+      const row = mk('div', 'dlrow'), left = mk('div'), b = mk('b'), p = mk('p', 'sm'), st = mk('span', 'sm qst');
+      b.textContent = name; p.textContent = desc; left.append(b, p);
+      const cur = QDL && QDL.key === key;
+      st.textContent = ok ? '✓ Ready' : cur ? '' : 'Missing'; st.classList.toggle('ok', ok); st.classList.toggle('warn', !ok && !cur);
+      row.append(left, st);
+      if (cur) {
+        const pr = mk('progress'); pr.max = 1000; if (QDL.total) pr.value = Math.round(QDL.received / QDL.total * 1000);
+        const tx = mk('p', 'sm dlst'); tx.textContent = QDL.phase || (fmtGB(QDL.received || 0) + (QDL.total ? ' of ' + fmtGB(QDL.total) : '') + (QDL.speed ? ' · ' + (QDL.speed / 1048576).toFixed(1) + ' MB/s' : ''));
+        row.append(pr, tx);
+      }
+      box.appendChild(row);
+    });
+    const miss = qMissing();
+    $('qGet').textContent = QDL ? 'Stop the download' : 'Download what is missing';
+    $('qGet').disabled = !QDL && !miss.length;
+    $('qNote').textContent = (QDL && QDL.error ? 'Download failed: ' + QDL.error + '. ' : '') + (miss.length ? 'Files go into the folder "qwen-image" next to ST Card Creator' + (QI ? ' (' + QI.dir + ')' : '') + '. A download can be stopped and started again later.' : 'Everything is ready. Each image starts the engine again, so the first seconds are spent loading the model.');
+  }
+  const QWAIT = {};
+  if (QB() && window.stBridge.onDownload) window.stBridge.onDownload(d => {
+    if (!QDL || !String(d.id).startsWith(QDL.id)) return;
+    if (d.phase) QDL.phase = d.phase;
+    if (d.received !== undefined && !d.done) { QDL.received = d.received; QDL.total = d.total; QDL.speed = d.received / Math.max(0.5, (Date.now() - QDL.t0) / 1000); if (!/^Unpacking/.test(QDL.phase || '')) QDL.phase = ''; }
+    if ((d.done || d.error) && d.id === QDL.id && QWAIT[d.id]) QWAIT[d.id](d);
+    qRender();
+  });
+  const qStep = (key, start) => new Promise(res => { const id = 'q' + Date.now().toString(36); QDL = { id, key, received: 0, total: 0, t0: Date.now(), phase: '' }; QWAIT[id] = d => { delete QWAIT[id]; res(d); }; qRender(); start(id); });
+  async function qGetMissing() {
+    if (QDL) { QDL.stop = true; try { window.stBridge.cancelDownload(QDL.id); } catch (e) { /* ignora */ } return; }
+    await qRefresh();
+    for (const key of qMissing()) {
+      if (key === '?') break;
+      const d = await qStep(key, id => key === 'sdcli' ? QB().qwenInstall({ id }) : QB().qwenDownload({ id, file: key }));
+      const stop = QDL && QDL.stop;
+      if (d.error || stop) { QDL = { error: stop ? 'stopped' : d.error }; await qRefresh(); QDL.error && say('istatus', 'Download failed: {m}', { m: QDL.error }, true); QDL = null; qRender(); return; }
+      await qRefresh();
+    }
+    QDL = null; await qRefresh();
+    say('istatus', qMissing().length ? 'Some files are still missing.' : 'Qwen Image 2.1 is ready.', null, !!qMissing().length);
+  }
+  /* Immagine in PNG come data URL (per il riferimento) */
+  const toPngData = blob => new Promise((res, rej) => {
+    const u = URL.createObjectURL(blob), im = new Image();
+    im.onload = () => { const c = document.createElement('canvas'); const k = Math.min(1, 1024 / Math.max(im.naturalWidth, im.naturalHeight)); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res(c.toDataURL('image/png')); };
+    im.onerror = () => { URL.revokeObjectURL(u); rej({ code: 'empty' }); };
+    im.src = u;
+  });
+  let QPROG = null;   /* chi mostra l'avanzamento della generazione */
+  if (QB()) window.stBridge.onQwen(d => { if (QPROG) QPROG(d); });
+  async function qwenGenerate(pos, neg, signal, opts) {
+    const id = 'qg' + Date.now().toString(36);
+    const ab = () => { try { QB().qwenCancel(id); } catch (e) { /* ignora */ } };
+    if (signal) { if (signal.aborted) throw { code: 'abort' }; signal.addEventListener('abort', ab, { once: true }); }
+    const [w, h] = opts.wide ? [1152, 768] : [768, 1152];
+    const ref = opts.ref ? await toPngData(opts.ref) : null;
+    const r = await QB().qwenGenerate({ id, prompt: pos, neg, w, h, steps: IA.q.steps, cfg: IA.q.cfg, seed: -1, model: IA.q.model, llm: IA.q.llm, ref });
+    if (signal) signal.removeEventListener('abort', ab);
+    if (r && r.error) {
+      if (r.error === 'cancelled') throw { code: 'abort' };
+      if (r.error === 'nosdcli' || /^missing:/.test(r.error)) { qRefresh(); throw { code: 'qwenfiles' }; }
+      throw { code: 'qwen', msg: r.error };
+    }
+    return b64blob(r.png, 'image/png');
+  }
+  /* Riferimento: l'immagine del personaggio (quella creata qui, o l'immagine della cover) */
+  const iaRefImg = () => IAFILE || IMGBLOB || null;
+  const iaRefOk = () => IPROVS[IA.prov].kind === 'qwen' || (IA.prov === 'openai' && /gpt-image/i.test(iaModel()));
+  async function iaGenerate(pos, neg, signal, opts) {
+    opts = opts || {};
     const why = iaWhy(); if (why) throw { code: why };
     const P = IPROVS[IA.prov], base = iaUrl(), model = iaModel();
     let b64 = null, url = null, mime = 'image/png';
+    const fit = b => opts.wide ? fitR(b, 3 / 2) : fit23(b);
+    if (P.kind === 'qwen') return fit(await qwenGenerate(pos, neg, signal, opts));
+    if (opts.ref && IA.prov === 'openai' && /gpt-image/i.test(model)) {
+      /* gpt-image: la stessa scena, con l'immagine del personaggio come riferimento */
+      const fd = new FormData(); fd.append('model', model); fd.append('prompt', pos + (neg ? '\n\nAvoid: ' + neg : '')); fd.append('n', '1'); fd.append('size', opts.wide ? '1536x1024' : '1024x1536');
+      fd.append('image', opts.ref, 'character.png');
+      const h = iaHeaders(false); let res;
+      try { res = await fetch(base + '/images/edits', { method: 'POST', headers: h, body: fd, signal }); }
+      catch (e) { if (e && e.name === 'AbortError') throw { code: 'abort' }; throw { code: 'net', msg: String(e && e.message || e) }; }
+      const txt = await res.text(); let j = null; try { j = JSON.parse(txt); } catch (e) { /* non JSON */ }
+      if (!res.ok) throw { code: res.status === 401 || res.status === 403 ? 'auth' : res.status === 429 ? 'rate' : 'http', status: res.status, msg: errMsg(j, txt) };
+      const d = j && Array.isArray(j.data) ? j.data[0] : null;
+      if (!d || !d.b64_json) throw { code: 'empty' };
+      return fit(b64blob(d.b64_json, 'image/png'));
+    }
     if (P.kind === 'sd') {
-      const [w, h] = String(IA.size || '832x1248').split('x').map(Number);
+      let [w, h] = String(IA.size || '832x1248').split('x').map(Number);
+      if (opts.wide) [w, h] = [h, w];
       const body = { prompt: pos, negative_prompt: neg || '', width: w, height: h, steps: +IA.steps || 25, cfg_scale: +IA.cfg || 6, batch_size: 1, n_iter: 1 };
       if (String(IA.sampler || '').trim()) body.sampler_name = IA.sampler.trim();
       if (model) body.override_settings = { sd_model_checkpoint: model };
@@ -5745,13 +5939,13 @@
       b64 = j && Array.isArray(j.images) ? j.images[0] : null;
       if (b64 && b64.startsWith('data:')) { const m = /^data:([^;]+);base64,(.*)$/s.exec(b64); if (m) { mime = m[1]; b64 = m[2]; } }
     } else if (P.kind === 'or') {
-      const j = await iaFetch('POST', base + '/images', { model, prompt: pos + (neg ? '\n\nAvoid: ' + neg : ''), n: 1, aspect_ratio: '2:3' }, signal);
+      const j = await iaFetch('POST', base + '/images', { model, prompt: pos + (neg ? '\n\nAvoid: ' + neg : ''), n: 1, aspect_ratio: opts.wide ? '3:2' : '2:3' }, signal);
       const d = j && Array.isArray(j.data) ? j.data[0] : null;
       if (d) { b64 = d.b64_json || null; url = d.url || null; if (d.media_type) mime = d.media_type; }
     } else {
       const body = { model, prompt: pos + (neg ? '\n\nAvoid: ' + neg : ''), n: 1 };
       if (/^dall-e/i.test(model)) body.response_format = 'b64_json';
-      const sizes = [/^dall-e-3/i.test(model) ? '1024x1792' : '1024x1536', null];
+      const sizes = [/^dall-e-3/i.test(model) ? (opts.wide ? '1792x1024' : '1024x1792') : (opts.wide ? '1536x1024' : '1024x1536'), null];
       let j = null;
       for (const sz of sizes) {
         const b = Object.assign({}, body); if (sz) b.size = sz;
@@ -5765,10 +5959,11 @@
     let blob;
     if (b64) blob = b64blob(b64, mime);
     else { let r; try { r = await fetch(url, { signal }); } catch (e) { throw { code: 'net' }; } blob = await r.blob(); }
-    return fit23(blob);
+    return fit(blob);
   }
   async function iaModels() {
     const P = IPROVS[IA.prov], base = iaUrl();
+    if (P.kind === 'qwen') { await qRefresh(); return QMODELS.filter(m => qHave(m[0])).map(m => m[0]); }
     if (!base) throw { code: 'nourl' };
     if (P.key && !String(IAKEYS[IA.prov] || '').trim()) throw { code: 'nokey' };
     const names = j => (Array.isArray(j) ? j : (j && (j.data || j.models || j.items)) || []).map(m => typeof m === 'string' ? m : (m && (m.id || m.title || m.name || m.model_name))).filter(Boolean);
@@ -5792,17 +5987,20 @@
     $('iUrlRow').hidden = !(P.kind === 'sd' || IA.prov === 'custom');
     $('iKeyRow').hidden = !P.key; $('iRemRow').hidden = !P.key;
     $('iSdRow').hidden = P.kind !== 'sd'; $('iDl').hidden = P.kind !== 'sd';
+    const qw = P.kind === 'qwen'; $('iQwen').hidden = !qw; $('iModelRow').hidden = qw; $('iModels').hidden = qw;
+    if (qw) { qRender(); if (!QI) qRefresh(); }
     $('iModelLbl').textContent = P.kind === 'sd' ? 'Checkpoint (optional)' : 'Model';
     if (document.activeElement !== $('iUrl')) $('iUrl').value = iaUrl();
     if (document.activeElement !== $('iKey')) $('iKey').value = IAKEYS[IA.prov] || '';
     $('iRem').checked = !!IA.remember;
     if (document.activeElement !== $('iModel')) $('iModel').value = iaModel();
     $('iSize').value = IA.size; $('iSteps').value = IA.steps; $('iCfg').value = IA.cfg; $('iSampler').value = IA.sampler || '';
-    $('iTest').textContent = P.kind === 'sd' ? 'Check connection and list checkpoints' : 'Check connection';
+    $('iTest').textContent = P.kind === 'sd' ? 'Check connection and list checkpoints' : qw ? 'Check the files' : 'Check connection';
+    $('iTest').hidden = qw && !QB();
     iaDlRender(); syncIaBtns();
   }
   function syncIaBtns() {
-    const ok = iaReady(), b = $('iaPick');
+    const ok = iaReady() && !Object.values(SCENE).some(x => x.busy), b = $('iaPick');
     if (b) { b.disabled = !ok || !!IACTL; b.title = ok ? 'Draws the character with ' + IPROVS[IA.prov].name : 'Set up Image generation in the API page first'; }
     const g = $('iaGo'); if (g) { g.disabled = !ok || !!IACTL; g.title = ok ? '' : 'Set up Image generation in the API page first'; }
   }
@@ -5819,6 +6017,12 @@
     on('iSteps', 'input', e => { IA.steps = +e.target.value || 25; iaSave(); });
     on('iCfg', 'input', e => { IA.cfg = +e.target.value || 6; iaSave(); });
     on('iSampler', 'input', e => { IA.sampler = e.target.value; iaSave(); });
+    on('qModel', 'change', e => { IA.q.model = e.target.value; iaSave(); qRender(); syncIaBtns(); drawImg(); });
+    on('qLlm', 'change', e => { IA.q.llm = e.target.value; iaSave(); qRender(); syncIaBtns(); drawImg(); });
+    on('qSteps', 'input', e => { IA.q.steps = Math.max(1, Math.min(100, +e.target.value || 30)); iaSave(); });
+    on('qCfg', 'input', e => { IA.q.cfg = Math.max(1, Math.min(20, +e.target.value || 5)); iaSave(); });
+    on('qGet', 'click', () => qGetMissing());
+    on('qDir', 'click', () => { if (QB()) QB().qwenOpenDir(); });
     on('iModels', 'click', async () => {
       const b = $('iModels'); b.disabled = true; say('istatus', 'Loading the model list…', null, false);
       try { const l = await iaModels(); say('istatus', l.length ? '{n} models loaded: pick one from the Model field.' : 'The service answered, but the list is empty: write the model name by hand.', { n: l.length }, !l.length); }
@@ -5829,6 +6033,7 @@
       const b = $('iTest'); b.disabled = true; say('istatus', 'Checking…', null, false);
       try {
         const l = await iaModels();
+        if (IPROVS[IA.prov].kind === 'qwen') { const m = qMissing(); say('istatus', m.length ? 'Missing: {n} file(s). Press "Download what is missing".' : 'Qwen Image 2.1 is ready.', { n: m.length }, !!m.length); b.disabled = false; return; }
         say('istatus', IPROVS[IA.prov].kind === 'sd' ? (l.length ? 'Connected. {n} checkpoints found.' : 'Connected, but no checkpoint found: download one below and press "Refresh" in WebUI.') : 'Connected. {n} image models available.', { n: l.length }, false);
       } catch (e) { const k = errKey(e); say('istatus', k[0], k[1] || null, true); }
       b.disabled = false;
@@ -5836,8 +6041,9 @@
     on('iClear', 'click', () => { IA = IA0(); IAKEYS = {}; try { localStorage.removeItem(IAKEY); } catch (e) { /* ignora */ } iaRender(); say('istatus', 'Settings forgotten.', null, false); });
     on('iclose', 'click', () => { if (IACTL) IACTL.abort(); $('idlg').close(); });
     on('iaPick', 'click', () => iaRun());
-    iaRender();
+    iaRender(); if (QB()) qRefresh();
   }
+  const qProgText = d => d.total ? 'Drawing… step ' + d.step + ' of ' + d.total : d.phase ? 'Preparing: ' + d.phase.replace(/^\[[A-Z]+\]\s*/, '').slice(0, 90) : 'Drawing…';
   /* Finestra del risultato */
   function iaWait(msg) {
     const box = $('ibody'); box.textContent = '';
@@ -5876,7 +6082,8 @@
         if (!IMGP || !IMGP.portrait || !IMGP.portrait.pos) throw { code: 'empty' };
       }
       iaWait('Drawing the character with ' + IPROVS[IA.prov].name + '… this can take a while.');
-      const file = await iaGenerate(IMGP.portrait.pos, IMGP.portrait.neg || '', IACTL.signal);
+      QPROG = d => { const w = document.querySelector('#ibody .qwait'); if (w && w.lastChild) w.lastChild.nodeValue = qProgText(d); };
+      const file = await iaGenerate(IMGP.portrait.pos, IMGP.portrait.neg || '', IACTL.signal).finally(() => { QPROG = null; });
       iaShow(file);
     } catch (e) {
       if (e && (e.code === 'abort' || e.name === 'AbortError')) { /* chiusa */ }
