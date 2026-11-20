@@ -14,6 +14,7 @@
 - **AI-assisted generation**: describe the idea in any language, pick the fields, get them written one by one in English. *Needs an API.*
 - **Lorebook**: import a lorebook JSON, or let the AI suggest entries from the description with proper names and focused trigger keywords
 - **Consistency check**: finds accidental contradictions (ages, looks, names), `{{char}}`/`{{user}}` misuse and leftover text
+- **Prompts** (Settings → Prompts): every prompt the app sends to the AI, on one page. Default is read-only; create your own presets to change any prompt, with Confirm / Restore on each.
 - 💬 **Test chat**: talk to the card before exporting it, with the same prompt layout SillyTavern sends. Greetings to swipe, lorebook entries shown when they trigger, nothing saved. *Needs an API.*
 
 **Design**
@@ -25,7 +26,7 @@
 **Images**
 - Ready-to-paste image prompts for the character, the first-message scene and every alternate message
 - **Image generation** from inside the app *Needs an API.*
-- **Qwen Image 2.1, local and all-in-one** (exe only): pick it in API → Image generation and press "Download what is missing". ST Card Creator downloads the engine (stable-diffusion.cpp), the model and the text encoder into the folder `qwen-image` next to the exe, then draws on your own graphics card. The first message image uses the character image as reference and is saved in the folder `images` next to the exe.
+- **Qwen Image 2.1, local and all-in-one** (exe only): pick it in Settings → Image Generation and press "Download what is missing". ST Card Creator downloads the engine (stable-diffusion.cpp), the model and the text encoder into the folder `qwen-image` next to the exe, then draws on your own graphics card. The first message image uses the character image as reference and is saved in the folder `images` next to the exe.
  
 **Import and export**
 - Import a card PNG or JSON. Export a PNG with the data embedded (`chara` + `ccv3`), JSON V3 or V2, CHARX (RisuAI) or TavernAI V1.

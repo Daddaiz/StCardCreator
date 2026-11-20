@@ -533,6 +533,24 @@
   details.acc > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 6px; }
   .accb { display: grid; gap: 18px; padding-top: 18px; }
   .accb .atitle { font-size: 20px; }
+  #sParams > .atitle, #sTest > .atitle { font-size: 14px; }
+  #tabs-api .tab { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.15; text-align: center; }
+  @media (max-width: 900px) { #tabs-api .tab { font-size: 13px; padding-left: 6px; padding-right: 6px; } }
+  /* Pagina Prompts */
+  .prtop { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .prwrap { width: min(100%, 360px); margin: 0; }
+  .prwrap > .tab { display: flex; align-items: center; gap: 10px; text-align: left; } .prwrap > .tab .lnm { flex: 1; }
+  #prMenu .prnew { border-top: 1px solid var(--line); color: var(--gold); }
+  #prList h3 { font: 700 20px/1.2 var(--font-title); color: var(--gold); margin: 26px 0 4px; }
+  .pritem { padding: 12px 0 4px; }
+  .pritem + .pritem { border-top: 1px solid var(--line); }
+  .pritem .prh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pritem .prh > b { font-weight: 700; } .pritem .prh .ctl { margin: 0 0 0 auto; gap: 6px; } .pritem .prh .ctl .btn { padding: 5px 12px; font-size: 13px; }
+  .pritem .prd { margin: 2px 0 6px; } .pritem hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0 8px; }
+  .pritem textarea { width: 100%; min-height: 110px; font: 13px/1.5 var(--font-mono); }
+  .pritem textarea:disabled { opacity: 0.75; cursor: not-allowed; }
+  .pritem.changed textarea { border-color: var(--gold); }
+  #newsPage { text-align: center; max-width: 720px; margin: 0 auto; } #newsPage ul { display: inline-block; text-align: left; max-width: 100%; }
   #sGfx { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 8px; }
   html.nogfx .flip-in { transition: none; }
   html.nogfx dialog[open], html.nogfx dialog[open]::backdrop { animation: none; }
@@ -1012,8 +1030,9 @@
   </div>
   </div>
 
+  <nav class="tabbar" id="tabs-api" aria-label="Settings sections" hidden></nav>
   <div id="view-api" class="apiview" hidden>
-    <details class="acc" name="apiacc" id="acc1" open><summary><h2 class="atitle">Scelta dell'API</h2></summary><div class="accb">
+    <details class="drawer" data-group="api" open><summary><h2 id="s-text">Text Generation</h2></summary><div class="accb">
     <section class="apibox">
       <div class="chips fit" id="provs" role="group" aria-label="Scelta dell'API"></div>
       <p class="sm"><span id="provNote"></span> <a id="provDoc" target="_blank" rel="noopener noreferrer" hidden></a></p>
@@ -1044,13 +1063,13 @@
       </div>
       <p class="sm" id="pInfo"></p>
     </section>
-    <section class="apibox">
+    <section class="apibox" id="sTest">
       <h2 class="atitle">Prova</h2>
       <div class="ctl"><button type="button" class="btn primary" id="aTest">Rileva e prova la connessione</button><button type="button" class="btn quiet" id="aClear">Dimentica queste impostazioni</button></div>
       <p class="sm" id="astatus" role="status"></p>
     </section>
     </div></details>
-    <details class="acc" name="apiacc" id="acc3"><summary><h2 class="atitle">Image generation</h2></summary><div class="accb">
+    <details class="drawer" data-group="api" id="acc3" open><summary><h2 id="s-img">Image Generation</h2></summary><div class="accb">
     <section class="apibox">
       <p class="sm">Draws the character image from the prompts in the <b>Image prompts</b> tab and puts it on the cover. This is separate from the text API above: it only draws.</p>
       <div class="chips fit" id="iprovs" role="group" aria-label="Image service"></div>
@@ -1085,7 +1104,7 @@
       <div class="dlgrid" id="iDlList"></div>
     </section>
     </div></details>
-    <details class="acc" name="apiacc" id="acc2"><summary><h2 class="atitle">SillyTavern</h2></summary><div class="accb">
+    <details class="drawer" data-group="api" open><summary><h2 id="s-st">SillyTavern</h2></summary><div class="accb">
     <section class="apibox" id="sSt">
       <div class="df">
         <span class="dfh"><b>SillyTavern address</b></span>
@@ -1099,14 +1118,24 @@
       <p class="sm" id="sNote"></p>
     </section>
     </div></details>
+    <details class="drawer" data-group="api" open><summary><h2 id="s-gfx">Graphic Enhancements</h2></summary><div class="accb">
     <section class="apibox" id="sGfx">
-      <h2 class="atitle">Graphic Enhancements</h2>
       <label class="chk"><input type="checkbox" id="gfxOn" checked> Graphic Enhancements</label>
     </section>
-    <section class="apibox">
-      <h2 class="atitle">What's new</h2>
-      <div class="ctl"><button type="button" class="btn" id="newsAll">See the changes in each version</button></div>
+    </div></details>
+    <details class="drawer" data-group="api" open><summary><h2 id="s-prompts">Prompts</h2></summary><div class="accb">
+    <section class="apibox" id="sPrompts">
+      <div class="prtop">
+        <div class="prewrap prwrap" id="prwrap"><button type="button" class="tab" id="prBtn" aria-haspopup="true" aria-expanded="false"></button><div class="dlmenu" id="prMenu" hidden role="menu"></div></div>
+        <button type="button" class="btn quiet" id="prDel" hidden>Delete this preset</button>
+      </div>
+      <p class="sm" id="prNote"></p>
+      <div id="prList"></div>
     </section>
+    </div></details>
+    <details class="drawer" data-group="api" open><summary><h2 id="s-news">What's new</h2></summary><div class="accb">
+    <section class="apibox" id="sNews"><div class="nbody nall" id="newsPage"></div></section>
+    </div></details>
   </div>
   <div id="view-gen" class="apiview" hidden>
     <section class="apibox">
@@ -1225,6 +1254,9 @@
   <dialog class="wdlg cdlg ddlg" id="ddlg" aria-label="Update the card on SillyTavern"><div class="cin"><div class="chead"><b>Update the card on SillyTavern</b><span class="tk" id="dsum"></span><button type="button" class="btn quiet" id="dclose">Close</button></div><div class="kbody" id="dnotes"></div><div class="difs" id="difs"></div><div class="krow"><button type="button" class="btn" id="dno">Cancel</button><button type="button" class="btn primary" id="dok">Update</button></div></div></dialog>
   <dialog class="wdlg cdlg qdlg" id="qdlg" aria-label="Consistency check"><div class="cin"><div class="chead"><b>Consistency check</b><span class="tk" id="qsum"></span></div><div class="qbody" id="qbody"></div><div class="qfoot"><button type="button" class="btn" id="qagain" hidden>Check again</button><button type="button" class="btn" id="qclose">OK</button></div></div></dialog>
   <dialog class="wdlg cdlg idlg" id="idlg" aria-label="Generated image"><div class="cin"><div class="chead"><b>Generated image</b><span class="tk" id="isum"></span><button type="button" class="btn quiet" id="iclose">Close</button></div><div class="ibody" id="ibody"></div><div class="krow" id="irow"></div></div></dialog>
+  <dialog class="wdlg kdlg" id="prdlg" aria-labelledby="prdt"><form method="dialog" id="prform" class="cin"><div class="chead"><b id="prdt">Create a new Prompts Preset</b></div>
+    <label class="df"><span class="dfh"><b>Preset name</b></span><input type="text" id="prName" maxlength="40" autocomplete="off" spellcheck="false" required></label>
+    <div class="krow"><button type="button" class="btn" id="prCancel">Cancel</button><button type="submit" class="btn primary" id="prOk" value="ok">OK</button></div></form></dialog>
   <dialog class="ndlg" id="ndlg" aria-label="What's new"><div class="nin"><img class="nlogo" id="nlogo" alt="ST Card Creator" width="266" height="124"><div class="nbody" id="nbody"></div><p class="nhint">Click anywhere to close</p></div></dialog>
   <dialog class="wdlg kdlg" id="kdlg" aria-label="Confirm"><div class="cin"><div class="chead"><b id="ktitle"></b></div><div class="kbody" id="kbody"></div><div class="krow"><button type="button" class="btn" id="kno">Cancel</button><button type="button" class="btn" id="kalt" hidden></button><button type="button" class="btn primary" id="kok">OK</button></div></div></dialog>
   <dialog class="wdlg" id="wdlg" aria-label="Bacchetta"><div class="wd" id="wdbody"></div></dialog>
@@ -3222,7 +3254,7 @@
   /* Schede orizzontali: ogni cassetto è un pannello, si vede solo quello scelto */
   const TABSEL = {};
   const TABLBL = { 'Dialogue examples': 'Dialogue Ex.', 'Advanced definitions': 'Adv. Definitions', 'Import Card': 'Import' };
-  const TABNAV = { data: 'tabs-data', cover: 'tabs-cover' };
+  const TABNAV = { data: 'tabs-data', cover: 'tabs-cover', api: 'tabs-api' };
   const panelsOf = g => [...document.querySelectorAll('details.drawer[data-group="' + g + '"]')];
   const panelId = d => d.querySelector('summary h2').id;
   function selectTab(g, id) {
@@ -3233,6 +3265,8 @@
     ps.forEach(d => { d.open = true; d.classList.toggle('tab-off', d !== on); if (d._tab) d._tab.setAttribute('aria-pressed', String(d === on)); });
     if (on.contains($('flist'))) buildList();
     if (panelId(on) === 'd-img') drawImg();
+    if (panelId(on) === 's-prompts') prRender();
+    if (panelId(on) === 's-news') newsPage();
   }
   function initTabs() {
     Object.keys(TABNAV).forEach(g => {
@@ -3659,7 +3693,7 @@
     XTA = ta;
     const x = $('xta');
     $('xtitle').textContent = title;
-    x.value = ta.value; x.setAttribute('aria-label', title);
+    x.value = ta.value; x.setAttribute('aria-label', title); x.readOnly = !!(ta.disabled || ta.readOnly);
     const cnt = () => { $('xtk').textContent = nf(tok(x.value)) + ' ' + tr('token'); };
     cnt();
     x.oninput = () => { if (XTA) { XTA.value = x.value; XTA.dispatchEvent(new Event('input', { bubbles: true })); } cnt(); };
@@ -3708,24 +3742,25 @@
     else if (kind === 'description' && K.personality.trim()) parts.push('Personality: ' + K.personality.trim().slice(0, 400));
     return parts.join('\n');
   }
-  function wandMessages(st, mode) {
-    const g = WF[st.f.kind];
-    const text = String(st.f.get() || '').trim();
-    const ctx = cardContext(st.f.kind);
-    const sys = mode === 'ask'
-      ? 'You help authors write SillyTavern roleplay character cards.'
-      : ['You are an expert editor of SillyTavern roleplay character cards.',
+  const WAND_ASKSYS0 = 'You help authors write SillyTavern roleplay character cards.';
+  const WAND_SYS0 = ['You are an expert editor of SillyTavern roleplay character cards.',
         'Rewrite the author\'s text so it is optimized for the given card field.',
         'Rules: output ONLY the final text for the field, with no preface, no explanation, no markdown fences and no surrounding quotes.',
         'Always write in English, even if the author text is in another language (translate it).',
         'Keep the author\'s facts, names, tone and intent. Fill small gaps tastefully, but do not invent major facts that the author or the answers do not support.',
         'Keep {{char}}, {{user}} and other SillyTavern macros exactly as they are, and where the field text hard-codes the main character\'s own name or the user, use the macros instead (except for the name, tags, cover tagline and keywords fields). Never write {{user}}\'s actions, thoughts or speech.',
         'Every token must earn its place: be concrete, no filler, no repetition, and leave out any detail that would not change how the character responds.'].join('\n');
-    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + (st.f.kind === 'keys' ? langKeysNote() : '') + '\n';
+  const WAND_ASK0 = 'Ask the 3 to 5 most useful, specific questions whose answers would let you write a much better version of this field (missing concrete details, voice, relationships, goals, constraints). Do not ask what the text already answers. Write the questions in [LANGUAGE].\nReply with ONLY a JSON array of strings.';
+  function wandMessages(st, mode) {
+    const g = WF[st.f.kind];
+    const text = String(st.f.get() || '').trim();
+    const ctx = cardContext(st.f.kind);
+    const sys = mode === 'ask' ? PT('wand.asksys') : PT('wand.sys');
+    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + PT('field.' + st.f.kind) + (st.f.kind === 'keys' ? langKeysNote() : '') + '\n';
     if (ctx) u += '\nCARD CONTEXT (for consistency only, do not copy it):\n' + ctx + '\n';
     u += '\nAUTHOR TEXT (any language):\n<<<\n' + text + '\n>>>\n';
     if (mode === 'ask') {
-      u += '\nAsk the 3 to 5 most useful, specific questions whose answers would let you write a much better version of this field (missing concrete details, voice, relationships, goals, constraints). Do not ask what the text already answers. Write the questions in ' + (LANG === 'it' ? 'Italian' : 'English') + '.\nReply with ONLY a JSON array of strings.';
+      u += '\n' + fill(PT('wand.ask'), { LANGUAGE: LANG === 'it' ? 'Italian' : 'English' });
     } else {
       if (st.extra.trim()) u += '\nAUTHOR INSTRUCTIONS:\n' + st.extra.trim() + '\n';
       const qa = st.qs.map((q, i) => [q, (st.ans[i] || '').trim()]).filter(x => x[1]);
@@ -3831,7 +3866,7 @@
     if (v === 'dati' || v === 'cover') placeStage(v);
     Object.keys(VIEWS).forEach(k => { VIEWS[k].hidden = k !== v; });
     document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
-    $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover';
+    $('tabs-data').hidden = v !== 'dati'; $('tabs-cover').hidden = v !== 'cover'; $('tabs-api').hidden = v !== 'api';
     { const ed = v === 'dati' || v === 'cover'; $('cinfo').hidden = !ed; document.querySelector('header.bar').classList.toggle('noline', ed); }
     if (v === 'cover') { buildList(); render(); try { updBack(); } catch (e) {} setTimeout(() => { try { window.__wiggle && window.__wiggle(); } catch (e) {} }, 900); }
     if (v === 'dati') { render(); try { updBack(); } catch (e) {} }
@@ -4367,6 +4402,9 @@
     }, 400);
     return { done: () => new Promise(res => { clearInterval(iv); let i = shown; if (document.hidden) { paintSegs(CKSEGS); res(); return; } const step = () => { if (!bar.isConnected || i >= CKSEGS) { res(); return; } i++; paintSegs(i); setTimeout(step, 45); }; step(); }), stop: () => clearInterval(iv) };
   }
+  const CHECK_SYS0 = 'You are a meticulous continuity editor for roleplay character cards (SillyTavern format). You find accidental contradictions and technical mistakes, the kind an author would be embarrassed by. You understand that good characters are full of deliberate tension and you never treat it as an error. You never rewrite style, never add content and never flag matters of taste. Output JSON only, no prose.';
+  const CHECK_TASK0 = 'Check this character card for consistency.\n\nCARD (each section starts with "### id (label)"):\n\n[CARD]\n\nLOOK FOR:\n- Facts that disagree between sections by accident, where the same fact is stated two different ways: age, appearance (hair, eyes, height, build), name spelling, relationships, job, places, species, timeline.\n- Placeholder misuse: {{char}} is the character, {{user}} is the player. Flag {{user}} used for the character, {{char}} used for the player, and any greeting that speaks, decides or acts for {{user}}.\n- Leftover placeholders or notes: things like [insert ...], TODO, XXX, lorem ipsum, "Name" used as a name.\n- Dialogue examples that mix speaker labels or lack <START> separators between examples.\n- Contradictions inside a single section, where one sentence makes another one impossible and nothing suggests it is on purpose.\n- {{user}} described in the description, personality or scenario (looks, actions, feelings, decisions), which belongs to the persona of the player.\n- A greeting or example written in a clearly different narration style or tense from the first message (for example first person versus third person).\n- Lorebook entries whose content contradicts the description or scenario.\n\nINTENTIONAL TENSION IS NOT AN ERROR. Never flag a character who breaks, ignores or defies a rule, law, taboo or custom of the setting; a character who differs from everyone else; hypocrisy, secrets, vices, quirks, inner conflict, irony, rebellion, or opposite traits in one person (shy but craves attention); or a gap between what a character says and does. These make a card interesting. Flag a rule-breaking case only when the card itself states that it is literally impossible and then shows it happening with no explanation. When in doubt whether something is deliberate, do not flag it.\n\nDO NOT FLAG: writing style, length, taste, missing optional sections, the proper name used instead of {{char}}, or the language of the text.' +
+      '\n\nReturn a JSON array with at most 12 items, the most serious first. Never report the same problem twice and never give two items the same "find" text. Each item:\n{"id": "<section id exactly as given>", "category": "facts" | "roles" | "clean" | "format", "severity": "high" | "medium" | "low", "issue": "<one or two sentences; name the sections that disagree>", "find": "<text copied verbatim from that section, at most 160 characters, or an empty string>", "replace": "<replacement for the found text that fixes the problem, same language and style, or an empty string>"}\nCategories: facts = facts that disagree; roles = {{char}}/{{user}} misuse or speaking for the player; clean = leftover notes or template text; format = broken greeting or dialogue example structure.\nUse "find"/"replace" only when a small local edit really fixes the problem; otherwise leave both empty. If the card is consistent, return [].';
   async function runCheck(auto) {
     if (auto !== true) CKCHAIN = 0;
     const d = $('qdlg'), box = $('qbody');
@@ -4377,10 +4415,8 @@
     const dump = ckDump();
     if (!dump.trim()) { box.textContent = ''; const p = mk('p', 'qok'); p.textContent = 'The card is empty: nothing to check.'; box.appendChild(p); ckSetFoot('score'); $('qclose').textContent = 'OK'; return; }
     const wait = ckWaitUI(box, dump);
-    const sys = 'You are a meticulous continuity editor for roleplay character cards (SillyTavern format). You find accidental contradictions and technical mistakes, the kind an author would be embarrassed by. You understand that good characters are full of deliberate tension and you never treat it as an error. You never rewrite style, never add content and never flag matters of taste. Output JSON only, no prose.';
-    const usr = 'Check this character card for consistency.\n\nCARD (each section starts with "### id (label)"):\n\n' + dump +
-      '\n\nLOOK FOR:\n- Facts that disagree between sections by accident, where the same fact is stated two different ways: age, appearance (hair, eyes, height, build), name spelling, relationships, job, places, species, timeline.\n- Placeholder misuse: {{char}} is the character, {{user}} is the player. Flag {{user}} used for the character, {{char}} used for the player, and any greeting that speaks, decides or acts for {{user}}.\n- Leftover placeholders or notes: things like [insert ...], TODO, XXX, lorem ipsum, "Name" used as a name.\n- Dialogue examples that mix speaker labels or lack <START> separators between examples.\n- Contradictions inside a single section, where one sentence makes another one impossible and nothing suggests it is on purpose.\n- {{user}} described in the description, personality or scenario (looks, actions, feelings, decisions), which belongs to the persona of the player.\n- A greeting or example written in a clearly different narration style or tense from the first message (for example first person versus third person).\n- Lorebook entries whose content contradicts the description or scenario.\n\nINTENTIONAL TENSION IS NOT AN ERROR. Never flag a character who breaks, ignores or defies a rule, law, taboo or custom of the setting; a character who differs from everyone else; hypocrisy, secrets, vices, quirks, inner conflict, irony, rebellion, or opposite traits in one person (shy but craves attention); or a gap between what a character says and does. These make a card interesting. Flag a rule-breaking case only when the card itself states that it is literally impossible and then shows it happening with no explanation. When in doubt whether something is deliberate, do not flag it.\n\nDO NOT FLAG: writing style, length, taste, missing optional sections, the proper name used instead of {{char}}, or the language of the text.' +
-      '\n\nReturn a JSON array with at most 12 items, the most serious first. Never report the same problem twice and never give two items the same "find" text. Each item:\n{"id": "<section id exactly as given>", "category": "facts" | "roles" | "clean" | "format", "severity": "high" | "medium" | "low", "issue": "<one or two sentences; name the sections that disagree>", "find": "<text copied verbatim from that section, at most 160 characters, or an empty string>", "replace": "<replacement for the found text that fixes the problem, same language and style, or an empty string>"}\nCategories: facts = facts that disagree; roles = {{char}}/{{user}} misuse or speaking for the player; clean = leftover notes or template text; format = broken greeting or dialogue example structure.\nUse "find"/"replace" only when a small local edit really fixes the problem; otherwise leave both empty. If the card is consistent, return [].';
+    const sys = PT('check.sys');
+    const usr = fill(PT('check.task'), { CARD: dump });
     try {
       const r = await callLLM([{ role: 'system', content: sys }, { role: 'user', content: usr }], { signal: CKCTL.signal, maxTokens: 2400 });
       const arr = parseJSONArray(String((r && typeof r === 'object' ? r.text : r) || ''));
@@ -5066,10 +5102,10 @@
     if (K.name.trim() && kind !== 'name') ctx.push('Name: ' + K.name.trim());
     ['description', 'personality', 'scenario'].forEach(k => { if (k !== kind && K[k].trim()) ctx.push(WF[k][0] + ': ' + K[k].trim().slice(0, 1400)); });
     if (kind === 'mes_example' && K.first_mes.trim()) ctx.push('First message: ' + K.first_mes.trim().slice(0, 800));
-    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + g[1] + '\n';
+    let u = 'FIELD: ' + g[0] + '\nFIELD RULES: ' + PT('field.' + kind) + '\n';
     if (ctx.length) u += '\nCARD CONTEXT (stay consistent, do not copy):\n' + ctx.join('\n') + '\n';
     u += '\nAUTHOR IDEA (any language):\n<<<\n' + idea + '\n>>>\n\nReturn only the final English text for this field.';
-    return [{ role: 'system', content: GEN_SYS }, { role: 'user', content: u }];
+    return [{ role: 'system', content: PT('gen.sys') }, { role: 'user', content: u }];
   }
   /* Controllo qualità: ritenta se la risposta è palesemente sbagliata, poi tiene comunque l'ultima versione e segnala */
   const waitMs = (ms, sig) => new Promise((res, rej) => {
@@ -5125,6 +5161,8 @@
   }
   const NAME_RULE = 'Every person who appears or is mentioned must have a proper first name: if the card text or the idea refers to someone only by role ("her boyfriend", "the landlord"), invent a fitting name for the setting and use it. For a secondary character always give name, approximate age, relationship to the main character and a small but distinct personality.';
   const KEY_RULE = 'Keywords are the words that should wake this entry up in the chat, so each one must point to THIS subject and almost nobody else. Use the specific name first (a person\'s name, a place\'s or object\'s own name). For a person, also add a short relationship phrase that includes the main character\'s name when natural ("sue\'s best friend"). Keep multi-word names as ONE keyword, never split them: "duffel bag", not "duffel" and "bag". For places and objects, qualify them with their owner or location ("sue and daniele\'s apartment"), never the bare noun alone (apartment, home, house, place, building, room, bed, bag). Never use: pronouns or filler words (he, him, her, she, they, it, the, their); phrases starting with a possessive pronoun ("their bed"); emotion, mood or state words and adjectives (angry, crying, tears, furious, quiet, sad); abstract nouns (betrayal, love, trust, mood, fear); broad role words alone (friend, man, woman); generic numbers or durations ("seven years"). Lowercase, 2 to 5 keywords.';
+  const LORE_SYS0 = 'You help authors build lorebooks for SillyTavern character cards.';
+  const LORE_TASK0 = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n[CARD][EXISTING]\n\nRULES:\n- NEVER make an entry about the main character[MAIN]: the description is always sent to the model, so an entry that repeats it only wastes tokens. Entries are about OTHER people, places, objects, events, organizations and world rules. Every entry must contain NEW information: never repeat, copy or paraphrase anything already stated in the description, personality, scenario, first message or another entry, and state each fact only once. Build on the card instead: add details that connect to it (a person\'s past, a place\'s history, a rule of the world, a secret, a rival, an object with a story), and now and then something unexpected that still fits the setting.\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n[LANGUAGE_RULE]Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords][LANGUAGE_SCHEMA], "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
   const WEAK_KEYS = new Set(['he', 'him', 'his', 'she', 'her', 'hers', 'they', 'them', 'their', 'it', 'its', 'i', 'me', 'my', 'you', 'your', 'we', 'us', 'the', 'a', 'an', 'this', 'that', 'there', 'man', 'woman', 'guy', 'girl', 'boy', 'person', 'people', 'thing', 'one', 'and', 'or', 'of', 'in', 'on', 'at', 'to', 'is', 'was', 'apartment', 'flat', 'home', 'house', 'place', 'building', 'room', 'bed', 'bag', 'door', 'street', 'town', 'city', 'stuff', 'friend', 'friends', 'mood', 'moods', 'angry', 'anger', 'furious', 'crying', 'cry', 'tears', 'tear', 'quiet', 'sad', 'sadness', 'happy', 'upset', 'afraid', 'scared', 'fear', 'love', 'hate', 'trust', 'betrayal', 'pain', 'feeling', 'feelings', 'emotion', 'emotions', 'lonely', 'tired']);
   const cleanKeys = (arr, title) => {
     const seen = new Set(), out = [];
@@ -5160,9 +5198,7 @@
     if (K.first_mes.trim()) ctx.push('First message: ' + K.first_mes.trim().slice(0, 1200));
     if (idea) ctx.push('Author idea: ' + idea.slice(0, 800));
     const have = K.entries.map(e => e.title.trim() || e.keys.trim()).filter(Boolean).slice(0, 30).join('; ');
-    const u = 'Propose lorebook entries for this character card. An entry is a self-contained piece of world or character information that should only be injected when its keywords appear in the chat: places, factions, important objects, relationships, secrets, rules of the setting.\n\nCARD:\n' + ctx.join('\n') +
-      (have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '') +
-      '\n\nRULES:\n- NEVER make an entry about the main character' + (K.name.trim() ? ' (' + K.name.trim() + ')' : '') + ': the description is always sent to the model, so an entry that repeats it only wastes tokens. Entries are about OTHER people, places, objects, events, organizations and world rules. Every entry must contain NEW information: never repeat, copy or paraphrase anything already stated in the description, personality, scenario, first message or another entry, and state each fact only once. Build on the card instead: add details that connect to it (a person\'s past, a place\'s history, a rule of the world, a secret, a rival, an object with a story), and now and then something unexpected that still fits the setting.\n- ' + NAME_RULE + '\n- The entry title is the subject\'s proper name (for a person: just the name, e.g. "Daniele"; for a place or object: its specific name).\n- ' + KEY_RULE + '\n- If the card mentions someone only by role, make an entry for them with an invented name and keep it consistent with what the card says about them.\n- Make entries only about concrete, nameable things: people, places, objects, events, organizations or world rules. NEVER make entries about moods, emotions, feelings, personality traits or behavior (those belong in the character description), because their keywords would fire for everyone and everything.\n- Only make entries that will matter during the roleplay. If the story starts after the character leaves a place or after an event, say so in the entry (for example that she no longer lives there) and skip places or objects that are only background.\n\n' + LANG_RULE() + 'Return ONLY a JSON array of 3 to 6 objects: {"title": string, "keys": [2 to 5 lowercase English trigger keywords]' + LANG_SCHEMA() + ', "content": string}. The content is 1 to 4 concise English sentences of neutral prose that start with the subject\'s name; for a person include approximate age, relationship to the main character and personality. Every entry must be fully written with real, specific content: never output placeholder, TBD, empty or template text, and never an entry whose content is just a label. If you cannot write a real entry, leave it out. Do not contradict the card; you may expand the setting plausibly.';
+    const u = fill(PT('lore.task'), { CARD: ctx.join('\n'), EXISTING: have ? '\n\nEXISTING ENTRIES (do not repeat): ' + have : '', MAIN: K.name.trim() ? ' (' + K.name.trim() + ')' : '', LANGUAGE_RULE: LANG_RULE(), LANGUAGE_SCHEMA: LANG_SCHEMA() });
     /* Scarta la voce sul personaggio principale e quelle che ricopiano la descrizione */
     const nrm = s => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
     const cname = nrm(K.name), cfirst = cname.split(' ')[0] || '';
@@ -5175,7 +5211,7 @@
       keys: mergeKeys(x),
       content: str(x && x.content).trim()
     })).filter(x => x.title && x.keys && x.content.length >= 25 && !LORE_JUNK.test(x.content.replace(/[\s.…\-_*]+/g, ' ').trim()) && !/^(?:placeholder|tbd|todo|untitled|title|name|entry)\b/i.test(x.title) && x.content.toLowerCase().replace(/\W+/g, '') !== x.title.toLowerCase().replace(/\W+/g, '') && !/\b(?:moods?|emotions?|feelings?|personality|traits?|behaviou?rs?)\b/i.test(x.title) && !isMain(x.title) && !copied(x.content)).slice(0, 8);
-    const r = await callChecked([{ role: 'system', content: 'You help authors build lorebooks for SillyTavern character cards.' }, { role: 'user', content: u }], { signal, maxTokens: 1800 },
+    const r = await callChecked([{ role: 'system', content: PT('lore.sys') }, { role: 'user', content: u }], { signal, maxTokens: 1800 },
       t => toItems(t).length ? null : 'it was not a valid JSON array of objects with title, keys and content (or every entry was unusable)');
     const items = toItems(r.text);
     items.warn = r.warn;
@@ -5548,26 +5584,30 @@
     'Be concrete and visual: only things that can be seen. Never include names of real people, living artists, or copyrighted characters. Do not ask for text, captions or logos in the image.',
     'Safety: if the character\'s age is not stated, depict an adult. Never sexualize anyone who is or looks like a minor or child; for such characters keep the image fully clothed, wholesome and safe-rated. Tone: match the card. If the card or the message is explicit (adult sexual content, nudity, gore, violence between adult characters), the prompt must be just as explicit: name plainly what is seen, with the matching rating tag on tag-based models, and do not soften, censor or fade to black. If the card is not explicit, keep the image safe.',
     'Output exactly this format and nothing else:\nPOSITIVE:\n<the prompt>\nNEGATIVE:\n<the negative prompt, or the single word none if this model has no negative prompt>'].join('\n');
+  const IMG_LAST0 = 'Illustrate ONE precise moment: the LAST thing that happens in the message (its final lines). Read the message to the end; what comes earlier is only context. Put [NAME] in the exact pose, action, gesture, expression and place of that final moment (for example sitting, lying, kneeling, leaning, walking away, reaching for something, seen from behind), with the framing and camera angle that show it best. Do NOT use a neutral standing or portrait pose, and do not repeat the pose of the character portrait, unless the final moment really is that. Then the setting, atmosphere and lighting of that moment.';
+  const IMG_PORTRAIT0 = 'Write a prompt for a vertical character image (2:3) of [NAME]: FULL BODY, head to feet all in frame, standing upright in a relaxed neutral idle pose, facing the viewer, on a plain solid BLACK background with nothing else in the image (no setting, no props, no other characters, no scenery). Describe only how [NAME] looks: body, face, hair, eyes, skin, outfit, accessories and signature details, plus an expression that suits their personality. Ignore events, places and actions from the card; this is the idle reference image of the character. If the model has a negative prompt, include background scenery, cropped, close-up, partial body, sitting. No text.';
+  const IMG_SCENE0 = 'Write a prompt for an illustration of the first message, in a wide 3:2 composition. [LAST_MOMENT] Do not depict the user; if the user is involved, show it from their point of view.';
+  const IMG_ALT0 = 'Write a prompt for an illustration of this alternate first message, in a wide 3:2 composition. [LAST_MOMENT] Keep [NAME]\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
   function imgMessages(kind, altIdx) {
     const m = sdInfo(), sty = SDSTYLE[m[2]], nm = K.name.trim() || 'the character';
     const fix = s => str(s).replace(/\{\{char\}\}/gi, nm).replace(/\{\{user\}\}/gi, 'the user').trim();
     const ctx = ['Name: ' + nm];
     (kind === 'portrait' ? ['description', 'personality'] : ['description', 'personality', 'scenario']).forEach(k => { if (K[k].trim()) ctx.push(WF[k][0] + ': ' + fix(K[k]).slice(0, 1800)); });
-    let rules = sty.rules.replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
+    let rules = PT('style.' + m[2]).replace('{Q}', m[3] || 'start the positive prompt with "masterpiece, best quality"');
     if (m[2] === 'anime' && m[3]) rules = rules.replace('{Q}', m[3]);
-    const LAST = 'Illustrate ONE precise moment: the LAST thing that happens in the message (its final lines). Read the message to the end; what comes earlier is only context. Put ' + nm + ' in the exact pose, action, gesture, expression and place of that final moment (for example sitting, lying, kneeling, leaning, walking away, reaching for something, seen from behind), with the framing and camera angle that show it best. Do NOT use a neutral standing or portrait pose, and do not repeat the pose of the character portrait, unless the final moment really is that. Then the setting, atmosphere and lighting of that moment.';
+    const LAST = fill(PT('img.last'), { NAME: nm });
     const ends = t => { t = fix(t); return t.length <= 2200 ? t : t.slice(0, 600) + '\n[...]\n' + t.slice(-1600); };
     let task;
-    if (kind === 'portrait') task = 'Write a prompt for a vertical character image (2:3) of ' + nm + ': FULL BODY, head to feet all in frame, standing upright in a relaxed neutral idle pose, facing the viewer, on a plain solid BLACK background with nothing else in the image (no setting, no props, no other characters, no scenery). Describe only how ' + nm + ' looks: body, face, hair, eyes, skin, outfit, accessories and signature details, plus an expression that suits their personality. Ignore events, places and actions from the card; this is the idle reference image of the character. If the model has a negative prompt, include background scenery, cropped, close-up, partial body, sitting. No text.';
+    if (kind === 'portrait') task = fill(PT('img.portrait'), { NAME: nm });
     else if (kind === 'alt') {
       ctx.push('Alternate first message: ' + ends(K.alt[altIdx]));
-      task = 'Write a prompt for an illustration of this alternate first message, in a wide 3:2 composition. ' + LAST + ' Keep ' + nm + '\'s look identical to the card. Do not depict the user; if the user is involved, show it from their point of view.';
+      task = fill(PT('img.alt'), { NAME: nm, LAST_MOMENT: LAST });
     } else {
       ctx.push('First message: ' + ends(K.first_mes));
-      task = 'Write a prompt for an illustration of the first message, in a wide 3:2 composition. ' + LAST + ' Do not depict the user; if the user is involved, show it from their point of view.';
+      task = fill(PT('img.scene'), { NAME: nm, LAST_MOMENT: LAST });
     }
     const u = 'TARGET MODEL: ' + m[1] + '\nMODEL RULES: ' + rules + '\nIMAGE STYLE: ' + ISTY + ' - ' + istyDesc() + '. The prompt must clearly ask for this style, expressed the way the target model understands it: plain words for natural-language models, matching tags for tag-based models. Do not let the model rules or default habits override this style (for example, no anime tags for a photorealistic image, and no photo terms for an anime image).\n\nCARD:\n' + ctx.join('\n') + '\n\nTASK: ' + task + '\n' + (sty.neg ? 'Include a negative prompt such as: ' + (m[2] === 'pony' ? 'score_6, score_5, score_4, ' : '') + NEG_BASE + ' (adapt it to this model).' : 'This model has no negative prompt: write the word none after NEGATIVE:.');
-    return [{ role: 'system', content: IMG_SYS }, { role: 'user', content: u }];
+    return [{ role: 'system', content: PT('img.sys') }, { role: 'user', content: u }];
   }
   function parseImg(t) {
     const x = String(t || '').replace(/```[a-z]*\n?/gi, '').trim();
@@ -5651,7 +5691,7 @@
     row.append(ctl, msg); w.appendChild(row);
   }
   /* Riga sotto il prompt del Character image: crea l'immagine e la mette subito come copertina */
-  const openImgSettings = () => { showView('api'); const a = $('acc3'); if (a) { a.open = true; a.scrollIntoView({ block: 'start', behavior: 'smooth' }); } };
+  const openImgSettings = () => { showView('api'); selectTab('api', 's-img'); };
   function coverRow(w) {
     const st = SCENE.cover || {}, row = mk('div', 'scrow'), ctl = mk('div', 'ctl'), msg = mk('p', 'sm');
     if (st.busy) {
@@ -6418,7 +6458,7 @@
   /* Prompt principale predefinito di SillyTavern: usato se la carta non ne ha uno suo */
   const PC_MAIN = "Write {{char}}'s next reply in a fictional chat between {{char}} and {{user}}.";
   const pcName = () => (K.name || '').trim() || 'Character';
-  const pcSub = t => bkSub(String(t || '').replace(/\{\{\s*original\s*\}\}/gi, PC_MAIN)).trim();
+  const pcSub = t => bkSub(String(t || '').replace(/\{\{\s*original\s*\}\}/gi, PT('chat.main'))).trim();
   const pcGreets = () => [K.first_mes].concat(K.alt || []).map(x => str(x)).filter(x => x.trim());
   /* Voci del lorebook attive: quelle costanti, più quelle con una parola chiave negli ultimi messaggi */
   function pcLore() {
@@ -6429,7 +6469,7 @@
   /* Stessa struttura che SillyTavern manda al modello: prompt principale, descrizione, personalità, scenario, lorebook, esempi, note */
   function pcSystem(lore) {
     const t = k => str(K[k]).trim(), out = [];
-    out.push(pcSub(t('system_prompt') || PC_MAIN));
+    out.push(pcSub(t('system_prompt') || PT('chat.main')));
     if (t('description')) out.push(pcSub(t('description')));
     if (t('personality')) out.push(pcSub("{{char}}'s personality: " + t('personality')));
     if (t('scenario')) out.push(pcSub('Scenario: ' + t('scenario')));
@@ -6683,8 +6723,105 @@
 
   /* Avviso nuova versione: solo un messaggio con link alla pagina della release, non scarica né sostituisce nulla */
 
+
+  /* ---------- Prompts: tutti i prompt mandati all'IA, con preset modificabili (Default resta fisso) ---------- */
+  const PRKEY = 'st-card-creator-prompts';
+  let PDEF = null;   /* [id, gruppo, titolo, spiegazione, testo predefinito] — costruito al primo uso, quando tutte le costanti esistono */
+  function pdefs() {
+    if (PDEF) return PDEF;
+    const F = 'Rules for this field, used by AI-assisted generation and by the wand.';
+    const SN = { qwen: 'Qwen Image 2.1', nl: 'Natural-language models (GPT-Image, DALL·E, Imagen, HiDream…)', flux: 'FLUX', fluxedit: 'FLUX Kontext / Edit', sdxl: 'SDXL family', sd3: 'Stable Diffusion 3 / 3.5', pony: 'Pony Diffusion', anime: 'Anime tag models (Illustrious, NoobAI, Animagine…)' };
+    PDEF = [
+      ['gen.sys', 'Writing the card', 'System prompt', 'Sent with every field written by AI-assisted generation.', GEN_SYS],
+      ['wand.sys', 'Writing the card', 'Wand · rewrite (system)', 'Sent when the wand rewrites a field.', WAND_SYS0],
+      ['wand.asksys', 'Writing the card', 'Wand · questions (system)', 'Sent when the wand asks you questions about a field.', WAND_ASKSYS0],
+      ['wand.ask', 'Writing the card', 'Wand · questions request', '[LANGUAGE] becomes the language of the app.', WAND_ASK0]
+    ];
+    Object.keys(WF).forEach(k => PDEF.push(['field.' + k, 'Card fields', WF[k][0], F, WF[k][1]]));
+    PDEF.push(
+      ['lore.sys', 'Lorebook', 'System prompt', 'Sent when the lorebook entries are written.', LORE_SYS0],
+      ['lore.task', 'Lorebook', 'Request', '[CARD] the card, [EXISTING] the entries already there, [MAIN] the main character\'s name, [LANGUAGE_RULE] and [LANGUAGE_SCHEMA] the chat language.', LORE_TASK0],
+      ['check.sys', 'Consistency check', 'System prompt', 'Sent with the consistency check.', CHECK_SYS0],
+      ['check.task', 'Consistency check', 'Request', '[CARD] becomes the whole card. Keep the JSON format: the app reads it.', CHECK_TASK0],
+      ['chat.main', 'Test chat', 'Main prompt', 'Used in the Test chat when the card has no Main prompt of its own.', PC_MAIN],
+      ['img.sys', 'Image prompts', 'System prompt', 'Sent when an image prompt is written. Keep the POSITIVE/NEGATIVE format: the app reads it.', IMG_SYS],
+      ['img.portrait', 'Image prompts', 'Character image', '[NAME] becomes the character\'s name.', IMG_PORTRAIT0],
+      ['img.scene', 'Image prompts', 'First message image', '[NAME] the character, [LAST_MOMENT] the text of "Last moment" below.', IMG_SCENE0],
+      ['img.alt', 'Image prompts', 'Alternate message image', '[NAME] the character, [LAST_MOMENT] the text of "Last moment" below.', IMG_ALT0],
+      ['img.last', 'Image prompts', 'Last moment', 'Part of the first and alternate message requests. [NAME] becomes the character\'s name.', IMG_LAST0]
+    );
+    Object.keys(SDSTYLE).forEach(k => PDEF.push(['style.' + k, 'Image models', SN[k] || k, 'Rules for writing prompts for this group of models.' + (/\{Q\}/.test(SDSTYLE[k].rules) ? ' {Q} becomes the quality tags of the chosen model.' : ''), SDSTYLE[k].rules]));
+    return PDEF;
+  }
+  let PR = { cur: 'default', list: [] };
+  try { const o = JSON.parse(localStorage.getItem(PRKEY) || 'null'); if (o && Array.isArray(o.list)) PR = { cur: o.cur || 'default', list: o.list.filter(x => x && x.id && x.name).map(x => ({ id: String(x.id), name: String(x.name).slice(0, 40), t: x.t && typeof x.t === 'object' ? x.t : {} })) }; } catch (e) { /* ignora */ }
+  if (PR.cur !== 'default' && !PR.list.some(x => x.id === PR.cur)) PR.cur = 'default';
+  const prSave = () => { try { localStorage.setItem(PRKEY, JSON.stringify(PR)); } catch (e) { /* ignora */ } };
+  const prCur = () => PR.list.find(x => x.id === PR.cur) || null;
+  const prDef = id => { const d = pdefs().find(x => x[0] === id); return d ? d[4] : ''; };
+  /* Testo del prompt nel preset attivo (le modifiche salvate sostituiscono quello predefinito) */
+  function PT(id) { const c = prCur(); return c && typeof c.t[id] === 'string' ? c.t[id] : prDef(id); }
+  /* Segnaposto [NOME] sostituiti dai valori; il testo inserito non viene riletto */
+  const fill = (t, v) => String(t).replace(/\[([A-Z_]+)\]/g, (m, k) => Object.prototype.hasOwnProperty.call(v, k) ? String(v[k]) : m);
+  function prRender() {
+    const list = $('prList'); if (!list) return;
+    const c = prCur(), ro = !c;
+    $('prBtn').innerHTML = '<span class="lnm"></span><span aria-hidden="true">▾</span>';
+    $('prBtn').querySelector('.lnm').textContent = 'Preset: ' + (c ? c.name : 'Default');
+    $('prDel').hidden = ro;
+    $('prNote').textContent = ro ? 'Default holds the prompts of ST Card Creator and cannot be changed. To change them, choose "Create a new Prompts Preset" in the list: the new preset starts as a copy of Default.' : 'Change a prompt, then press Confirm. Restore puts the Default text back. Words in [SQUARE BRACKETS] are filled in by the app.';
+    const m = $('prMenu'); m.textContent = '';
+    const item = (txt, fn, on, cls) => { const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'menuitemradio'); b.setAttribute('aria-checked', String(!!on)); if (cls) b.className = cls; const t = document.createElement('b'); t.textContent = txt; b.appendChild(t); b.addEventListener('click', () => { prMenu(false); fn(); }); m.appendChild(b); };
+    item('Default', () => prUse('default'), ro);
+    PR.list.forEach(x => item(x.name, () => prUse(x.id), PR.cur === x.id));
+    item('Create a new Prompts Preset', prNew, false, 'prnew');
+    list.textContent = '';
+    let grp = '';
+    pdefs().forEach(([id, g, title, desc]) => {
+      if (g !== grp) { grp = g; const h = document.createElement('h3'); h.textContent = g; list.appendChild(h); }
+      const w = mk('div', 'pritem'), head = mk('div', 'prh'), b = mk('b'), d = mk('p', 'sm prd'), ta = mk('textarea');
+      b.textContent = title; d.textContent = desc; w.dataset.id = id;
+      const saved = PT(id); ta.value = saved; ta.disabled = ro; ta.spellcheck = false; ta.setAttribute('aria-label', g + ' · ' + title);
+      ta.rows = Math.min(14, Math.max(4, Math.ceil(saved.length / 95)));
+      const ctl = mk('div', 'ctl');
+      ctl.appendChild(makeExpand(ta, () => g + ' · ' + title));
+      if (!ro) {
+        const ok = mk('button', 'btn primary'), back = mk('button', 'btn quiet');
+        ok.type = back.type = 'button'; ok.textContent = 'Confirm'; back.textContent = 'Restore';
+        const sync = () => { const ch = ta.value !== PT(id); ok.disabled = !ch; w.classList.toggle('changed', ch); back.disabled = ta.value === prDef(id) && PT(id) === prDef(id); };
+        ta.addEventListener('input', sync);
+        ok.addEventListener('click', () => { const cur = prCur(); if (!cur) return; if (ta.value === prDef(id)) delete cur.t[id]; else cur.t[id] = ta.value; prSave(); sync(); say('prNote', 'Saved: {t}.', { t: title }, false); });
+        back.addEventListener('click', () => { const cur = prCur(); if (!cur) return; delete cur.t[id]; prSave(); ta.value = prDef(id); sync(); say('prNote', 'Restored: {t}.', { t: title }, false); });
+        ctl.append(ok, back); sync();
+      }
+      head.append(b, ctl);
+      w.append(head, d, mk('hr'), ta);
+      list.appendChild(w);
+    });
+  }
+  function prUse(id) { PR.cur = id === 'default' || PR.list.some(x => x.id === id) ? id : 'default'; prSave(); prRender(); }
+  function prMenu(on) { $('prMenu').hidden = !on; $('prBtn').setAttribute('aria-expanded', String(on)); if (on) { const x = $('prMenu').querySelector('[aria-checked="true"]') || $('prMenu').firstChild; if (x) x.focus(); } }
+  function prNew() { $('prName').value = ''; const d = $('prdlg'); if (!d.open) d.showModal(); $('prName').focus(); }
+  $('prBtn').addEventListener('click', () => prMenu($('prMenu').hidden));
+  document.addEventListener('click', e => { if (!$('prMenu').hidden && !e.target.closest('#prwrap')) prMenu(false); });
+  $('prMenu').addEventListener('keydown', e => { if (e.key === 'Escape') { prMenu(false); $('prBtn').focus(); } });
+  $('prCancel').addEventListener('click', () => $('prdlg').close());
+  $('prform').addEventListener('submit', e => {
+    const name = $('prName').value.trim().slice(0, 40);
+    if (!name) { e.preventDefault(); $('prName').focus(); return; }
+    const id = 'p' + Date.now().toString(36);
+    PR.list.push({ id, name, t: {} }); PR.cur = id; prSave(); prRender();
+  });
+  $('prDel').addEventListener('click', async () => {
+    const c = prCur(); if (!c) return;
+    const ok = await askConfirm('Delete the preset?', ['"' + c.name + '" and its prompts will be deleted. Default stays as it is.'], 'Delete', null, 'Keep it');
+    if (!ok) return;
+    PR.list = PR.list.filter(x => x.id !== c.id); PR.cur = 'default'; prSave(); prRender();
+  });
+
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
+    ["1.0.45", ["Settings has its own section buttons: Text Generation, Image Generation, SillyTavern, Graphic Enhancements, Prompts and What's new.", "New Prompts page: every prompt the app sends to the AI, grouped by task. Default is read-only; \"Create a new Prompts Preset\" makes an editable copy, with Confirm and Restore on each prompt.", "What's new lists every version on its own page."]],
     ["1.0.44", ["Qwen Image 2.1 prompts follow the official Qwen examples: one detailed paragraph, no negative prompt, and scenes that build on the character image.", "\"New card\": the confirm button now just says \"Confirm\"."]],
     ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns.", "\"Stable diffusion\" is now \"Image prompt\", also in Image prompts next to the image style, with Qwen Image 2.1 in the list (picked by itself when Qwen draws your images)."]],
     ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
@@ -6716,7 +6853,13 @@
     body.scrollTop = 0;
   }
   $('ndlg').addEventListener('click', () => $('ndlg').close());
-  $('newsAll').addEventListener('click', () => newsShow(true));
+  function newsPage() {
+    const body = $('newsPage'); if (!body || body.childNodes.length) return;
+    NEWS.forEach(([v, items]) => {
+      const h = document.createElement('h3'); h.textContent = 'v' + v; body.appendChild(h);
+      const ul = document.createElement('ul'); items.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); body.appendChild(ul);
+    });
+  }
   /* Al primo avvio di una versione nuova, una volta sola */
   try {
     if (localStorage.getItem(NEWSKEY) !== NEWS[0][0]) {
