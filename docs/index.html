@@ -537,17 +537,22 @@
   #tabs-api .tab { flex: 1 1 0; min-width: 0; white-space: normal; line-height: 1.15; text-align: center; }
   @media (max-width: 900px) { #tabs-api .tab { font-size: 13px; padding-left: 6px; padding-right: 6px; } }
   /* Pagina Prompts */
-  .prtop { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
-  .prwrap { width: min(100%, 360px); margin: 0; }
+  .prtop { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+  .prwrap { width: min(100%, 360px); margin: 0; flex: 0 0 auto; }
+  .prtop #prNote { flex: 1 1 280px; margin: 0; }
+  #view-api.wide { max-width: 1080px; }
+  #prList details.acc { padding: 12px 0; }
+  #prList details.acc > summary .atitle { font-size: 20px; }
+  #prList details.acc > summary .tk { color: var(--muted); font-size: 13px; }
+  #prList .accin { padding-top: 6px; }
   .prwrap > .tab { display: flex; align-items: center; gap: 10px; text-align: left; } .prwrap > .tab .lnm { flex: 1; }
   #prMenu .prnew { border-top: 1px solid var(--line); color: var(--gold); }
-  #prList h3 { font: 700 20px/1.2 var(--font-title); color: var(--gold); margin: 26px 0 4px; }
   .pritem { padding: 12px 0 4px; }
   .pritem + .pritem { border-top: 1px solid var(--line); }
   .pritem .prh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .pritem .prh > b { font-weight: 700; } .pritem .prh .ctl { margin: 0 0 0 auto; gap: 6px; } .pritem .prh .ctl .btn { padding: 5px 12px; font-size: 13px; }
   .pritem .prd { margin: 2px 0 6px; } .pritem hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0 8px; }
-  .pritem textarea { width: 100%; min-height: 110px; font: 13px/1.5 var(--font-mono); }
+  .pritem textarea { width: 100%; min-height: 0; height: auto; resize: vertical; font: 13px/1.5 var(--font-mono); }
   .pritem textarea:disabled { opacity: 0.75; cursor: not-allowed; }
   .pritem.changed textarea { border-color: var(--gold); }
   #newsPage { text-align: center; max-width: 720px; margin: 0 auto; } #newsPage ul { display: inline-block; text-align: left; max-width: 100%; }
@@ -1127,9 +1132,9 @@
     <section class="apibox" id="sPrompts">
       <div class="prtop">
         <div class="prewrap prwrap" id="prwrap"><button type="button" class="tab" id="prBtn" aria-haspopup="true" aria-expanded="false"></button><div class="dlmenu" id="prMenu" hidden role="menu"></div></div>
+        <p class="sm" id="prNote"></p>
         <button type="button" class="btn quiet" id="prDel" hidden>Delete this preset</button>
       </div>
-      <p class="sm" id="prNote"></p>
       <div id="prList"></div>
     </section>
     </div></details>
@@ -3262,6 +3267,7 @@
     let on = ps.find(d => panelId(d) === id && !d.hidden) || ps.find(d => !d.hidden);
     if (!on) return;
     TABSEL[g] = panelId(on);
+    if (g === 'api') $('view-api').classList.toggle('wide', panelId(on) === 's-prompts');
     ps.forEach(d => { d.open = true; d.classList.toggle('tab-off', d !== on); if (d._tab) d._tab.setAttribute('aria-pressed', String(d === on)); });
     if (on.contains($('flist'))) buildList();
     if (panelId(on) === 'd-img') drawImg();
@@ -6776,13 +6782,20 @@
     PR.list.forEach(x => item(x.name, () => prUse(x.id), PR.cur === x.id));
     item('Create a new Prompts Preset', prNew, false, 'prnew');
     list.textContent = '';
-    let grp = '';
-    pdefs().forEach(([id, g, title, desc]) => {
-      if (g !== grp) { grp = g; const h = document.createElement('h3'); h.textContent = g; list.appendChild(h); }
+    let grp = '', box = null;
+    const defs = pdefs();
+    defs.forEach(([id, g, title, desc]) => {
+      if (g !== grp) {
+        grp = g; const dt = mk('details', 'acc'), sm = mk('summary'), h = mk('h3', 'atitle'), n = mk('span', 'tk');
+        h.textContent = g; const c = defs.filter(x => x[1] === g).length; n.textContent = c + (c === 1 ? ' prompt' : ' prompts');
+        sm.append(h, n); box = mk('div', 'accin'); dt.append(sm, box); dt.open = PROPEN === g;
+        dt.addEventListener('toggle', () => { if (dt.open) { PROPEN = g; list.querySelectorAll(':scope > details.acc[open]').forEach(o => { if (o !== dt) o.open = false; }); } else if (PROPEN === g) PROPEN = ''; });
+        list.appendChild(dt);
+      }
       const w = mk('div', 'pritem'), head = mk('div', 'prh'), b = mk('b'), d = mk('p', 'sm prd'), ta = mk('textarea');
       b.textContent = title; d.textContent = desc; w.dataset.id = id;
       const saved = PT(id); ta.value = saved; ta.disabled = ro; ta.spellcheck = false; ta.setAttribute('aria-label', g + ' · ' + title);
-      ta.rows = Math.min(14, Math.max(4, Math.ceil(saved.length / 95)));
+      ta.rows = 2;
       const ctl = mk('div', 'ctl');
       ctl.appendChild(makeExpand(ta, () => g + ' · ' + title));
       if (!ro) {
@@ -6796,9 +6809,10 @@
       }
       head.append(b, ctl);
       w.append(head, d, mk('hr'), ta);
-      list.appendChild(w);
+      box.appendChild(w);
     });
   }
+  let PROPEN = '';
   function prUse(id) { PR.cur = id === 'default' || PR.list.some(x => x.id === id) ? id : 'default'; prSave(); prRender(); }
   function prMenu(on) { $('prMenu').hidden = !on; $('prBtn').setAttribute('aria-expanded', String(on)); if (on) { const x = $('prMenu').querySelector('[aria-checked="true"]') || $('prMenu').firstChild; if (x) x.focus(); } }
   function prNew() { $('prName').value = ''; const d = $('prdlg'); if (!d.open) d.showModal(); $('prName').focus(); }
@@ -6821,7 +6835,7 @@
 
   /* ---------- Novità: mostrate una volta per versione (exe e versione web), e tutte dalle impostazioni ---------- */
   const NEWS = [
-    ["1.0.45", ["Settings has its own section buttons: Text Generation, Image Generation, SillyTavern, Graphic Enhancements, Prompts and What's new.", "New Prompts page: every prompt the app sends to the AI, grouped by task. Default is read-only; \"Create a new Prompts Preset\" makes an editable copy, with Confirm and Restore on each prompt.", "What's new lists every version on its own page."]],
+    ["1.0.45", ["Settings has its own section buttons: Text Generation, Image Generation, SillyTavern, Graphic Enhancements, Prompts and What's new.", "New Prompts page: every prompt the app sends to the AI, grouped by task. Default is read-only; \"Create a new Prompts Preset\" makes an editable copy, with Confirm and Restore on each prompt. Prompts are grouped in sections, one open at a time.", "What's new lists every version on its own page."]],
     ["1.0.44", ["Qwen Image 2.1 prompts follow the official Qwen examples: one detailed paragraph, no negative prompt, and scenes that build on the character image.", "\"New card\": the confirm button now just says \"Confirm\"."]],
     ["1.0.43", ["The light/dark switch stays next to the settings button, and the header fits better in smaller windows.", "Fixed the section buttons sometimes dropping down after going back to a card from the start screen.", "API and image buttons re-check by themselves when the window comes back to the front or the network returns.", "\"Stable diffusion\" is now \"Image prompt\", also in Image prompts next to the image style, with Qwen Image 2.1 in the list (picked by itself when Qwen draws your images)."]],
     ["1.0.42", ["Image prompts: \"Create the cover\" sits right under the character image prompt; the result goes on the card only when you press \"Use as cover\".", "The old \"Create the image\" box is gone."]],
