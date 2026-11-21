@@ -547,12 +547,12 @@
   #prList .accin { padding-top: 6px; }
   .prwrap > .tab { display: flex; align-items: center; gap: 10px; text-align: left; } .prwrap > .tab .lnm { flex: 1; }
   #prMenu .prnew { border-top: 1px solid var(--line); color: var(--gold); }
-  .pritem { padding: 12px 0 4px; }
+  .pritem { padding: 8px 0 10px; }
   .pritem + .pritem { border-top: 1px solid var(--line); }
-  .pritem .prh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pritem .prh { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 28px; }
   .pritem .prh > b { font-weight: 700; } .pritem .prh .ctl { margin: 0 0 0 auto; gap: 6px; } .pritem .prh .ctl .btn { padding: 5px 12px; font-size: 13px; }
-  .pritem .prd { margin: 2px 0 6px; } .pritem hr { border: 0; border-top: 1px solid var(--line); margin: 6px 0 8px; }
-  .pritem textarea { width: 100%; min-height: 0; height: auto; resize: vertical; font: 13px/1.5 var(--font-mono); }
+  .pritem .prd { margin: 0 0 5px; line-height: 1.3; }
+  .pritem textarea { width: 100%; min-height: 0; height: auto; resize: vertical; font: 13px/1.35 var(--font-mono); padding-top: 7px; padding-bottom: 7px; }
   .pritem textarea:disabled { opacity: 0.75; cursor: not-allowed; }
   .pritem.changed textarea { border-color: var(--gold); }
   #newsPage { text-align: center; max-width: 720px; margin: 0 auto; } #newsPage ul { display: inline-block; text-align: left; max-width: 100%; }
@@ -6808,7 +6808,7 @@
         ctl.append(ok, back); sync();
       }
       head.append(b, ctl);
-      w.append(head, d, mk('hr'), ta);
+      w.append(head, d, ta);
       box.appendChild(w);
     });
   }
